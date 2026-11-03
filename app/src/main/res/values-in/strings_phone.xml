@@ -36,6 +36,7 @@
     <string name="phone_a11y_skipped">Dilewati</string>
     <string name="phone_app_info">Tidak bisa mengaktifkan? Izinkan setelan terbatas di Info aplikasi dulu</string>
     <string name="phone_auto_read">Saat kode muncul, tunggu beberapa detik — Mika membacanya dan menyelesaikan pemasangan. Tidak perlu meninggalkan halaman itu.</string>
+    <string name="phone_auto_read_fallback">Tidak ada yang terjadi setelah beberapa detik? Tarik ke bawah panel notifikasi dan masukkan kode di “%1$s”. Jendela pemasangan tetap terbuka.</string>
     <string name="phone_turned_on_next">Sudah saya aktifkan, lanjut</string>
     <string name="phone_revisit_back">Kembali ke posisi tadi</string>
     <string name="phone_revisit_note">Ketuk langkah mana pun di atas untuk kembali dan mengulanginya.</string>

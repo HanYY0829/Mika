@@ -21,6 +21,7 @@
     <string name="plans_edit_time">시간 변경</string>
     <string name="plans_edit_title">다음 실행 시간 변경</string>
     <string name="plans_edit_label">현지 시간: yyyy-MM-dd HH:mm</string>
+    <string name="plans_preview">이 변경 후 예정된 실행 시각:</string>
     <string name="plans_need_future">올바른 미래 시간을 입력하세요</string>
     <string name="plans_delete_title">이 예약 작업을 삭제할까요?</string>
     <string name="plans_done">완료</string>

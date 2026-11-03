@@ -36,6 +36,7 @@
     <string name="phone_a11y_skipped">건너뜀</string>
     <string name="phone_app_info">켤 수 없나요? 먼저 앱 정보에서 제한된 설정을 허용하세요</string>
     <string name="phone_auto_read">코드가 나타나면 몇 초 기다리세요. Mika가 코드를 읽고 페어링을 마쳐요. 그 페이지를 떠날 필요는 없어요.</string>
+    <string name="phone_auto_read_fallback">몇 초가 지나도 반응이 없으면 알림 창을 아래로 내려 “%1$s”에 코드를 입력하세요. 페어링 창은 닫히지 않아요.</string>
     <string name="phone_turned_on_next">켰어요, 다음</string>
     <string name="phone_revisit_back">원래 위치로 돌아가기</string>
     <string name="phone_revisit_note">위의 단계를 누르면 돌아가서 다시 할 수 있어요.</string>

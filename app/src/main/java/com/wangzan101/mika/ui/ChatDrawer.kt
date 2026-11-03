@@ -2,6 +2,7 @@ package com.wangzan101.mika.ui
 
 import com.wangzan101.mika.R
 import com.wangzan101.mika.i18n.tr
+import com.wangzan101.mika.ui.components.DirectionalIcon
 import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.geometry.Offset
@@ -330,7 +331,7 @@ private fun RunningLabel(onScreens: () -> Unit) {
         ) {
             Icon(MikaIcons.Screens, null, Modifier.size(14.dp), tint = c.ink3)
             Text(stringResource(R.string.drawer_screens), style = MikaType.Hint, color = c.ink2)
-            Icon(MikaIcons.Chevron, null, Modifier.size(10.dp), tint = c.ink3)
+            DirectionalIcon(MikaIcons.Chevron, null, Modifier.size(10.dp), tint = c.ink3)
         }
     }
 }

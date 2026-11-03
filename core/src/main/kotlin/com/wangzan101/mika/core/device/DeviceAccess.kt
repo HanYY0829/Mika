@@ -31,6 +31,8 @@ interface DeviceAccessPort {
     suspend fun wake(): Boolean
     suspend fun dismiss(): Boolean
     suspend fun credentialReady(kind: CredentialKind): Boolean
+    /** 只读识别当前唯一的系统凭据框;未知、歧义或平台不支持时返回 null,不聚焦或输入。 */
+    suspend fun detectedCredentialKind(): CredentialKind? = null
     suspend fun enter(credential: DeviceCredential): Boolean
 }
 
@@ -45,7 +47,8 @@ interface DeviceAccessStore {
 }
 
 data class DeviceAccessResult(val status: String, val state: DeviceState?, val enabled: Boolean,
-    val credentialConfigured: Boolean, val attemptBlocked: Boolean)
+    val credentialConfigured: Boolean, val attemptBlocked: Boolean,
+    val storedKind: CredentialKind? = null, val detectedKind: CredentialKind? = null)
 
 /** 整个进程共用一份。并发调用串行化,成功依据系统状态,不依据按键或命令的返回码。 */
 class DeviceAccess(private val port: DeviceAccessPort, private val store: DeviceAccessStore,
@@ -94,7 +97,17 @@ class DeviceAccess(private val port: DeviceAccessPort, private val store: Device
                 targetReady = port.credentialReady(it.kind)
                 if (!targetReady) { delay(pollMs); waited += pollMs }
             }
-            if (!targetReady) return@withLock result("unsupported_keyguard", read())
+            if (!targetReady) {
+                val current = read() ?: return@withLock result("device_unavailable")
+                if (current.ready) return@withLock result("unlocked", current)
+                if (!store.enabled) return@withLock result("disabled", current)
+                if (!current.helperAvailable) return@withLock result("helper_unavailable", current)
+                val detected = port.detectedCredentialKind()
+                if (detected != null && detected != it.kind) {
+                    return@withLock result("credential_kind_mismatch", current, it.kind, detected)
+                }
+                return@withLock result("unsupported_keyguard", current)
+            }
             if (!store.enabled) return@withLock result("disabled", read())
             if (!store.beginAttempt(it)) return@withLock result("attempt_blocked", read())
             // 从此刻起中断也保留占位,不重复输入。只有系统已解锁才清掉。
@@ -125,6 +138,6 @@ class DeviceAccess(private val port: DeviceAccessPort, private val store: Device
         while (s != null && !done(s) && waited < waitMs) { delay(pollMs); waited += pollMs; s = read() }
         return s
     }
-    private fun result(status: String, s: DeviceState? = null) =
-        DeviceAccessResult(status, s, store.enabled, store.credentialConfigured, store.attemptBlocked)
+    private fun result(status: String, s: DeviceState? = null, storedKind: CredentialKind? = null, detectedKind: CredentialKind? = null) =
+        DeviceAccessResult(status, s, store.enabled, store.credentialConfigured, store.attemptBlocked, storedKind, detectedKind)
 }

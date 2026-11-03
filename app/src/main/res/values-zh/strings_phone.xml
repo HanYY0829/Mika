@@ -36,6 +36,7 @@
     <string name="phone_a11y_skipped">已跳过</string>
     <string name="phone_app_info">打不开?先去应用信息里允许受限制的设置</string>
     <string name="phone_auto_read">看到配对码后稍等几秒,Mika 会自己读出来并完成配对,不用离开那个页面。</string>
+    <string name="phone_auto_read_fallback">等了几秒没反应?下拉通知栏,在「%1$s」里填码,配对窗口不会关。</string>
     <string name="phone_turned_on_next">我已经打开了,下一步</string>
     <string name="phone_revisit_back">回到原来的步骤</string>
     <string name="phone_revisit_note">点上面任一步,可以回去重做。</string>

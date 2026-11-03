@@ -36,6 +36,7 @@
     <string name="phone_a11y_skipped">Omitido</string>
     <string name="phone_app_info">¿No puedes activarla? Primero permite los ajustes restringidos en la información de la app</string>
     <string name="phone_auto_read">Cuando aparezca el código, espera unos segundos: Mika lo lee y termina de vincular. No hace falta salir de esa página.</string>
+    <string name="phone_auto_read_fallback">¿No pasa nada tras unos segundos? Desliza hacia abajo el panel de notificaciones y escribe el código en “%1$s”. La ventana de vinculación sigue abierta.</string>
     <string name="phone_turned_on_next">Ya la activé, siguiente</string>
     <string name="phone_revisit_back">Volver donde estaba</string>
     <string name="phone_revisit_note">Toca cualquier paso de arriba para volver y rehacerlo.</string>

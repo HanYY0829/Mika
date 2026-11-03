@@ -21,6 +21,7 @@
     <string name="plans_edit_time">Изменить время</string>
     <string name="plans_edit_title">Изменить время следующего запуска</string>
     <string name="plans_edit_label">Местное время: гггг-ММ-дд ЧЧ:мм</string>
+    <string name="plans_preview">Следующие запуски после этого изменения:</string>
     <string name="plans_need_future">Введите корректное время в будущем</string>
     <string name="plans_delete_title">Удалить эту задачу по расписанию?</string>
     <string name="plans_done">Выполнено</string>

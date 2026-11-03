@@ -264,6 +264,12 @@ class TaskRun(
     @Volatile var muteFailedFor: String? = null
         private set
     @Volatile private var awake: KeepAwake? = null
+    /**
+     * 收尾时还有任务排着:先替接班的拿一份屏幕锁再放开自己的,服务收尾时交给放出来的那个,它开跑拿上自己那份后放开;
+     * 没人接班、或没跑起来就结束了,由服务放开。否则这里一放开,屏幕若已过了系统的熄屏时间就当场熄掉,
+     * 接班的拿锁点不亮屏幕,一开跑就停在等解锁。重复放开不会多算(见 [SharedWakeLock])。
+     */
+    @Volatile internal var wakeHandoff: WakeLockPort? = null
     /** shell 进程没了,虚拟屏和上面的 App 一起没了;任务没法接着做。 */
     @Volatile var shellDied = false
         internal set
@@ -482,6 +488,9 @@ class TaskRun(
             // 用户在「干活时」关掉了常亮就不拿唤醒锁;开跑就按此刻的状态(准备中)拿上:
             // 开模型、读知识、选路线、判断意图这些第一步之前的准备和推理期间屏幕也不熄
             awake = if (FeatureFlags.get(service).keepScreenOn()) KeepAwake(service.wakeLock.lease(), side).also { it.onState(_state.value) } else null
+            // 前一个任务替这个拿着的那份,自己的拿上了就放开
+            wakeHandoff?.release()
+            wakeHandoff = null
             val model = env.modelFactory(service, session) ?: return TaskState.Failed(tr(R.string.fail_no_main_model), FailKind.Environment)
             // 用户在浏览器页上对着一页问的:那一页借给这个任务当当前网页标签(见 PageLoans);开跑时页面还开着才借得到
             val pageLoan = if (provenance.origin == RunOrigin.Ui) withContext(Dispatchers.Main) { UserBrowser.existing()?.claim(conversationId, key) } else null
@@ -918,6 +927,7 @@ class TaskRun(
             _frames.value = null
             _webOpen.value = false
             synchronized(publishLock) { ended = true }
+            if (awake != null && service.hasQueuedRuns()) wakeHandoff = service.wakeLock.lease().also { it.acquire() }
             awake?.close()
             awake = null
             shellDeath?.let { d -> runCatching { shellBinder?.unlinkToDeath(d, 0) } }

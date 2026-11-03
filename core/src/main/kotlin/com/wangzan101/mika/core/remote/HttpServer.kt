@@ -210,7 +210,8 @@ class MiniHttpServer(
             val out = ByteArrayOutputStream()
             while (true) {
                 val size = readLine(input).substringBefore(';').trim().toIntOrNull(16) ?: throw HttpProtocolException(400, "bad chunk")
-                if (size < 0 || out.size() + size > MAX_BODY) throw HttpProtocolException(413, "body too large")
+                // 按剩余额度检查,避免相加溢出后放行超大分块并尝试分配内存。
+                if (size < 0 || size > MAX_BODY - out.size()) throw HttpProtocolException(413, "body too large")
                 if (size == 0) {
                     while (readLine(input).isNotEmpty()) Unit
                     return out.toByteArray()

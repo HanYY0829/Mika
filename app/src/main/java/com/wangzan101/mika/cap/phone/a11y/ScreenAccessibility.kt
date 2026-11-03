@@ -5,6 +5,7 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.accessibilityservice.GestureDescription
 import android.content.Intent
 import android.graphics.Bitmap
+import android.util.Log
 import android.graphics.Path
 import android.app.Notification
 import android.os.Build
@@ -40,9 +41,12 @@ open class ScreenAccessibility : AccessibilityService() {
             }
         }
         _instance.value = this
+        // 配对时读码、引导页打勾都看它;连上和断开各记一句,排查「明明开着却当没开」
+        Log.i(TAG, "accessibility service connected")
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
+        Log.i(TAG, "accessibility service unbound")
         clearInstance()
         return super.onUnbind(intent)
     }
@@ -217,6 +221,7 @@ open class ScreenAccessibility : AccessibilityService() {
             onBufferOverflow = BufferOverflow.DROP_OLDEST,
         )
 
+        private const val TAG = "MikaA11y"
         private val _instance = MutableStateFlow<ScreenAccessibility?>(null)
         /** 已连接的服务实例;服务未开启或已断开时为 null。 */
         val instance: StateFlow<ScreenAccessibility?> = _instance.asStateFlow()

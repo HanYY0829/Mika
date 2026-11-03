@@ -36,6 +36,7 @@
     <string name="phone_a11y_skipped">スキップしました</string>
     <string name="phone_app_info">オンにできませんか？ 先にアプリ情報で制限付き設定を許可してください</string>
     <string name="phone_auto_read">コードが表示されたら、数秒待ってください。Mika が読み取ってペア設定を完了します。そのページから離れる必要はありません。</string>
+    <string name="phone_auto_read_fallback">数秒待っても何も起きない場合は、通知シェードを下にスワイプして「%1$s」にコードを入力してください。ペア設定の画面は閉じません。</string>
     <string name="phone_turned_on_next">オンにしました。次へ</string>
     <string name="phone_revisit_back">元の場所に戻る</string>
     <string name="phone_revisit_note">上のステップをタップすると、戻ってやり直せます。</string>

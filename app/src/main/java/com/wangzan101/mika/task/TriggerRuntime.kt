@@ -23,10 +23,9 @@ import com.wangzan101.mika.core.trigger.TriggerEngine
 import com.wangzan101.mika.core.trigger.ConditionOutcome
 import com.wangzan101.mika.core.trigger.TriggerSnapshot
 import com.wangzan101.mika.core.trigger.TriggerWindowState
+import com.wangzan101.mika.core.trigger.rescheduledTo
 import java.io.File
-import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -135,11 +134,9 @@ object TriggerRuntime {
         TriggerSnapshot(it.all(), it.windows())
     }
 
-    @Synchronized fun setEnabled(context: Context, id: String, enabled: Boolean) {
-        val store = store(context)
-        store.get(id)?.let { store.upsert(it.copy(enabled = enabled)) }
-        engine(context, store).rearm(System.currentTimeMillis())
-    }
+    /** 暂停或恢复;改不了(没有这个计划、恢复跑过的一次性计划)时返回 false,见 [TriggerEngine.setEnabled]。 */
+    @Synchronized fun setEnabled(context: Context, id: String, enabled: Boolean): Boolean =
+        store(context).let { engine(context, it).setEnabled(id, enabled, System.currentTimeMillis()) }
 
     @Synchronized fun remove(context: Context, id: String) {
         val store = store(context)
@@ -150,11 +147,7 @@ object TriggerRuntime {
     @Synchronized fun reschedule(context: Context, id: String, nextAtMs: Long) {
         val store = store(context)
         store.get(id)?.let { trigger ->
-            val local = trigger.calendarZone?.let { zone ->
-                DateTimeFormatter.ofPattern("HH:mm").format(Instant.ofEpochMilli(nextAtMs).atZone(ZoneId.of(zone)))
-            }
-            store.upsert(trigger.copy(nextAtMs = nextAtMs, enabled = true,
-                calendarTime = if (trigger.calendarTime != null) local else null))
+            store.upsert(trigger.rescheduledTo(nextAtMs))
         }
         engine(context, store).rearm(System.currentTimeMillis())
     }

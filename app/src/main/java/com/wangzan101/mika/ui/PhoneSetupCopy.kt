@@ -70,6 +70,8 @@ object PhoneSetupCopy {
 
     /** 配对一步:无障碍开着时 Mika 自己读码。 */
     val AUTO_READ_HINT: String get() = tr(R.string.phone_auto_read)
+    /** 读不到时的退路:填码通知一开始就静静放在通知栏里。 */
+    val AUTO_READ_FALLBACK: String get() = tr(R.string.phone_auto_read_fallback, NOTIFY_ENTER_TITLE)
     /** 无障碍没开时的三步图示:点系统的配对按钮、看顶部弹出的通知、在通知里填码。 */
     val NOTIFY_GUIDE: List<String> get() = listOf(
         tr(R.string.phone_guide_1), tr(R.string.phone_guide_2), tr(R.string.phone_guide_3, NOTIFY_ACTION),

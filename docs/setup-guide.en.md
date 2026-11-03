@@ -150,6 +150,8 @@ Then one of two things happens:
 
 The wizard shows a green hint: "When the code appears, wait a few seconds — Mika reads it and finishes pairing." Stay on the pairing dialog and **wait a few seconds**. Mika reads the code and pairs by itself, and the dialog closes on its own.
 
+Some phones pause Mika's accessibility as soon as you open system Settings, and then Mika can't read the code. If nothing happens after a few seconds, **swipe down from the top of the screen** and type the 6 digits into Mika's "Enter pairing code" notification in the shade (same as in case B below). The pairing dialog stays open.
+
 ### Case B: accessibility is off (you skipped step 3) — enter the code in the notification
 
 The wizard shows this as three small steps: ① Tap “Pair device with pairing code” ② Mika’s notification pops up at the top of the screen; if not, swipe down to open the notification shade ③ Tap “Enter code” and type the 6 digits. In detail:

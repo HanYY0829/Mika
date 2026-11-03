@@ -397,11 +397,12 @@ private fun Modifier.morphGlass(m: Morph, end: Boolean, c: MikaColors, need: Boo
             if (need) c.warnSolid.copy(alpha = 0.5f) else c.glassEdge, style = Stroke(stroke))
     }
 
-/** 宽 [width](0 或超出时按整块)、贴着一边([end] 时右边)的胶囊形;[inset] 往里收(画描边用)。 */
+/** 宽 [width](0 或超出时按整块)、贴着一边([end] 时逻辑末端)的胶囊形;[inset] 往里收(画描边用)。 */
 private class EdgePill(private val width: Float, private val end: Boolean, private val inset: Float = 0f) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
         val w = if (width > 0f) width.coerceAtMost(size.width) else size.width
-        val left = if (end) size.width - w else 0f
+        val atRight = end != (layoutDirection == LayoutDirection.Rtl)
+        val left = if (atRight) size.width - w else 0f
         val r = size.height / 2 - inset
         return Outline.Rounded(RoundRect(left + inset, inset, left + w - inset, size.height - inset, CornerRadius(r, r)))
     }

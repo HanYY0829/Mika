@@ -13,6 +13,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Process
 import android.provider.Settings
+import android.util.Log
 import com.wangzan101.mika.core.adb.AdbConnectPort
 import com.wangzan101.mika.core.adb.AdbConnection
 import com.wangzan101.mika.core.adb.ConnectCandidates
@@ -173,7 +174,9 @@ class BuiltinShellManager(context: Context, private val hub: HelperHub, private 
             cm.allNetworks.any { cm.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true }
         }.getOrDefault(true)
 
-        override suspend fun findPairingPort(timeoutMs: Long): Int? = finder.findPorts(AdbServiceTypes.PAIRING, timeoutMs).firstOrNull()
+        override suspend fun findPairingPort(timeoutMs: Long): Int? =
+            finder.findPorts(AdbServiceTypes.PAIRING, timeoutMs).firstOrNull()
+                .also { Log.i(PAIRING_TAG, if (it != null) "found the pairing window on port $it" else "no pairing window within $timeoutMs ms") }
 
         override fun pair(port: Int, code: String) {
             AdbPairing(AndroidAdb.tls(AndroidAdb.pairingIdentity(app))).pair(LOCALHOST, port, code)
@@ -232,6 +235,8 @@ class BuiltinShellManager(context: Context, private val hub: HelperHub, private 
         /** 内置助手从安卓 12 起启用;旧系统使用不带较新屏幕标志的兼容路径。 */
         const val MIN_SDK = Build.VERSION_CODES.S
         private const val PREFS = "builtin_shell"
+        /** 和配对其余几处(PairingCoordinator、PairingCodeReader)用同一个,按它一条命令就能看完配对经过。 */
+        private const val PAIRING_TAG = "MikaPairing"
         /** 安卓原版 adbd 把无线调试的连接端口写在这个系统属性里;读不到时靠缓存、mDNS、扫本机端口和用户填的端口。 */
         private const val TLS_PORT_PROPERTY = "service.adb.tls.port"
         private const val LOCALHOST = AdbConnectPort.LOCALHOST

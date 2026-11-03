@@ -387,13 +387,15 @@ private fun MikaRoot(store: ProviderStore, monitor: SystemStatusMonitor, activit
             LaunchedEffect(Unit) { routeCount = withContext(Dispatchers.IO) { runCatching { routeStore.count() }.getOrNull() } }
             val vm by produceState<MemoryViewModel?>(null) {
                 value = withContext(Dispatchers.IO) {
+                    val bundled = GuideCatalog.loadBundled()
                     MemoryViewModel(
                         memoryRuntime.store(), memoryRuntime.settings(), memoryRuntime.skills(),
                         vmScope, memoryRuntime.file().brokenNotice,
                         wipe = { memoryRuntime.scope.launch(Dispatchers.IO) { memoryRuntime.wipeAll() } },
                         onForgotten = { id -> memoryRuntime.scope.launch(Dispatchers.IO) { memoryRuntime.stripMemory(setOf(id)) } },
-                        runnableScripts = GuideCatalog.loadBundled().runnableScripts(),
+                        runnableScripts = bundled.runnableScripts(),
                         appDrafts = memoryRuntime.appKnowledge(),
+                        builtinSkillNames = bundled.items.map { it.name }.toSet(),
                     )
                 }
             }

@@ -20,6 +20,7 @@ class StringResourcesTest {
     private val others = listOf(
         Other("values-ja", Locale.JAPANESE, setOf("other")),
         Other("values-ko", Locale.KOREAN, setOf("other")),
+        Other("values-ar", Locale.forLanguageTag("ar"), setOf("zero", "one", "two", "few", "many", "other")),
         Other("values-es", Locale.forLanguageTag("es"), setOf("one", "many", "other")),
         Other("values-pt", Locale.forLanguageTag("pt"), setOf("one", "many", "other")),
         Other("values-ru", Locale.forLanguageTag("ru"), setOf("one", "few", "many", "other")),
@@ -78,7 +79,15 @@ class StringResourcesTest {
                 val forms = t.plurals.getValue(name)
                 assertEquals("${o.folder}/$name", o.quantities, forms.keys)
                 val expected = args(en.plurals.getValue(name).getValue("other"))
-                forms.forEach { (q, v) -> assertEquals("${o.folder}/$name/$q", expected, args(v)) }
+                forms.forEach { (q, v) ->
+                    val actual = args(v)
+                    val mayOmitCount = o.folder == "values-ar" && q in setOf("one", "two") && "%1\$d" in expected
+                    if (mayOmitCount) {
+                        assertTrue("${o.folder}/$name/$q", actual == expected || actual == expected - "%1\$d")
+                    } else {
+                        assertEquals("${o.folder}/$name/$q", expected, actual)
+                    }
+                }
             }
         }
     }
@@ -134,6 +143,8 @@ class StringResourcesTest {
         assertEquals(AppLanguage.SimplifiedChinese, AppLanguage.fromTag("zh-Hans") { "Hant" })
         assertEquals(AppLanguage.English, of("en"))
         assertEquals(AppLanguage.English, of("fr-FR"))
+        assertEquals(AppLanguage.Arabic, of("ar"))
+        assertEquals(AppLanguage.Arabic, of("ar-MA"))
         // 其他语言只看语言代码,地区不管
         assertEquals(AppLanguage.Japanese, of("ja-JP"))
         assertEquals(AppLanguage.Portuguese, of("pt-PT"))

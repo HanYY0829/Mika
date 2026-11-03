@@ -49,9 +49,9 @@ private class Failure(val message: Int, val detail: String? = null)
  * 中文按文字体系分,和资源目录(values-zh / values-b+zh+Hant)一致。
  */
 private fun classifierLanguage(locale: java.util.Locale): String = when {
-    locale.language != "zh" -> "English"
     locale.script == "Hant" || locale.country in setOf("TW", "HK", "MO") -> "Traditional Chinese"
-    else -> "Simplified Chinese"
+    locale.language == "zh" -> "Simplified Chinese"
+    else -> locale.getDisplayLanguage(java.util.Locale.ENGLISH)
 }
 
 @Composable

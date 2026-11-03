@@ -87,6 +87,21 @@ class ProviderStoreTest {
         assertNull(store().provider(first.id)!!.contextSettings["m1"])
     }
 
+    /** 预设改了默认上下文后,按旧默认存下的配置读入时跟上去;用户改过的和写了每模型窗口的不动(见 repairStaleContextDefaults)。 */
+    @Test fun stalePresetWindowIsRepairedOnLoadButUserValuesAreNot() {
+        val s = store()
+        val deepseek = s.connect("DeepSeek", ProviderConfig.Kind.OpenAiCompat, "https://api.deepseek.com", "k", listOf(ListedModel("deepseek-flash")))
+        val other = connected(s)
+        s.use(ModelRole.Main, deepseek.id, "deepseek-flash", none)
+        s.use(ModelRole.Light, other.id, "m1", none)
+        // 用户给另一条配置单独写过窗口:不动
+        assertTrue(s.setModelContext(s.configFor(ModelRole.Light)!!.id, ModelContextSettings(windowTokens = 32_000)))
+        val reloaded = store()
+        assertEquals(1_000_000, reloaded.configFor(ModelRole.Main)!!.capabilities.contextTokens)
+        // 预设默认没变的(示例地址不对应任何预设)和用户写过的都不动
+        assertEquals(64_000, reloaded.configFor(ModelRole.Light)!!.capabilities.contextTokens)
+    }
+
     @Test fun manualTriggerUsesCoreBoundsAndASmallerReselectedWindowKeepsTheStoredValue() {
         val s = store()
         val p = connected(s)

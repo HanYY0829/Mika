@@ -21,6 +21,7 @@
     <string name="plans_edit_time">改時間</string>
     <string name="plans_edit_title">修改下次時間</string>
     <string name="plans_edit_label">本地時間：yyyy-MM-dd HH:mm</string>
+    <string name="plans_preview">本次修改後的接下來幾次觸發：</string>
     <string name="plans_need_future">請輸入未來的有效時間</string>
     <string name="plans_delete_title">刪除這條定時任務？</string>
     <string name="plans_done">已完成</string>

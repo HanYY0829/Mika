@@ -290,4 +290,33 @@ class ContextCompressorTest {
         val hard = ContextCompressor(TOOLS,diffScreens = true).compress(h, contextTokens = 1000, aggressive = true).messages
         assertTrue(hard.flatMap { it.parts }.filterIsInstance<Part.ToolResult>().none { "\"s1\"" in it.content })
     }
+
+    // #263:只折到留 12 轮那一档时,留下的往返里的屏幕自己看得懂(第一份是全量 s9),边界前那份全量 s1 照常折叠;
+    // s9 是接在 s3 后面的差异时 s1 照旧留着(沿用原来的做法;s3 已换成占位,s1 并不足以看懂 s9)
+    @Test fun dropsEarlierFullReadWhenKeptScreensAreSelfContained() {
+        val (folded, kept) = compressWithLatest("""{"snapshotId":"s9","full":true,"elements":[{"ref":"@e1"}]}""")
+        assertTrue(kept.any { "\"s9\"" in it } && kept.none { "\"s1\"" in it })
+        val (foldedWithBase, keptWithBase) = compressWithLatest("""{"snapshotId":"s9","base":"s3","full":false,"added":[]}""")
+        assertTrue(keptWithBase.any { "\"s9\"" in it } && keptWithBase.any { "\"s1\"" in it })
+        // 两次都停在留 12 轮那一档:前 30 次点按、两次差异和(第一次)s1 折掉
+        assertEquals(listOf(38, 37), listOf(folded, foldedWithBase))
+    }
+
+    // 手机和网页各有各的差异链:留下的往返里先有网页的全量,手机的差异仍接在边界前手机那份全量后面,它不能折
+    @Test fun keepsPhoneBaseWhenKeptRoundsStartWithAWebFullScreen() {
+        val web = round("web_interact", "{}", """{"ok":true,"screen":{"snapshotId":"w1","full":true,"elements":[{"ref":"@w1"}]},"pad":"$pad"}""")
+        val (folded, kept) = compressWithLatest("""{"snapshotId":"p2","base":"s3","full":false,"added":[]}""", before = web)
+        assertTrue(kept.any { "\"w1\"" in it } && kept.any { "\"s1\"" in it })
+        assertEquals(37, folded)
+    }
+
+    /** 边界前:30 次点按、全量 s1、两次差异、5 次点按;留下的 12 次:[before]、带 [screen] 的一次返回、其余点按。返回折了几步和留下的工具结果。 */
+    private fun compressWithLatest(screen: String, before: List<Message> = emptyList()): Pair<Int, List<String>> {
+        val full = round("phone_observe", "{}", """{"ok":true,"snapshotId":"s1","elements":[{"ref":"@e1"}],"pad":"$pad"}""")
+        val diffs = (2..3).flatMap { round("phone_back", "{}", """{"ok":true,"screen":{"snapshotId":"s$it","base":"s${it - 1}","full":false,"added":[]},"pad":"$pad"}""") }
+        val latest = round("phone_back", "{}", """{"ok":true,"screen":$screen,"pad":"$pad"}""")
+        val h = head + taps(30) + full + diffs + taps(5) + before + latest + taps(11 - before.size / 2)
+        val c = ContextCompressor(TOOLS, diffScreens = true).compress(h, contextTokens = 10_000)
+        return c.foldedSteps to c.messages.flatMap { it.parts }.filterIsInstance<Part.ToolResult>().map { it.content }
+    }
 }

@@ -21,6 +21,7 @@
     <string name="plans_edit_time">Cambiar hora</string>
     <string name="plans_edit_title">Cambiar la hora de la próxima ejecución</string>
     <string name="plans_edit_label">Hora local: aaaa-MM-dd HH:mm</string>
+    <string name="plans_preview">Próximas ejecuciones tras este cambio:</string>
     <string name="plans_need_future">Introduce una hora válida en el futuro</string>
     <string name="plans_delete_title">¿Eliminar esta tarea programada?</string>
     <string name="plans_done">Hecha</string>

@@ -35,6 +35,9 @@ class DeviceAccessTest {
         var suspendInput = false
         var falselyReportsWake = false
         var targetHook: () -> Unit = {}
+        var visibleKind: CredentialKind? = null
+        var detect: (() -> CredentialKind?)? = null
+        override suspend fun detectedCredentialKind() = detect?.invoke() ?: visibleKind
         override suspend fun state() = current
         override suspend fun wake(): Boolean { wakes++; if (!falselyReportsWake) current = current.copy(interactive = true); return true }
         override suspend fun dismiss(): Boolean {
@@ -42,7 +45,7 @@ class DeviceAccessTest {
             if (!current.secure) current = current.copy(keyguardShowing = false, deviceLocked = false)
             return true
         }
-        override suspend fun credentialReady(kind: CredentialKind): Boolean { targetHook(); return readyTarget }
+        override suspend fun credentialReady(kind: CredentialKind): Boolean { targetHook(); return readyTarget && (visibleKind == null || visibleKind == kind) }
         override suspend fun enter(credential: DeviceCredential): Boolean {
             entries++
             if (suspendInput) awaitCancellation()
@@ -109,6 +112,62 @@ class DeviceAccessTest {
         s.kind = null
         assertEquals("credential_required", d.unlock().status)
         assertEquals(0, p.entries)
+    }
+
+    @Test fun wrongStoredKindIsReportedWithoutSubmittingOrBlockingTheCredential() = runTest {
+        for (stored in CredentialKind.entries) {
+            val visible = CredentialKind.entries.single { it != stored }
+            val p = Port().apply { visibleKind = visible }
+            val s = Store().apply { kind = stored }
+            val result = DeviceAccess(p, s, 10, 30).unlock()
+            assertEquals("credential_kind_mismatch", result.status)
+            assertEquals(stored, result.storedKind)
+            assertEquals(visible, result.detectedKind)
+            val json = result.toJson()
+            assertEquals(kotlinx.serialization.json.JsonPrimitive(stored.name.lowercase()), json["stored_kind"])
+            assertEquals(kotlinx.serialization.json.JsonPrimitive(visible.name.lowercase()), json["detected_kind"])
+            assertTrue(json["message"].toString().contains("Re-enter"))
+            assertFalse(json.toString().contains("123456"))
+            assertFalse(json.toString().contains("Test pass!"))
+            assertEquals(0, p.entries)
+            assertFalse(s.attemptBlocked)
+            assertTrue(s.last!!.value.all { it == '\u0000' })
+        }
+    }
+
+    @Test fun cancellingTypeDetectionWipesTheCredentialWithoutStartingAnAttempt() = runTest {
+        val p = Port().apply {
+            readyTarget = false
+            detect = { throw kotlinx.coroutines.CancellationException("cancelled") }
+        }
+        val s = Store()
+        try {
+            DeviceAccess(p, s, 10, 30).unlock()
+            fail("cancellation must propagate")
+        } catch (_: kotlinx.coroutines.CancellationException) { }
+        assertEquals(0, p.entries)
+        assertFalse(s.attemptBlocked)
+        assertTrue(s.last!!.value.all { it == '\u0000' })
+    }
+
+    @Test fun typeDetailsAreAbsentFromOrdinaryStateAndWakeResponses() = runTest {
+        val d = DeviceAccess(Port(), Store())
+        for (r in listOf(d.state(), d.wake())) {
+            assertNull(r.storedKind)
+            assertNull(r.detectedKind)
+            assertFalse(r.toJson().containsKey("stored_kind"))
+            assertFalse(r.toJson().containsKey("detected_kind"))
+            assertFalse(r.toJson().containsKey("message"))
+        }
+    }
+
+    @Test fun recognizedButUnreadyMatchingFieldStillReportsUnsupported() = runTest {
+        val p = Port().apply { readyTarget = false; visibleKind = CredentialKind.Pin }
+        val s = Store()
+        assertEquals("unsupported_keyguard", DeviceAccess(p, s, 10, 30).unlock().status)
+        assertEquals(0, p.entries)
+        assertFalse(s.attemptBlocked)
+        assertTrue(s.last!!.value.all { it == '\u0000' })
     }
 
     @Test fun concurrentRequestsSubmitTheCredentialOnlyOnce() = runTest {

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="trigger_reminder">تذكير Mika</string>
+    <string name="trigger_not_started_body">تعذر بدء مهمة مجدولة. تحقق منها في صفحة «المهام المجدولة» وشغّلها مجددًا.</string>
+    <string name="trigger_start_failed">تعذر البدء</string>
+    <string name="trigger_not_started">لم تبدأ المهمة المجدولة</string>
+    <string name="trigger_interrupted_body">توقفت مهمة مجدولة، ولا يمكن تأكيد نتيجتها. تحقق أولًا مما حدث فعليًا؛ لن تكررها Mika تلقائيًا.</string>
+    <string name="trigger_unconfirmed">يجب التحقق من نتيجة المهمة المجدولة</string>
+    <string name="trigger_alarm_title">تحتاج المهام المجدولة إلى إذن «المنبهات والتذكيرات»</string>
+    <string name="trigger_alarm_body">من دون هذا الإذن، قد تتأخر المهام المجدولة أو لا تعمل إطلاقًا. انقر هنا لتفعيله.</string>
+    <string name="op_failed">حدث خطأ ما</string>
+    <string name="plans_alarm_body">من دون هذا الإذن، قد تتأخر المهام المجدولة أو لا تعمل إطلاقًا. لا يلزم تفعيله إلا مرة واحدة.</string>
+    <string name="plans_running_n">نشطة %1$d</string>
+    <string name="plans_stopped_n">متوقفة %1$d</string>
+    <string name="plans_empty">لا توجد مهام مجدولة بعد\nأخبر Mika في محادثة بموعد تذكيرك أو بعمل شيء من أجلك.</string>
+    <string name="plans_none_running">لا توجد مهام مجدولة نشطة</string>
+    <string name="plans_none_stopped">لا توجد مهام مجدولة متوقفة</string>
+    <string name="plans_footer">يمكنك أيضًا إنشاء مهمة بقول «كل يوم عند الثامنة…» أو «أخبرني عندما ينخفض السعر» في محادثة؛ وستعود النتائج إلى تلك المحادثة. قد تتأثر المهام المحددة بوقت بتوفير البطارية؛ ولا يؤثر إيقاف المهمة أو حذفها إلا في عمليات التشغيل المستقبلية.</string>
+    <string name="plans_open_chat">فتح المحادثة</string>
+    <string name="plans_run_now">تشغيل الآن</string>
+    <string name="plans_edit_time">تغيير الوقت</string>
+    <string name="plans_edit_title">تغيير موعد التشغيل التالي</string>
+    <string name="plans_edit_label">التوقيت المحلي: yyyy-MM-dd HH:mm</string>
+    <string name="plans_preview">مواعيد التشغيل التالية بعد هذا التغيير:</string>
+    <string name="plans_need_future">أدخل وقتًا مستقبليًا صالحًا</string>
+    <string name="plans_delete_title">هل تريد حذف هذه المهمة المجدولة؟</string>
+    <string name="plans_done">مكتملة</string>
+    <string name="plans_checked">تم التحقق</string>
+    <string name="plans_check_failed">تعذر التحقق</string>
+    <string name="plans_result_pending">يجب التحقق من النتيجة</string>
+    <string name="plans_every_day">كل يوم</string>
+    <plurals name="plans_every_minutes">
+        <item quantity="zero">كل %1$d دقيقة</item>
+        <item quantity="one">كل دقيقة واحدة (%1$d)</item>
+        <item quantity="two">كل دقيقتين (%1$d)</item>
+        <item quantity="few">كل %1$d دقائق</item>
+        <item quantity="many">كل %1$d دقيقة</item>
+        <item quantity="other">كل %1$d دقيقة</item>
+    </plurals>
+    <string name="plans_once">مرة واحدة</string>
+    <string name="plans_next">%1$s · التالي %2$s</string>
+    <string name="plans_condition">يعمل فقط إذا: %1$s · %2$s</string>
+    <string name="plans_last">الأخير %1$s · %2$s</string>
+    <string name="plans_never_run">لم يُشغّل بعد</string>
+    <string name="plans_delivered">تم التسليم</string>
+    <string name="plans_unchanged">لم يتغير الشرط</string>
+    <string name="plans_running_now">قيد التشغيل</string>
+    <string name="trigger_deleted">حُذفت المهمة المجدولة</string>
+    <string name="trigger_busy">ما زالت هذه المهمة قيد التشغيل</string>
+</resources>

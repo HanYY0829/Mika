@@ -1213,6 +1213,11 @@ class CapsuleController(
             keeper.close(KeptPageClose.User)
             collapse()
         }
+        override fun hideCapsule() {
+            // 和设置 › 悬浮胶囊里选「关闭」同一处:开关一变,render 按 CapsuleModel 收掉胶囊和卡片(hide),任务和通知不受影响
+            flags.setCapsuleMode(CapsuleMode.Off)
+            android.widget.Toast.makeText(context, CardCopy.hiddenHint(), android.widget.Toast.LENGTH_LONG).show()
+        }
     }
 
     /** 卡片窗口里:展开时是卡片,收起时什么都没有(窗口没有大小)。 */

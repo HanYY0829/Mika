@@ -21,6 +21,7 @@
     <string name="plans_edit_time">Change time</string>
     <string name="plans_edit_title">Change next run time</string>
     <string name="plans_edit_label">Local time: yyyy-MM-dd HH:mm</string>
+    <string name="plans_preview">Next runs after this change:</string>
     <string name="plans_need_future">Enter a valid time in the future</string>
     <string name="plans_delete_title">Delete this scheduled task?</string>
     <string name="plans_done">Done</string>

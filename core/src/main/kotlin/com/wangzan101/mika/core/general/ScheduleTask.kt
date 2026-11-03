@@ -80,7 +80,11 @@ internal object ScheduleTask : AgentTool {
                 }
                 else -> return ToolExecution(okObj { put("changed", false); put("reason", "invalid_op") })
             }
-            return ToolExecution(okObj { put("changed", changed); if (!changed) put("reason", "plan_not_found") })
+            return ToolExecution(okObj {
+                put("changed", changed)
+                // 计划在、却没改成:只有恢复认领过(跑过或正在跑)的一次性计划会这样
+                if (!changed) put("reason", if (op == "resume" && admin.list(thread).any { it.id == id }) "already_ran" else "plan_not_found")
+            })
         }
         val goal = a.str("goal", max = 4000) ?: return ToolExecution(okObj { put("scheduled", false); put("reason", "missing_goal") })
         val first = a.str("at")

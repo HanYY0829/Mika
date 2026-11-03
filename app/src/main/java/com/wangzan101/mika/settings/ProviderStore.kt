@@ -833,6 +833,7 @@ class ProviderStore(
             keys = json.parseToJsonElement(keyFile.readText()).jsonObject.mapValues { it.value.jsonPrimitive.content }
         }
         migrate()
+        repairStaleContextDefaults()
         // 指向不存在的配置的选择退回默认,没人用的配置删掉;和文件里的不一样(含刚迁移的用途)才写回
         _roles.value = _roles.value.keepOnly(_configs.value.map { it.id }.toSet())
         prune()
@@ -884,6 +885,25 @@ class ProviderStore(
         if (keys.keys.any { it !in ids }) {
             keys = keys.filterKeys { it in ids }
             writeAtomically(keyFile, keysJson())
+        }
+    }
+
+    /**
+     * 预设的默认上下文更新后,把当年按旧默认存下的配置跟上去:仅当存着的正是旧默认、这家预设现在的默认已经不同、
+     * 用户没给这个模型单独写过窗口时才改;用户改过的任何值一律不动。只在 [load] 读入后跑一次,
+     * 改动随读入后的统一写回落盘。窗口按旧值 64k 时,压缩会频繁改写请求前缀,服务商的前缀缓存整段失效(见 [ProviderPresets])。
+     */
+    private fun repairStaleContextDefaults() {
+        val fixed = _configs.value.mapNotNull { c ->
+            val now = ProviderPresets.forBaseUrl(c.baseUrl)?.capabilities?.contextTokens
+                ?.takeIf { it != LEGACY_DEFAULT_CONTEXT_TOKENS }
+            if (now != null && c.capabilities.contextTokens == LEGACY_DEFAULT_CONTEXT_TOKENS &&
+                provider(c.providerId)?.contextSettings?.get(c.model)?.windowTokens == null
+            ) c.id to now else null
+        }.toMap()
+        if (fixed.isEmpty()) return
+        _configs.value = _configs.value.map { c ->
+            fixed[c.id]?.let { window -> c.copy(capabilities = c.capabilities.copy(contextTokens = window)) } ?: c
         }
     }
 
@@ -1071,6 +1091,9 @@ class ProviderStore(
         private const val CONFIG_FILE = "providers.json"
         private const val KEY_FILE = "provider-keys.json"
         private const val CHATGPT_HOST_FILE = "chatgpt-host.json"
+
+        /** 各家预设沿用的旧上下文默认值;预设改了默认后,存着这个值的配置由 [repairStaleContextDefaults] 跟上去。 */
+        private const val LEGACY_DEFAULT_CONTEXT_TOKENS = 64_000
 
         /** `uses` 里每个用途的 `use`:具体模型(另记 `config`)、用主模型、不用。旧版本的文件里只有 `roles`。 */
         private const val USE_MODEL = "model"

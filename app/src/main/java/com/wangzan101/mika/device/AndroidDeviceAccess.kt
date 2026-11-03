@@ -49,10 +49,29 @@ internal class AndroidDeviceAccessPort(context: Context, private val helper: () 
      * 也算准备好(按键本来就只投给那个窗口,由锁屏页自己接)。认不出时在日志里记一句原因,不含屏上文字。
      */
     override suspend fun credentialReady(kind: CredentialKind): Boolean = withContext(Dispatchers.IO) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return@withContext false
-        if (!power.isInteractive || !keyguard.isKeyguardLocked || !keyguard.isDeviceLocked) return@withContext false
-        val service = ScreenAccessibility.instance.value ?: return@withContext false.also { Log.i(TAG, "keyguard: accessibility off") }
-        val fields = mutableListOf<Pair<AccessibilityNodeInfo, AccessibilityWindowInfo>>()
+        val fields = credentialFields().filter { it.kind == kind }
+        val target = fields.singleOrNull() ?: return@withContext false.also {
+            Log.i(TAG, "keyguard: ${fields.size} matching field(s) for $kind")
+        }
+        val (field, window) = target
+        val ready = field.isFocused || field.performAction(AccessibilityNodeInfo.ACTION_FOCUS) ||
+            field.performAction(AccessibilityNodeInfo.ACTION_CLICK) || window.isFocused
+        if (!ready) Log.i(TAG, "keyguard: field found but neither it nor its window has focus")
+        ready
+    }
+
+    /** 只读识别当前唯一的系统凭据框,不聚焦、不输入,不按容器名字推测锁屏类型。 */
+    override suspend fun detectedCredentialKind(): CredentialKind? = withContext(Dispatchers.IO) {
+        credentialFields().singleOrNull()?.kind
+    }
+
+    private data class CredentialField(val node: AccessibilityNodeInfo, val window: AccessibilityWindowInfo, val kind: CredentialKind)
+
+    private fun credentialFields(): List<CredentialField> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return emptyList()
+        if (!power.isInteractive || !keyguard.isKeyguardLocked || !keyguard.isDeviceLocked) return emptyList()
+        val service = ScreenAccessibility.instance.value ?: return emptyList<CredentialField>().also { Log.i(TAG, "keyguard: accessibility off") }
+        val fields = mutableListOf<CredentialField>()
         val systemUi = service.windowsOn(Display.DEFAULT_DISPLAY).mapNotNull { w ->
             w.root?.takeIf { it.packageName?.toString() == SYSTEM_UI }?.let { w to it }
         }
@@ -71,19 +90,16 @@ internal class AndroidDeviceAccessPort(context: Context, private val helper: () 
             }
             visit(root, 0)
             val pad = KeyguardFields.isDigitPad(digits)
-            candidates.filterTo(mutableListOf()) { n ->
+            for (n in candidates) {
                 val cls = n.inputType and InputType.TYPE_MASK_CLASS
-                KeyguardFields.matches(kind, n.viewIdResourceName.orEmpty(), n.className?.toString().orEmpty(), n.isPassword,
-                    n.isEditable, numeric = cls == InputType.TYPE_CLASS_NUMBER, untyped = n.inputType == InputType.TYPE_NULL, digitPad = pad)
-            }.mapTo(fields) { it to window }
+                val kind = CredentialKind.entries.singleOrNull { kind ->
+                    KeyguardFields.matches(kind, n.viewIdResourceName.orEmpty(), n.className?.toString().orEmpty(), n.isPassword,
+                        n.isEditable, numeric = cls == InputType.TYPE_CLASS_NUMBER, untyped = n.inputType == InputType.TYPE_NULL, digitPad = pad)
+                } ?: continue
+                fields += CredentialField(n, window, kind)
+            }
         }
-        val (field, window) = fields.singleOrNull() ?: return@withContext false.also {
-            Log.i(TAG, "keyguard: ${fields.size} matching field(s) for $kind in ${systemUi.size} SystemUI window(s)")
-        }
-        val ready = field.isFocused || field.performAction(AccessibilityNodeInfo.ACTION_FOCUS) ||
-            field.performAction(AccessibilityNodeInfo.ACTION_CLICK) || window.isFocused
-        if (!ready) Log.i(TAG, "keyguard: field found but neither it nor its window has focus")
-        ready
+        return fields
     }
 
     override suspend fun enter(credential: DeviceCredential): Boolean {

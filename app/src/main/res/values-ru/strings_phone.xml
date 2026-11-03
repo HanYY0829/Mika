@@ -36,6 +36,7 @@
     <string name="phone_a11y_skipped">Пропущено</string>
     <string name="phone_app_info">Не удаётся включить? Сначала разрешите ограниченные настройки в сведениях о приложении</string>
     <string name="phone_auto_read">Когда появится код, подождите несколько секунд: Mika считает его и завершит сопряжение. Уходить с этой страницы не нужно.</string>
+    <string name="phone_auto_read_fallback">Ничего не происходит через несколько секунд? Потяните вниз шторку уведомлений и введите код в «%1$s». Окно подключения не закроется.</string>
     <string name="phone_turned_on_next">Включено, дальше</string>
     <string name="phone_revisit_back">Вернуться назад</string>
     <string name="phone_revisit_note">Нажмите на любой шаг выше, чтобы вернуться и выполнить его заново.</string>

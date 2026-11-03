@@ -36,6 +36,7 @@
     <string name="phone_a11y_skipped">Pulado</string>
     <string name="phone_app_info">Não consegue ativar? Permita as configurações restritas primeiro em Informações do app</string>
     <string name="phone_auto_read">Quando o código aparecer, espere alguns segundos — o Mika o lê e conclui o pareamento. Não precisa sair dessa página.</string>
+    <string name="phone_auto_read_fallback">Nada acontece depois de alguns segundos? Deslize a barra de notificações para baixo e digite o código em “%1$s”. A janela de pareamento continua aberta.</string>
     <string name="phone_turned_on_next">Já ativei, próximo</string>
     <string name="phone_revisit_back">Voltar para onde eu estava</string>
     <string name="phone_revisit_note">Toque em qualquer passo acima para voltar e refazê-lo.</string>

@@ -146,6 +146,7 @@ class TaskService : Service() {
 
     internal fun otherRunHasDisplay(run: TaskRun) = center.running().any { it !== run && it.displayId.value >= 0 }
     internal fun hasActiveRuns() = center.running().isNotEmpty()
+    internal fun hasQueuedRuns() = center.queued().isNotEmpty()
 
     private fun publishRuns() {
         val r = center.runs()
@@ -399,6 +400,8 @@ class TaskService : Service() {
             if (delivered) center.markDelivered(run)
             onRunEnded(run, store)
         }
+        // 收尾前被取消(服务退出)、放出来还没跑就被停掉时,替它拿着的屏幕锁没交出去也没放开:这里放开
+        run.job?.invokeOnCompletion { run.wakeHandoff?.release(); run.wakeHandoff = null }
     }
 
     /**
@@ -423,6 +426,11 @@ class TaskService : Service() {
     private fun onRunEnded(run: TaskRun, store: ConversationStore) {
         val wasShown = taskState.shownRun === run
         val started = center.onEnded(run)
+        // 收尾时替接班的拿着的屏幕锁交给第一个放出来的;没有放出来的(排着的被取消、同一对话还有任务在跑)就放开
+        run.wakeHandoff?.let { lease ->
+            run.wakeHandoff = null
+            started.firstOrNull()?.let { it.wakeHandoff = lease } ?: lease.release()
+        }
         publishRuns()
         if (wasShown) started.firstOrNull { it.conversationId == run.conversationId }?.show()
         // 对话空出来就开始留给它的话,不等别的对话的任务

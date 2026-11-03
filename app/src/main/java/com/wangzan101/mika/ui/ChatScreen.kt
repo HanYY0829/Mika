@@ -4,6 +4,7 @@ import androidx.compose.foundation.gestures.scrollBy
 import com.wangzan101.mika.core.agent.QuoteMessage
 import com.wangzan101.mika.core.record.ConversationTokens
 import com.wangzan101.mika.core.cap.web.AttachedPage
+import com.wangzan101.mika.ui.components.DirectionalIcon
 import com.wangzan101.mika.ui.components.keepsKeyboard
 import android.content.Context
 import android.graphics.Bitmap
@@ -95,6 +96,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -108,6 +110,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wangzan101.mika.R
@@ -790,6 +793,7 @@ private fun StepItem(
     actions: List<StepAction> = emptyList(), open: Boolean = false,
 ) {
     val c = MikaTheme.colors
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Row(
         Modifier.fillMaxWidth()
             .then(
@@ -822,9 +826,9 @@ private fun StepItem(
             }
         }
         // 能点开的只有有动作的那些:右边一个小箭头,点开时朝下
-        if (actions.isNotEmpty()) Icon(
+        if (actions.isNotEmpty()) DirectionalIcon(
             MikaIcons.Chevron, null,
-            Modifier.padding(start = 6.dp).size(12.dp).graphicsLayer { rotationZ = if (open) 90f else 0f },
+            Modifier.padding(start = 6.dp).size(12.dp).graphicsLayer { rotationZ = if (open) if (rtl) -90f else 90f else 0f },
             tint = c.ink3,
         )
     }
@@ -1111,7 +1115,7 @@ private fun FileCards(files: List<SharedFile>) {
                         style = FileMeta, color = c.ink3, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
                 }
-                Icon(MikaIcons.Chevron, null, Modifier.size(MikaSize.SmallIcon), tint = c.ink3)
+                DirectionalIcon(MikaIcons.Chevron, null, Modifier.size(MikaSize.SmallIcon), tint = c.ink3)
             }
         }
     }

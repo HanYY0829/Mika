@@ -36,6 +36,7 @@
     <string name="phone_a11y_skipped">Skipped</string>
     <string name="phone_app_info">Can’t turn it on? Allow restricted settings in App info first</string>
     <string name="phone_auto_read">When the code appears, wait a few seconds — Mika reads it and finishes pairing. No need to leave that page.</string>
+    <string name="phone_auto_read_fallback">Nothing happens after a few seconds? Swipe down the notification shade and enter the code in “%1$s”. The pairing window stays open.</string>
     <string name="phone_turned_on_next">I’ve turned it on, next</string>
     <string name="phone_revisit_back">Back to where I was</string>
     <string name="phone_revisit_note">Tap any step above to go back and redo it.</string>
