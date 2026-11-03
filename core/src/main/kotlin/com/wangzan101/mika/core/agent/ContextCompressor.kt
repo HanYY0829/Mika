@@ -48,8 +48,11 @@ class ContextCompressor(
 ) {
     /** 「真实 / 粗估」比值:每次用量回来就平滑更新([TokenEstimate.calibrated]);只决定什么时候压缩、压到哪一级,不改发过的内容。 */
     private var observed: Double? = null
-    /** 估算乘的比值:校准过用校准值,还没有真实用量时用偏保守的 [UNCALIBRATED_SCALE]。消息和固定开销都乘它。 */
-    internal val scale: Double get() = observed ?: UNCALIBRATED_SCALE
+    /**
+     * 估算乘的比值。真实用量只用来提高这个保守下限,不把后面的增量往下估:
+     * 普通提示词的用量偏低,不代表随后追加的标点密集 JSON 也有同样的字符/token 比。
+     */
+    internal val scale: Double get() = observed?.coerceAtLeast(UNCALIBRATED_SCALE) ?: UNCALIBRATED_SCALE
 
     /** 上一次压缩:它覆盖的完整历史开头 [covered],压成的 [base](粗估 [estimate]);[aggressive]:按模型报超长那一档压的。 */
     private class View(val covered: List<Message>, val base: List<Message>, val folded: Int, val aggressive: Boolean) {

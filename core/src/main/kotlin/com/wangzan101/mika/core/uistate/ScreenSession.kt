@@ -178,7 +178,11 @@ internal class ScreenSession(
             if (s.changedDuringRead) put("note", NOTE_CHANGED_DURING_READ)
             s.opened?.let { put("opened", openedJson(it)) }
             if (s.protected) { put("protected", true); put("hint", HINT_PROTECTED) }
-            else if (unreadable(s) != null && ocr.isNullOrEmpty()) { put("readable", false); put("hint", unreadable(s)) }
+            else if (unreadable(s) != null && ocr.isNullOrEmpty()) {
+                put("readable", false)
+                // 窗口不可读不等于画面不可用:有截图和视觉定位时,不能把它盖成只能 Back 或交用户。
+                put("hint", unreadableHint(s, tree, ocrStatus))
+            }
             else if (s.packageName == null && s.elements.isEmpty() && !s.hasWindow) put("hint", Feedback[surface.family.emptyHint])
             else treeHint(tree, ocrStatus)?.let { put("hint", it) }
             put("viewport", buildJsonObject { put("width", s.width); put("height", s.height) })
@@ -296,8 +300,9 @@ internal class ScreenSession(
                 (s.web?.dialog?.let { mapOf("dialog" to dialogJson(it)) } ?: emptyMap()) +
                 (quality(tree)?.let { mapOf("treeQuality" to JsonPrimitive(it)) } ?: emptyMap()) +
                 (ocrStatus?.let { mapOf("ocr" to JsonPrimitive(it)) } ?: emptyMap()) +
-                ((unreadable(s)?.takeIf { ocr.isNullOrEmpty() }?.let { mapOf("readable" to JsonPrimitive(false), "hint" to JsonPrimitive(it)) })
-                    ?: treeHint(tree, ocrStatus)?.let { mapOf("hint" to JsonPrimitive(it)) } ?: emptyMap()))
+                ((unreadable(s)?.takeIf { ocr.isNullOrEmpty() }?.let {
+                    mapOf("readable" to JsonPrimitive(false), "hint" to JsonPrimitive(unreadableHint(s, tree, ocrStatus)))
+                }) ?: treeHint(tree, ocrStatus)?.let { mapOf("hint" to JsonPrimitive(it)) } ?: emptyMap()))
         }
         val text = observationText(s, ocr.orEmpty())
         // 和上一次读到的一样就不再记一遍,免得把较早的读屏挤出去
@@ -452,6 +457,12 @@ internal class ScreenSession(
         val app = s.unreadableApp ?: return null
         if (s.elements.any { it.meaningful }) return null
         return Feedback.format("unreadable_window", "app" to app)
+    }
+
+    /** 窗口不可读但截图可用时,保留「不要重复启动」,后续路线改用这棵树的 OCR/视觉回退。 */
+    private fun unreadableHint(s: ScreenSnapshot, tree: TreeCheck, ocrStatus: String?): String {
+        val fallback = treeHint(tree, ocrStatus) ?: return unreadable(s)!!
+        return Feedback.format("unreadable_window.fallback", "app" to s.unreadableApp!!, "fallback" to fallback)
     }
 
     /** 这一次读到的界面状态:可读元素的文字、在哪、网页标题、输入框里的字。 */

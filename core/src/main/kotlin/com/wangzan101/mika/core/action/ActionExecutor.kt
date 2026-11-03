@@ -222,7 +222,10 @@ class ActionExecutor(
         val after = subVerdicts.toMutableList()
         after += if (s.offScreen) offScreen?.result(call.name, s.args, resolved.content).orEmpty() else guards.result(call.name, resolved.content)
         // 动作报回的实际效果先记(没有效果、换了地方),接着的画面就不再按指纹重复记
-        ((resolved.content["effect"] as? JsonObject)?.get("kind") as? JsonPrimitive)?.takeIf { !s.offScreen }?.let { after += guards.effect(it.content) }
+        (resolved.content["effect"] as? JsonObject)?.takeIf { !s.offScreen }?.let { effect ->
+            val kind = (effect["kind"] as? JsonPrimitive)?.content ?: return@let
+            after += guards.effect(kind, (effect["treeBlind"] as? JsonPrimitive)?.booleanOrNull == true)
+        }
         val elements = resolved.screenElements ?: resolved.content["elements"] as? JsonArray
         val beforeFrameProgress = guards.progressVersion
         elementsHash(elements)?.let { after += guards.frame("$n:${call.id}", it) }

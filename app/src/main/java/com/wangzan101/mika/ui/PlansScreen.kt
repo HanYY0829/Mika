@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
+import com.wangzan101.mika.ui.components.MikaDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -132,7 +132,7 @@ fun PlansScreen(context: Context, onBack: () -> Unit, onOpenConversation: (Strin
         val at = runCatching {
             LocalDateTime.parse(value, PLAN_TIME).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         }.getOrNull()
-        AlertDialog(onDismissRequest = { editing = null }, title = { Text(tr(R.string.plans_edit_title)) },
+        MikaDialog(onDismissRequest = { editing = null }, title = { Text(tr(R.string.plans_edit_title)) },
             text = { KeyboardDismissArea {
                 Column {
                     OutlinedTextField(value, { value = it }, Modifier.keepsKeyboard(), label = { Text(tr(R.string.plans_edit_label)) },
@@ -153,7 +153,7 @@ fun PlansScreen(context: Context, onBack: () -> Unit, onOpenConversation: (Strin
             dismissButton = { TextButton(onClick = { editing = null }) { Text(tr(R.string.cancel)) } })
     }
     deleting?.let { plan ->
-        AlertDialog(onDismissRequest = { deleting = null }, title = { Text(tr(R.string.plans_delete_title)) },
+        MikaDialog(onDismissRequest = { deleting = null }, title = { Text(tr(R.string.plans_delete_title)) },
             text = { Text(plan.goal) },
             confirmButton = { TextButton(onClick = { act { TriggerRuntime.remove(context, plan.id) }; deleting = null }) {
                 Text(tr(R.string.confirm_delete), color = MikaTheme.colors.bad)

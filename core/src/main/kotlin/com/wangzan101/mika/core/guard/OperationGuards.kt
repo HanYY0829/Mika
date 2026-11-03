@@ -127,12 +127,23 @@ class OperationGuards(private val stepBudget: Int? = null) {
     /**
      * 动作报回的实际效果(effect 的 kind,见 core.uistate.EffectKind):no_effect 记一次「没有效果」,
      * 明显变了、换了 App 或换了页就从头计;小的局部变化两样都不算。
+     * [treeBlind] 时连画面也没有可见变化,既不能用控件树查隐藏状态,也不该换着坐标一直试:两次提醒、三次叫停。
      */
-    fun effect(kind: String): List<GuardVerdict> {
+    fun effect(kind: String, treeBlind: Boolean = false): List<GuardVerdict> {
         effectNoted = true
         when (kind) {
             NO_EFFECT -> unchanged += 1
             else -> { unchanged = 0; unchangedWarnedAt = 0; return emptyList() }
+        }
+        if (treeBlind) {
+            val severity = when {
+                unchanged == 2 -> Severity.Warn
+                unchanged >= 3 -> Severity.Stop
+                else -> return emptyList()
+            }
+            return verdict("no_progress", severity, buildJsonObject {
+                put("unchanged", unchanged); put("treeBlind", true)
+            }, unchanged)
         }
         return noProgress()
     }

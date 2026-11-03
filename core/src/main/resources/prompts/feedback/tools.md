@@ -72,6 +72,9 @@ No web page is open yet. Open one with web_navigate; this is not a fault.
 ## unreadable_window
 {{app}} is open in the foreground, but its window cannot be read right now (a secure, splash or special window, or one shown elsewhere). The app did launch: do not launch it again. Wait a moment and look once more; if it is still unreadable, press back once, and if that does not help, call hand_to_user.
 
+## unreadable_window.fallback
+{{app}} is open in the foreground, but its window cannot be read right now; do not launch it again. {{fallback}}
+
 ## tree_poor
 The accessibility tree is missing much of this screen (treeQuality), and observing again will not add the missing elements. visibleText is the text read from the screenshot; its center is a tap point on phone_tap's 0–999 x/y grid. Use element refs where they exist; tap text that has none with phone_tap x/y at its center. OCR can misread small or decorated text: do not report a garbled line as fact.
 

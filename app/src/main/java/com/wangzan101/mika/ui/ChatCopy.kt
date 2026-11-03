@@ -126,7 +126,7 @@ object ChatCopy {
         ComposerMode.Idle -> if (hasHistory) tr(R.string.chat_placeholder_more) else EMPTY_PROMPT
     }
 
-    /** 能按住说话时的灰字(前面配一个小话筒):告诉人能按住说、点一下打字;任务在跑时说的就是插话。 */
+    /** 能按住说话时的居中灰字:告诉人能按住说、点一下打字;任务在跑时说的就是插话。 */
     fun voicePlaceholder(mode: ComposerMode): String = when (mode) {
         ComposerMode.Busy -> tr(R.string.voice_placeholder_busy)
         ComposerMode.Answer -> tr(R.string.voice_placeholder_answer)

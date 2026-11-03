@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
+import com.wangzan101.mika.ui.components.MikaDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -131,7 +131,7 @@ internal fun SkillsSection(vm: MemoryViewModel, ui: SkillsUi, pending: Boolean) 
     if (importing) {
         var text by remember { mutableStateOf("") }
         var problem by remember { mutableStateOf<String?>(null) }
-        AlertDialog(
+        MikaDialog(
             onDismissRequest = { importing = false },
             title = { Text(stringResource(R.string.skills_import)) },
             text = {
@@ -154,7 +154,7 @@ internal fun SkillsSection(vm: MemoryViewModel, ui: SkillsUi, pending: Boolean) 
 
     editing?.let { d ->
         var text by remember(d.id) { mutableStateOf(d.markdown) }
-        AlertDialog(
+        MikaDialog(
             onDismissRequest = { editing = null },
             title = { Text(stringResource(R.string.skills_edit_title)) },
             text = { KeyboardDismissArea { OutlinedTextField(text, { text = it }, Modifier.fillMaxWidth().heightIn(min = 240.dp).keepsKeyboard().testTag("skill-markdown")) } },

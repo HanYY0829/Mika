@@ -13,10 +13,17 @@ import com.wangzan101.mika.core.run.RunOrigin
 import com.wangzan101.mika.core.run.RunProvenance
 import com.wangzan101.mika.core.run.RunSpec
 import com.wangzan101.mika.core.tool.ActionPass
+import com.wangzan101.mika.core.tool.Args
 import com.wangzan101.mika.core.tool.FakeScreen
+import com.wangzan101.mika.core.tool.ToolDispatcher
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -31,13 +38,120 @@ class McpClientTest {
         var calls = 0
         var offeredResources: List<McpResourceDescriptor> = emptyList()
         var offeredPrompts: List<McpPromptDescriptor> = emptyList()
+        var resourcesError: Exception? = null
         override fun tools() = offered
-        override fun resources() = offeredResources
+        override fun resources() = resourcesError?.let { throw it } ?: offeredResources
         override fun prompts() = offeredPrompts
         override suspend fun call(name: String, arguments: JsonObject): McpResult { calls++; return result }
         override suspend fun readResource(uri: String) = McpResult("resource:$uri")
         override suspend fun getPrompt(name: String, arguments: JsonObject) =
             McpResult("prompt:$name\n$arguments")
+    }
+
+    private fun endpointWithSchema(schema: String) = FakeEndpoint().apply {
+        offered = listOf(McpToolDescriptor("search", "Search", Json.parseToJsonElement(schema).jsonObject))
+    }
+
+    private fun parameters(tools: ToolDispatcher): JsonObject = Json.parseToJsonElement(
+        tools.definitions().single { it.name == "mcp_demo__search" }.parametersJsonSchema,
+    ).jsonObject
+
+    @Test fun nullPropertiesIsTreatedAsNoParameters() = runBlocking {
+        val endpoint = endpointWithSchema("""{"type":"object","properties":null}""")
+        val tools = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(endpoint)))
+        assertEquals(setOf("reason"), parameters(tools)["properties"]!!.jsonObject.keys)
+        val result = tools.execute(Part.ToolCall("c", "mcp_demo__search", "{}"), ActionPass())
+        assertEquals(JsonPrimitive(true), result.content["ok"])
+        assertEquals(1, endpoint.calls)
+    }
+
+    @Test fun booleanPropertySchemaBecomesPermissiveObject() = runBlocking {
+        val endpoint = endpointWithSchema(
+            """{"type":"object","properties":{"q":true,"n":{"type":"number","minimum":0}},"required":["q"]}""",
+        )
+        val tools = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(endpoint)))
+        val properties = parameters(tools)["properties"]!!.jsonObject
+        assertEquals(JsonObject(emptyMap()), properties["q"])
+        assertEquals(Json.parseToJsonElement("""{"type":"number","minimum":0}"""), properties["n"])
+        val result = tools.execute(Part.ToolCall("c", "mcp_demo__search", """{"q":42}"""), ActionPass())
+        assertEquals(JsonPrimitive(true), result.content["ok"])
+        assertEquals(1, endpoint.calls)
+    }
+
+    @Test fun malformedRequiredIsIgnoredAndNonStringEntriesAreDropped() {
+        val scalar = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(
+            endpointWithSchema("""{"type":"object","properties":{"q":{"type":"string"}},"required":"q"}"""),
+        )))
+        assertEquals(emptyList<String>(), parameters(scalar)["required"]!!.jsonArray.map { it.jsonPrimitive.content })
+
+        val mixed = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(
+            endpointWithSchema("""{"type":"object","properties":{"q":{},"n":{}},"required":["q",1,true,null,"n"]}"""),
+        )))
+        assertEquals(listOf("q", "n"), parameters(mixed)["required"]!!.jsonArray.map { it.jsonPrimitive.content })
+    }
+
+    @Test fun wellFormedSchemaKeepsPropertyConstraintsAndRequired() {
+        val tools = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(endpointWithSchema(
+            """{"type":"object","properties":{"q":{"type":"string","description":"Query","minLength":1,"enum":["a","b"],"default":"a"},"n":{"type":"integer","minimum":1}},"required":["q"],"additionalProperties":false}""",
+        ))))
+        val schema = parameters(tools)
+        val properties = schema["properties"]!!.jsonObject
+        assertEquals(Json.parseToJsonElement(
+            """{"type":"string","description":"Query","minLength":1,"enum":["a","b"],"default":"a"}""",
+        ), properties["q"])
+        assertEquals(Json.parseToJsonElement("""{"type":"integer","minimum":1}"""), properties["n"])
+        assertEquals(listOf("q"), schema["required"]!!.jsonArray.map { it.jsonPrimitive.content })
+    }
+
+    @Test fun oneServerAssemblyFailureKeepsOtherCapabilitiesAndReportsCause() = runBlocking {
+        val broken = object : McpEndpoint {
+            override val serverId = "broken"
+            override fun tools(): List<McpToolDescriptor> = throw IllegalStateException("catalog exploded")
+            override suspend fun call(name: String, arguments: JsonObject) = McpResult("unused")
+        }
+        val healthy = FakeEndpoint()
+        val tools = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(broken), McpConnection(healthy)))
+        val names = tools.definitions().map { it.name }
+        assertTrue("phone_observe" in names)
+        assertTrue("mcp_demo__search" in names)
+        assertFalse(names.any { it.startsWith("mcp_broken__") })
+        val diagnostics = tools.promptSections(tools.definitions()).joinToString("\n")
+        assertTrue(diagnostics, "broken" in diagnostics)
+        assertTrue(diagnostics, "catalog exploded" in diagnostics)
+        assertTrue(diagnostics, "other capabilities remain available" in diagnostics)
+
+        val result = tools.execute(Part.ToolCall("c", "mcp_demo__search", "{}"), ActionPass())
+        assertEquals(JsonPrimitive(true), result.content["ok"])
+        assertEquals(1, healthy.calls)
+    }
+
+    @Test fun oneToolAssemblyFailureBecomesDiagnosableToolError() = runBlocking {
+        val endpoint = FakeEndpoint()
+        val descriptor = endpoint.offered.single()
+        val assembled = assembleMcpTool("mcp:demo", endpoint, descriptor) {
+            throw IllegalStateException("schema adapter exploded")
+        }
+        assertEquals("mcp_demo__search", assembled.tool.name)
+        assertTrue(assembled.failure.orEmpty(), "schema adapter exploded" in assembled.failure.orEmpty())
+        val result = assembled.tool.execute(
+            Args(assembled.tool.def, buildJsonObject {}),
+            toolDispatcher(FakeScreen()).ctx,
+        )
+        assertEquals("mcp_tool_assembly_failed", result.content["error"]?.jsonPrimitive?.content)
+        assertEquals("demo", result.content["server"]?.jsonPrimitive?.content)
+        assertEquals("search", result.content["tool"]?.jsonPrimitive?.content)
+        assertTrue(result.content["message"]?.jsonPrimitive?.content.orEmpty().contains("schema adapter exploded"))
+    }
+
+    @Test fun syntheticToolAssemblyFailureDoesNotRemoveServerTools() {
+        val endpoint = FakeEndpoint().apply { resourcesError = IllegalStateException("resources exploded") }
+        val tools = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(endpoint)))
+        val names = tools.definitions().map { it.name }
+        assertTrue("mcp_demo__search" in names)
+        assertFalse("mcp_demo__resource_read" in names)
+        val diagnostics = tools.promptSections(tools.definitions()).joinToString("\n")
+        assertTrue(diagnostics, "resources exploded" in diagnostics)
+        assertTrue(diagnostics, "resource_read" in diagnostics)
     }
 
     @Test fun annotationRiskDefaultsToWriteAndEscalatesOpenWorldAndDestructive() {

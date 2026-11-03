@@ -16,13 +16,11 @@ import com.wangzan101.mika.core.tool.ToolContext
 import com.wangzan101.mika.core.tool.ToolDef
 import com.wangzan101.mika.core.tool.ToolExecution
 import com.wangzan101.mika.core.tool.Verb
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
@@ -109,20 +107,36 @@ fun mcpApprovalRisk(a: McpAnnotations, trust: McpTrust = McpTrust.TrustAnnotatio
 internal class McpCapability(connection: McpConnection, override val id: String) : Capability {
     private val endpoint = connection.endpoint
     private val budget = McpBudget(connection.maxCostUnits)
-    private val serverToolNames = endpoint.tools()
+    private val descriptors = endpoint.tools()
         .filter { connection.allowedTools == null || it.name in connection.allowedTools }
-        .map { sanitize(it.name) }
-        .toSet()
+    private val serverToolNames = descriptors.map { sanitize(it.name) }.toSet()
+    private val assemblyFailures = mutableListOf<String>()
     private val tools = buildList {
-        endpoint.tools()
-            .filter { connection.allowedTools == null || it.name in connection.allowedTools }
-            .mapTo(this) { McpClientTool(id, endpoint, it, budget, connection.resultStore, connection.previewChars, connection.trust) }
-        resourceTool(connection)?.let(::add)
-        promptTool(connection)?.let(::add)
+        descriptors.forEach { descriptor ->
+            val assembled = assembleMcpTool(id, endpoint, descriptor) {
+                McpClientTool(id, endpoint, descriptor, budget, connection.resultStore, connection.previewChars, connection.trust)
+            }
+            add(assembled.tool)
+            assembled.failure?.let(assemblyFailures::add)
+        }
+        try {
+            resourceTool(connection)?.let(::add)
+        } catch (e: Exception) {
+            assemblyFailures += "resource_read: ${mcpAssemblyReason(e)}"
+        }
+        try {
+            promptTool(connection)?.let(::add)
+        } catch (e: Exception) {
+            assemblyFailures += "prompt_get: ${mcpAssemblyReason(e)}"
+        }
     }
-    override fun status(): CapabilityStatus = CapabilityStatus.Available
+    override fun status(): CapabilityStatus = if (assemblyFailures.isEmpty()) CapabilityStatus.Available
+        else CapabilityStatus.Degraded(assemblyFailures.joinToString("; "))
     override fun tools(): List<AgentTool> = tools
-    override fun sections(env: PromptEnv): List<String> = emptyList()
+    override fun sections(env: PromptEnv): List<String> = if (assemblyFailures.isEmpty()) emptyList() else listOf(
+        "MCP server '${endpoint.serverId}' was only partially assembled. Other tools remain available.\n" +
+            assemblyFailures.joinToString("\n") { "- $it" },
+    )
 
     /** resources/read 合成一个只读工具;服务端有同名工具时让位给服务端。 */
     private fun resourceTool(connection: McpConnection): AgentTool? {
@@ -186,6 +200,59 @@ internal class McpCapability(connection: McpConnection, override val id: String)
     private fun sanitize(name: String): String = name.replace(Regex("[^A-Za-z0-9_]"), "_")
 }
 
+internal data class McpToolAssembly(val tool: AgentTool, val failure: String?)
+
+/** 一个工具的声明坏了只降级这个工具;名字保留下来,调用方能拿到明确的装配错误。 */
+internal fun assembleMcpTool(
+    capability: String,
+    endpoint: McpEndpoint,
+    descriptor: McpToolDescriptor,
+    assemble: () -> AgentTool,
+): McpToolAssembly = try {
+    McpToolAssembly(assemble(), null)
+} catch (e: Exception) {
+    val reason = mcpAssemblyReason(e)
+    McpToolAssembly(
+        McpFailedTool(capability, endpoint.serverId, descriptor, reason),
+        "tool '${descriptor.name}': $reason",
+    )
+}
+
+internal fun mcpAssemblyReason(e: Exception): String {
+    val type = e::class.simpleName ?: "Exception"
+    val detail = e.message?.takeIf { it.isNotBlank() }?.let { ": $it" }.orEmpty()
+    return "$type$detail".replace(Regex("\\s+"), " ").take(500)
+}
+
+private fun mcpToolName(serverId: String, toolName: String): String =
+    "mcp_${serverId.replace(Regex("[^A-Za-z0-9_]"), "_")}__${toolName.replace(Regex("[^A-Za-z0-9_]"), "_")}"
+
+private class McpFailedTool(
+    override val capability: String,
+    private val serverId: String,
+    private val descriptor: McpToolDescriptor,
+    reason: String,
+) : AgentTool {
+    private val message = "MCP tool '${descriptor.name}' on server '$serverId' could not be assembled: $reason"
+    override val def = ToolDef(
+        mcpToolName(serverId, descriptor.name),
+        "${descriptor.description}\n\nUnavailable: $message".trim(),
+    )
+    override val verb = Verb.Interact
+    override val risk = Risk.Read
+    override val approvalRisk = ApprovalRisk(ActionRisk.Read)
+    override val offScreen = true
+
+    override suspend fun execute(a: Args, ctx: ToolContext): ToolExecution = ToolExecution(buildJsonObject {
+        put("ok", false)
+        put("error", "mcp_tool_assembly_failed")
+        put("server", serverId)
+        put("tool", descriptor.name)
+        put("message", message)
+        put("recoverable", false)
+    })
+}
+
 private class McpBudget(private val limit: Long?) {
     private var used = 0L
     @Synchronized fun charge(units: Long): Boolean {
@@ -207,10 +274,12 @@ private class McpClientTool(
     private val schema = descriptor.inputSchema
     private val approval = mcpApprovalRisk(descriptor.annotations, trust)
     override val def: ToolDef = ToolDef(
-        "mcp_${endpoint.serverId.replace(Regex("[^A-Za-z0-9_]"), "_")}__${descriptor.name.replace(Regex("[^A-Za-z0-9_]"), "_")}",
+        mcpToolName(endpoint.serverId, descriptor.name),
         descriptor.description,
-        schema["properties"]?.jsonObject.orEmpty().mapValues { it.value.jsonObject },
-        schema["required"]?.jsonArray?.map { it.jsonPrimitive.content }.orEmpty(),
+        (schema["properties"] as? JsonObject).orEmpty()
+            .mapValues { (_, value) -> value as? JsonObject ?: JsonObject(emptyMap()) },
+        (schema["required"] as? JsonArray).orEmpty()
+            .mapNotNull { (it as? JsonPrimitive)?.takeIf { p -> p.isString }?.content },
     )
     override val verb = Verb.Interact
     override val risk = when (approval.level) {

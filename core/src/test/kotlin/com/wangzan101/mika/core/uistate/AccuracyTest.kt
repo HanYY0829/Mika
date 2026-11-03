@@ -183,6 +183,34 @@ class AccuracyTest {
         assertEquals(Verification.MISMATCH, run(FakeField("", format = { "${it}设置" }), reacted = true))
     }
 
+    @Test fun retryUsesTheOtherWriteChannel() {
+        val f = object : TextField {
+            var text = ""
+            var directWrites = 0
+            var pasteWrites = 0
+            override fun read() = text
+            override fun write(text: String): Boolean {
+                directWrites++
+                return true // 动作被接受,但显示文字没变
+            }
+            override fun retry(text: String): Boolean {
+                pasteWrites++
+                this.text = text
+                return true
+            }
+        }
+        assertEquals(Verification.MATCH, runBlocking { typeAndVerify(f, "WLAN") })
+        assertEquals(1, f.directWrites)
+        assertEquals(1, f.pasteWrites)
+    }
+
+    @Test fun unreadableFieldCannotHideARejectedWrite() {
+        val f = FakeField(null, writeResult = false)
+        assertEquals(Verification.MISMATCH, type(f, "secret"))
+        assertEquals(1, f.writes)
+        assertEquals(Verification.MISMATCH, runBlocking { typeAndVerify(f, "secret", secret = true) })
+    }
+
     @Test fun unreadableFieldIsUnknown() {
         val f = FakeField(null)
         assertEquals(Verification.UNKNOWN, type(f, "secret"))

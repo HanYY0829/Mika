@@ -6,7 +6,7 @@ import androidx.compose.ui.res.stringResource
 import com.wangzan101.mika.settings.ProviderConnection
 import android.app.ActivityManager
 import androidx.activity.compose.BackHandler
-import androidx.compose.material3.AlertDialog
+import com.wangzan101.mika.ui.components.MikaDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -217,7 +217,7 @@ fun SettingsScreen(
 
     explaining?.let { p ->
         val e = StatusCopy.explain(p, androidRelease)
-        AlertDialog(
+        MikaDialog(
             onDismissRequest = { explaining = null },
             title = { Text(e.title) },
             text = { Text(e.body) },

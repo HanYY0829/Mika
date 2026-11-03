@@ -14,7 +14,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.material3.AlertDialog
+import com.wangzan101.mika.ui.components.MikaDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
 import com.wangzan101.mika.chat.DeleteImpact
@@ -413,7 +413,7 @@ internal fun RenameConversationDialog(title: String, onSave: (String) -> Unit, o
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
     val ok = value.text.isNotBlank()
-    AlertDialog(
+    MikaDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.drawer_rename_title)) },
         text = {
@@ -446,7 +446,7 @@ internal fun DeleteConversationDialog(title: String, impact: DeleteImpact, onCon
         if (impact.runningTask) stringResource(R.string.drawer_delete_running) else null,
         if (impact.schedules > 0) trPlural(R.plurals.drawer_delete_schedules, impact.schedules) else null,
     ).joinToString("\n")
-    AlertDialog(
+    MikaDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.drawer_delete_title)) },
         text = { Text(body, Modifier.testTag("delete-conversation-body")) },

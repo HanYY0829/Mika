@@ -67,6 +67,25 @@ class OperationGuardsTest {
         g.noteAction(); g.effect("done"); assertEquals(0, g.unchangedFrames)
     }
 
+    @Test fun treeBlindNoVisibleEffectWarnsAtTwoAndStopsAtThree() {
+        val g = OperationGuards()
+        assertTrue(g.effect("no_effect", treeBlind = true).isEmpty())
+        val warned = g.effect("no_effect", treeBlind = true).single()
+        assertEquals(Severity.Warn, warned.severity)
+        assertEquals("no_progress", warned.code)
+        val stopped = g.effect("no_effect", treeBlind = true).single()
+        assertEquals(Severity.Stop, stopped.severity)
+        assertEquals(3, stopped.evidence["unchanged"]!!.jsonPrimitive.int)
+        assertEquals("true", stopped.evidence["treeBlind"]!!.jsonPrimitive.content)
+        assertEquals("no_progress", g.stop?.code)
+
+        val recovered = OperationGuards()
+        repeat(2) { recovered.effect("no_effect", treeBlind = true) }
+        assertTrue(recovered.effect("done", treeBlind = true).isEmpty())
+        assertTrue(recovered.effect("no_effect", treeBlind = true).isEmpty())
+        assertNull(recovered.stop)
+    }
+
     @Test fun backAndForthBetweenTwoStatesDoesNotStopProgress() {
         val g = OperationGuards()
         g.frame("s0", 1L)

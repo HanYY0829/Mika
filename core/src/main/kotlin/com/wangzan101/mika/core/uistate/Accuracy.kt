@@ -95,6 +95,8 @@ internal fun stationary(before: List<ElementLocator>, after: List<ElementLocator
 interface TextField {
     fun read(): String?
     fun write(text: String): Boolean
+    /** 第一次写入后读回不一致时的换通道重试;没有另一通道的字段默认照原方式再写。 */
+    fun retry(text: String): Boolean = write(text)
 }
 
 /** 比较前去掉所有空白:输入框可能自动给号码分组加空格。 */
@@ -118,28 +120,26 @@ suspend fun typeAndVerify(
     secret: Boolean = false,
 ): Verification {
     if (secret) {
-        field.write(text)
-        return Verification.UNKNOWN
+        return if (field.write(text)) Verification.UNKNOWN else Verification.MISMATCH
     }
     val want = normText(text)
     var baseline = field.read() ?: run {
-        // 读不出也照常写一次,但无法核对
-        field.write(text)
-        return Verification.UNKNOWN
+        // 读不出也照常写一次,但无法核对;写入本身被拒绝不能说成未知
+        return if (field.write(text)) Verification.UNKNOWN else Verification.MISMATCH
     }
     if (want.isNotEmpty() && normText(baseline) == want) {
-        field.write("")
+        val cleared = field.write("")
         settle()
-        baseline = field.read() ?: return Verification.UNKNOWN
+        baseline = field.read() ?: return if (cleared) Verification.UNKNOWN else Verification.MISMATCH
         if (normText(baseline) == want) {
-            field.write(text)
-            return Verification.UNKNOWN
+            return if (field.write(text)) Verification.UNKNOWN else Verification.MISMATCH
         }
     }
     var stuck = true
     var wrote = false
-    repeat(attempts) {
-        if (!field.write(text)) return@repeat
+    repeat(attempts) { attempt ->
+        val accepted = if (attempt == 0) field.write(text) else field.retry(text)
+        if (!accepted) return@repeat
         wrote = true
         settle()
         val actual = field.read() ?: return Verification.UNKNOWN
