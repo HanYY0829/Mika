@@ -160,6 +160,16 @@
                 android:value="Runs a user-requested phone task on the app's own virtual display and shows its progress; afterwards keeps the one web page the user asked to keep open running, for at most two hours" />
         </service>
 
+        <!-- 用户绑定并打开微信渠道后保持长轮询；没有本地服务器，任务仍交给 TaskService。 -->
+        <service
+            android:name=".wechat.WechatService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the user-enabled WeChat bot connection available so private messages can be handed to the app's existing task service" />
+        </service>
+
         <!--
             电脑连接(MCP):用户在设置里打开、或电脑经 USB 调试打开后才运行,让监听端口在后台也开着;关掉就停。
             对外开放只为让 adb shell 能起它(am start-foreground-service):调用方必须持有 INTERACT_ACROSS_USERS_FULL,

@@ -75,13 +75,16 @@ internal object HttpSupport {
     }
 
     /**
-     * SSE 按事件交付；取消协程会同时取消 HTTP 请求。流读到头时由调用者按各自协议判断有没有正常收尾，
-     * 没收尾算 [ModelError.StreamCut]。一个事件都没有、又不是事件流格式的成功响应(比如地址指到了网页)算 [ModelError.BadResponse]。
+     * SSE 按事件交付；取消协程会同时取消 HTTP 请求。[onEvent] 返回 true 表示协议层已到
+     * 终态(如 OpenAI 的 [DONE]、Anthropic 的 message_stop),读循环就此收尾并关闭连接——
+     * 有的服务器发完终态后并不主动关流(经隧道时生成完却静默挂到读超时),
+     * 此时不能干等 EOF。调用者仍按各自协议判断有没有正常收尾,没收尾算 [ModelError.StreamCut]。
+     * 一个事件都没有、又不是事件流格式的成功响应(比如地址指到了网页)算 [ModelError.BadResponse]。
      */
-    suspend fun stream(http: OkHttpClient, req: Request, onEvent: (String) -> Unit): RawResponse =
+    suspend fun stream(http: OkHttpClient, req: Request, onEvent: (String) -> Boolean): RawResponse =
         observe(req) { attempt -> streamRaw(http, req, attempt, onEvent) }.also(::requireProxyAccepted)
 
-    private suspend fun streamRaw(http: OkHttpClient, req: Request, attempt: TraceCall.Attempt?, onEvent: (String) -> Unit): RawResponse = suspendCancellableCoroutine { cont ->
+    private suspend fun streamRaw(http: OkHttpClient, req: Request, attempt: TraceCall.Attempt?, onEvent: (String) -> Boolean): RawResponse = suspendCancellableCoroutine { cont ->
         val call = http.newCall(req)
         cont.invokeOnCancellation { call.cancel() }
         call.enqueue(object : Callback {
@@ -105,19 +108,20 @@ internal object HttpSupport {
                         val source = it.body?.source() ?: throw ModelError.BadResponse("流式响应没有内容")
                         val data = mutableListOf<String>()
                         var events = 0
-                        fun dispatch() {
-                            if (data.isNotEmpty()) {
-                                events++
-                                val event = data.joinToString("\n")
-                                attempt?.packet(event)
-                                onEvent(event)
-                                data.clear()
-                            }
+                        /** 派发一个事件;返回 true 表示协议层已到终态(如 [DONE]),读循环就此收尾,不再等连接关闭。 */
+                        fun dispatch(): Boolean {
+                            if (data.isEmpty()) return false
+                            events++
+                            val event = data.joinToString("\n")
+                            attempt?.packet(event)
+                            val terminal = onEvent(event)
+                            data.clear()
+                            return terminal
                         }
                         while (cont.isActive) {
                             val line = source.readUtf8Line() ?: break
                             when {
-                                line.isEmpty() -> dispatch()
+                                line.isEmpty() -> if (dispatch()) break
                                 line.startsWith("data:") -> data += line.removePrefix("data:").removePrefix(" ")
                             }
                         }

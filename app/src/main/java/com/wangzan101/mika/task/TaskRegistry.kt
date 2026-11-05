@@ -1,5 +1,6 @@
 package com.wangzan101.mika.task
 
+import com.wangzan101.mika.core.run.ChannelPeer
 import com.wangzan101.mika.core.run.MemoryRunStore
 import com.wangzan101.mika.core.run.RunId
 import com.wangzan101.mika.core.run.RunPhase
@@ -11,6 +12,8 @@ sealed interface StartResult<out R> {
     data class Started<R>(val run: R) : StartResult<R>
     /** 超出并行上限,排在队里第 [position] 个。 */
     data class Queued<R>(val run: R, val position: Int) : StartResult<R>
+    /** 已登记过的渠道消息不再次执行，包括进程重启后服务端重投的消息。 */
+    data object DuplicateChannelMessage : StartResult<Nothing>
     /** 这个对话已经有任务(在跑或在排队):照 M1 规则不收,由对话自己排队。 */
     data object AlreadyRunningInConversation : StartResult<Nothing>
 }
@@ -36,16 +39,22 @@ class TaskCenter<R : Any>(
     val takeoverQueue get() = resources.takeoverQueue
 
     @Synchronized
-    fun tryStart(conversationId: String, goal: String, queueInConversation: Boolean = false): StartResult<R> {
+    fun tryStart(conversationId: String, goal: String, queueInConversation: Boolean = false,
+        channelPeer: ChannelPeer? = null, channelMessageId: String? = null): StartResult<R> {
+        if (channelMessageId != null && store.all().any {
+            it.channelMessageId == channelMessageId && it.channelPeer == channelPeer
+        }) return StartResult.DuplicateChannelMessage
         val sameConversation = byConversation(conversationId) != null
         if (sameConversation && !queueInConversation) return StartResult.AlreadyRunningInConversation
         val run = create(conversationId, goal)
+        val record = StoredRun(RunId(keyOf(run)), conversationId, goal, RunPhase.Preparing,
+            channelPeer = channelPeer, channelMessageId = channelMessageId)
         return if (!sameConversation && running.size < limit().max) {
-            store.save(StoredRun(RunId(keyOf(run)), conversationId, goal, RunPhase.Preparing))
+            store.save(record)
             running += run
             StartResult.Started(run)
         } else {
-            store.save(StoredRun(RunId(keyOf(run)), conversationId, goal, RunPhase.Queued))
+            store.save(record.copy(phase = RunPhase.Queued))
             queued += run
             StartResult.Queued(run, queued.size)
         }

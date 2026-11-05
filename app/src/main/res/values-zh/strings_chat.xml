@@ -6,12 +6,12 @@
     <string name="chat_greeting_evening">晚上好</string>
     <string name="chat_greeting_night">夜深了</string>
     <string name="chat_empty_prompt">想让 Mika 做什么？</string>
-    <string name="chat_example_message">打开微信，给王赞发消息，让他拉我进Mika内测体验群</string>
+    <string name="chat_example_follow">打开小红书，搜索博主“王赞不赞”，点击关注，然后加入群聊</string>
     <string name="chat_example_group_summary">帮我总结微信群聊，Mika内测体验群今天都聊了些啥</string>
     <string name="chat_example_jobs">在Boss直聘上帮我投递AI产品经理岗位，150个投满</string>
-    <string name="chat_example_music">帮我打开汽水音乐，看广告领取24小时听歌VIP会员</string>
+    <string name="chat_example_multi_step">帮我打开汽水音乐，看广告领取24小时听歌VIP会员</string>
     <string name="chat_example_alarms">帮我订明天早上9:40、9:50、10:00 的闹钟</string>
-    <string name="chat_example_creator">打开小红书，帮我总结一下博主王赞不赞的内容</string>
+    <string name="chat_example_ai_apps">看看我手机里有哪些 AI App，分别问问它们各自有什么优势，最后做个对比</string>
     <string name="chat_working_on">正在操作%1$s</string>
     <string name="chat_working">正在处理</string>
     <string name="chat_wait_previous_task">等前一个任务做完再开始</string>

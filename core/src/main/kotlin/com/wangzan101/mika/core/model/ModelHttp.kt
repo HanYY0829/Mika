@@ -27,12 +27,30 @@ object ModelHttp {
             status == 401 -> ModelError.Auth()
             status == 402 || body.contains("insufficient_quota") -> ModelError.QuotaExceeded()
             status == 429 -> ModelError.RateLimited(HttpSupport.retryAfterMs(retryAfter))
-            status == 400 && (body.contains("context_length") || body.contains("maximum context")) -> ModelError.ContextTooLong()
+            contextTooLong(status, body) -> ModelError.ContextTooLong()
             status == 404 -> ModelError.ModelNotFound(model, ModelAccessErrors.jsonDetail(body))
             status in 500..599 -> ModelError.Server(status)
             status == 403 -> ModelError.Auth()
             else -> ModelError.BadResponse("HTTP $status ${body.take(200)}")
         }
+
+    /** HTTP 400 的报错说请求超出了模型的上下文(见 [saysContextTooLong])。OpenAI 兼容、Responses、Anthropic 三种接口共用;本机跑的服务三种接口都可能开。 */
+    fun contextTooLong(status: Int, body: String): Boolean = status == 400 && saysContextTooLong(body)
+
+    /**
+     * 报错内容说请求超出了模型的上下文。各家原话不同(`context_length_exceeded`、「maximum context length」、
+     * 「exceeds the available context size」、「is longer than the model's context length」、「exceeds the context window」、
+     * 「is greater than the context length」、带图时的「is longer than the maximum model length」…):
+     * 认「超出 / 长于 / 大于 / max」后面不远处(同一句里)跟着上下文的长度、大小、上限、窗口或模型长度,不分大小写;
+     * 原来认的 `context_length`、「maximum context」照旧;另认一个本机服务旧版的「loaded with context length of only」。
+     * 只提到「context window」这类词不算:报错里可能回显了请求里的话。
+     */
+    internal fun saysContextTooLong(text: String): Boolean = CONTEXT_TOO_LONG.containsMatchIn(text)
+
+    private val CONTEXT_TOO_LONG = Regex(
+        """(?:exceed|longer than|larger than|greater than|max)[^.\n]{0,40}?(?:context[ _](?:length|size|limit|window)|model[ _]length)|context_length|maximum context|context length of only""",
+        RegexOption.IGNORE_CASE,
+    )
 
     private val json = Json { ignoreUnknownKeys = true }
 

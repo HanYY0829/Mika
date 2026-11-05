@@ -38,7 +38,7 @@ interface TriggerOutcomes {
 class RunRecovery(
     private val store: RunStore,
     private val outbox: Outbox,
-    private val channel: Channel,
+    private val channels: (String) -> Channel?,
     private val triggers: TriggerOutcomes,
     private val conversations: ConversationStore,
     private val scope: CoroutineScope,
@@ -75,7 +75,8 @@ class RunRecovery(
 
     private suspend fun settle(run: StoredRun) {
         run.triggerWindowKey?.let { triggers.interrupted(it, "run interrupted before the result was confirmed") }
-        val peer = ChannelPeer(LocalChannel.ID, "phone-owner", run.threadId)
+        val peer = run.channelPeer ?: ChannelPeer(LocalChannel.ID, "phone-owner", run.threadId)
+        val channel = channels(peer.channelId) ?: return
         val deliveryId = run.deliveryId
         val reply = run.reply
         if (reply != null && deliveryId != null) {

@@ -6,12 +6,12 @@
     <string name="chat_greeting_evening">こんばんは</string>
     <string name="chat_greeting_night">夜更かしですね</string>
     <string name="chat_empty_prompt">Mika に何をお願いしますか？</string>
-    <string name="chat_example_message">WeChat を開いて Wang Zan に、Mika のベータグループに入れてほしいとメッセージして</string>
-    <string name="chat_example_group_summary">WeChat の Mika ベータグループで今日話された内容をまとめて</string>
-    <string name="chat_example_jobs">BOSS Zhipin で AI プロダクトマネージャーの求人に 150 件応募して</string>
-    <string name="chat_example_music">Qishui Music を開いて、広告を見て VIP を 24 時間分もらって</string>
+    <string name="chat_example_follow">X を開いて Wang Zan（@wangzan101）を検索し、アカウントをフォローして</string>
+    <string name="chat_example_group_summary">WhatsApp を開いて今日の未読メッセージをまとめ、返信が必要なものを拾って</string>
+    <string name="chat_example_jobs">LinkedIn でリモートの AI プロダクトマネージャーの求人を5件探し、応募条件を比較して</string>
+    <string name="chat_example_multi_step">Amazon で100ドル未満の高評価のワイヤレスイヤホンを3つ探し、メリットとデメリットを比較して</string>
     <string name="chat_example_alarms">明日の朝 9:40、9:50、10:00 にアラームをセットして</string>
-    <string name="chat_example_creator">小紅書(Xiaohongshu)を開いて、クリエイター 王赞不赞 の投稿をまとめて</string>
+    <string name="chat_example_ai_apps">スマホに入っている AI アプリを探し、それぞれに得意なことを聞いて、回答を比較して</string>
     <string name="chat_working_on">%1$s で作業中</string>
     <string name="chat_working">作業中</string>
     <string name="chat_wait_previous_task">前のタスクが終わってから始まります</string>

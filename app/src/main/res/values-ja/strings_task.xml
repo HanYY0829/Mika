@@ -53,6 +53,7 @@
     <string name="task_too_old">スマホのアプリの操作には Android 12 以降が必要です。チャット、ウェブ、サンドボックスのタスクは使えます。</string>
     <string name="task_shell_died">スマホの操作のヘルパーが切断され、仮想画面が閉じました。再接続したら、もう一度お試しください。</string>
     <string name="task_running">実行中</string>
+    <string name="channel_task_accepted">受け付けました。タスクを登録しました。</string>
     <string name="task_step_note">ステップ %1$d: %2$s</string>
     <string name="task_wait_unlock">ロック解除を待っています</string>
     <string name="task_wait_unlock_body">スマホのロックを解除すると続行します</string>

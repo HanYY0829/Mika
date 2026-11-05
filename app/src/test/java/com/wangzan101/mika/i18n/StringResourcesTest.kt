@@ -97,7 +97,7 @@ class StringResourcesTest {
     fun otherLanguagesHaveNoChineseLeftOver() {
         val cjk = Regex("[\\u4e00-\\u9fff]")
         for (o in others.filter { it.folder != "values-ja" }) {
-            val left = o.texts.strings.filter { (k, v) -> k != "chat_example_creator" && cjk.containsMatchIn(v) }.keys +
+            val left = o.texts.strings.filter { (_, v) -> cjk.containsMatchIn(v) }.keys +
                 o.texts.plurals.filter { (_, forms) -> forms.values.any(cjk::containsMatchIn) }.keys
             assertEquals(o.folder, emptySet<String>(), left)
         }
@@ -118,10 +118,8 @@ class StringResourcesTest {
 
     @Test
     fun englishHasNoChineseLeftOver() {
-        // 例子里的博主名本来就是中文
-        val allowed = fixed + "chat_example_creator"
         val cjk = Regex("[\\u4e00-\\u9fff]")
-        val left = en.strings.filter { (k, v) -> k !in allowed && cjk.containsMatchIn(v) }.keys +
+        val left = en.strings.filter { (k, v) -> k !in fixed && cjk.containsMatchIn(v) }.keys +
             en.plurals.filter { (_, forms) -> forms.values.any(cjk::containsMatchIn) }.keys
         assertEquals(emptySet<String>(), left)
     }

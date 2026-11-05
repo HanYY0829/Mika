@@ -56,6 +56,7 @@
     <string name="task_too_old">Phone app control needs Android 12 or later. Chat, web and sandbox tasks are still available.</string>
     <string name="task_shell_died">The phone control helper disconnected and the virtual screen closed. Try again once it reconnects.</string>
     <string name="task_running">Running</string>
+    <string name="channel_task_accepted">Got it — your task is registered.</string>
     <string name="task_step_note">Step %1$d: %2$s</string>
     <string name="task_wait_unlock">Waiting for unlock</string>
     <string name="task_wait_unlock_body">Will continue once you unlock your phone</string>

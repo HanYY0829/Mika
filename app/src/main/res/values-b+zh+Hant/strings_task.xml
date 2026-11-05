@@ -53,6 +53,7 @@
     <string name="task_too_old">手機 App 操作需要 Android 12 及以上。仍然可以聊天、使用網頁和沙盒。</string>
     <string name="task_shell_died">手機操作助手中斷了,虛擬螢幕隨之關閉;等它重新連上後再試</string>
     <string name="task_running">正在執行</string>
+    <string name="channel_task_accepted">收到，任務已登記。</string>
     <string name="task_step_note">第 %1$d 步:%2$s</string>
     <string name="task_wait_unlock">等待解鎖</string>
     <string name="task_wait_unlock_body">解鎖手機後會自動繼續</string>

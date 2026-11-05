@@ -53,6 +53,7 @@
     <string name="task_too_old">Kontrol aplikasi ponsel memerlukan Android 12 atau lebih baru. Tugas obrolan, web, dan sandbox tetap tersedia.</string>
     <string name="task_shell_died">Pembantu kontrol ponsel terputus dan layar virtual ditutup. Coba lagi setelah tersambung kembali.</string>
     <string name="task_running">Berjalan</string>
+    <string name="channel_task_accepted">Diterima — tugas sudah didaftarkan.</string>
     <string name="task_step_note">Langkah %1$d: %2$s</string>
     <string name="task_wait_unlock">Menunggu dibuka kuncinya</string>
     <string name="task_wait_unlock_body">Akan dilanjutkan setelah Anda membuka kunci ponsel</string>

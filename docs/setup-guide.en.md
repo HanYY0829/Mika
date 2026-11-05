@@ -195,11 +195,11 @@ If pairing or connecting fails, Mika uses what it could read to say which earlie
 
 ## Another way: start it from a computer (USB cable)
 
-If wireless pairing doesn't work (some vendor ROMs have no working "Wireless debugging" at all), or you'd like an AI agent on your computer to set things up, you can start the same built-in helper from a computer with adb over a USB cable:
+If wireless pairing doesn't work (some vendor ROMs have no working "Wireless debugging" at all), or you'd like an AI agent on your computer to set things up, you can start the same built-in helper from a computer with adb over a USB cable. Both wireless pairing and USB startup provide the adb shell identity that the helper needs. USB debugging already provides that identity, so if the system has removed the "Wireless debugging" entry, there is no need to keep looking for a pairing page or code.
 
 1. Open Mika on the phone once (Mika prepares the start file).
-2. Do steps 1 and 2 (Developer options, USB debugging) and connect the phone to the computer with a cable; when the phone asks whether to allow USB debugging, tap "Allow".
-3. On the computer, run:
+2. Do steps 1 and 2 (Developer options, USB debugging) and connect the phone to the computer with a cable; when the phone asks whether to allow USB debugging, tap "Allow". Confirm system security prompts yourself; do not let a tool simulate the taps.
+3. On the computer, run (if more than one device is connected, use `adb -s <serial> shell ...` instead):
 
 ```
 adb shell sh /sdcard/Android/data/com.wangzan101.mika/files/usb-start.sh

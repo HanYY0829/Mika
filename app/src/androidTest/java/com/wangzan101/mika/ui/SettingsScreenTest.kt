@@ -53,6 +53,7 @@ class SettingsScreenTest {
             SettingsContent(
                 status = status, androidRelease = "14", mainModel = mainModel, onBack = {}, onProblem = onProblem,
                 onOpenModels = { opened += "models" }, onOpenPhoneOps = { opened += "phone" }, onOpenDuringWork = { opened += "work" },
+                onOpenWechat = { opened += "wechat" },
                 capsuleMode = CapsuleMode.DuringTasks, onOpenCapsule = { opened += "capsule" }, onOpenNotifications = { opened += "notifications" },
                 onOpenLanguage = { opened += "language" }, onOpenAppAccess = { opened += "access" },
                 onOpenMemory = { opened += "memory" }, onOpenAdvanced = { opened += "advanced" },
@@ -83,11 +84,11 @@ class SettingsScreenTest {
     fun homeRowsOpenTheirPages() {
         val opened = mutableListOf<String>()
         home(opened = opened)
-        for (t in listOf("模型", "手机操作", "任务运行", "悬浮胶囊", "语言与外观", "通知", "记忆与数据", "应用访问", "高级与其他", "关于 Mika")) {
+        for (t in listOf("模型", "手机操作", "微信", "任务运行", "悬浮胶囊", "语言与外观", "通知", "记忆与数据", "应用访问", "高级与其他", "关于 Mika")) {
             scrollTo(t)
             compose.onNodeWithText(t).performClick()
         }
-        assertEquals(listOf("models", "phone", "work", "capsule", "language", "notifications", "memory", "access", "advanced", "about"), opened)
+        assertEquals(listOf("models", "phone", "wechat", "work", "capsule", "language", "notifications", "memory", "access", "advanced", "about"), opened)
     }
 
     /** 高级与其他集中放连接、维护和工程入口,各行仍打开原来的子页。 */

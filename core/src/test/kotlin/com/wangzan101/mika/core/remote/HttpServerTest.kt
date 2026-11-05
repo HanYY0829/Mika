@@ -48,6 +48,55 @@ class HttpServerTest {
         assertEquals(0, read("0\r\n\r\n").body.size)
     }
 
+    @Test fun closesWhenConnectionOptionsIncludeClose() {
+        for (options in listOf("keep-alive, close", "close, keep-alive", "keep-alive, \tClOsE\t")) {
+            val reply = exchange("GET /closed HTTP/1.1\r\nHost: localhost\r\nConnection: $options\r\n\r\n")
+            assertTrue(reply, reply.startsWith("HTTP/1.1 200 "))
+            assertTrue(reply, reply.contains("Connection: close\r\n"))
+            assertTrue(reply, reply.endsWith("/closed"))
+        }
+    }
+
+    @Test fun closesWhenRepeatedConnectionHeadersIncludeClose() {
+        for (headers in listOf(
+            "Connection: keep-alive\r\nConnection: close",
+            "Connection: close\r\nConnection: keep-alive",
+        )) {
+            val reply = exchange("GET /closed HTTP/1.1\r\nHost: localhost\r\n$headers\r\n\r\n")
+            assertTrue(reply, reply.startsWith("HTTP/1.1 200 "))
+            assertTrue(reply, reply.contains("Connection: close\r\n"))
+            assertTrue(reply, reply.endsWith("/closed"))
+        }
+    }
+
+    @Test fun keepsServingWhenConnectionOptionsDoNotIncludeClose() {
+        val reply = exchange(
+            "GET /first HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive, x-close, close-extra\r\n\r\n" +
+                "GET /second HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+        )
+        assertTrue(reply, reply.startsWith("HTTP/1.1 200 "))
+        assertTrue(reply, reply.contains("/firstHTTP/1.1 200 "))
+        assertTrue(reply, reply.endsWith("/second"))
+    }
+
+    private fun exchange(request: String): String {
+        val server = MiniHttpServer(InetSocketAddress(loopback, 0), handler = { req ->
+            HttpResponse(200, req.path.toByteArray(Charsets.UTF_8))
+        })
+        return Socket().use { socket ->
+            server.start()
+            try {
+                socket.connect(InetSocketAddress(loopback, server.port), 2_000)
+                socket.soTimeout = 2_000
+                socket.getOutputStream().write(request.toByteArray(Charsets.ISO_8859_1))
+                // 读取到服务端关闭连接;忽略 close 时会超时,不能只检查响应头。
+                socket.getInputStream().bufferedReader().readText()
+            } finally {
+                server.stop()
+            }
+        }
+    }
+
     @Test fun rejectsUnauthenticatedOverflowBeforeTheHandlerAndKeepsServing() {
         val handled = AtomicInteger()
         val server = MiniHttpServer(InetSocketAddress(loopback, 0), handler = { req ->

@@ -11,6 +11,9 @@ data class StoredRun(
     val roundInProgress: Boolean = false,
     val triggerWindowKey: String? = null,
     val runSucceeded: Boolean? = null,
+    /** 非本机任务的回复地址与入站编号；旧记录缺省时仍按本机任务恢复。 */
+    val channelPeer: ChannelPeer? = null,
+    val channelMessageId: String? = null,
 )
 
 interface RunStore {

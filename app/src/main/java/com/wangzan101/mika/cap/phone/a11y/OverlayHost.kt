@@ -19,8 +19,6 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityWindowInfo
 import android.graphics.Rect
 import android.view.KeyEvent
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -41,7 +39,6 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import kotlin.coroutines.resume
 import kotlin.math.hypot
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -114,8 +111,9 @@ class HoldGesture(private val slopPx: Float) {
  */
 class OverlayHost internal constructor(private val service: ScreenAccessibility) {
     private val windows = mutableListOf<OverlayWindow>()
-    /** 正在下发的自有注入手势层数;大于 0 时所有浮层都不接触摸。只在主线程改。 */
-    private var injectedGestures = 0
+    private val injectedGestures = InjectedGestures { isolate ->
+        forEachGestureWindow(windows.toList()) { it.isolateInjectedGestures(isolate) }
+    }
 
     /**
      * 加一个包住内容大小的浮层窗口。平时不抢焦点、点不到的地方照常交给下面的 App;
@@ -144,7 +142,7 @@ class OverlayHost internal constructor(private val service: ScreenAccessibility)
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                (if (touchable && injectedGestures == 0) 0 else WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE),
+                (if (touchable && !injectedGestures.isolated) 0 else WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE),
             PixelFormat.TRANSLUCENT,
         ).apply {
             // 按整块屏幕摆,不让系统再把窗口挤进状态栏、导航栏以内:要避开哪里由调用方按 area() 定
@@ -196,20 +194,7 @@ class OverlayHost internal constructor(private val service: ScreenAccessibility)
      * 结束后恢复每个窗口原本能不能接触摸;原本不接触摸的面板不会被误改成可触摸。嵌套手势只在外层结束时恢复。
      * 调用方取消协程时也等系统手势收尾再恢复:取消等待并不会撤掉已经注入系统的触摸。
      */
-    suspend fun <T> passInjectedGesturesThrough(block: suspend () -> T): T {
-        withContext(Dispatchers.Main.immediate) {
-            injectedGestures++
-            if (injectedGestures == 1) windows.toList().forEach { it.isolateInjectedGestures(true) }
-        }
-        try {
-            return withContext(NonCancellable) { block() }
-        } finally {
-            withContext(NonCancellable + Dispatchers.Main.immediate) {
-                injectedGestures = (injectedGestures - 1).coerceAtLeast(0)
-                if (injectedGestures == 0) windows.toList().forEach { it.isolateInjectedGestures(false) }
-            }
-        }
-    }
+    suspend fun <T> passInjectedGesturesThrough(block: suspend () -> T): T = injectedGestures.passThrough(block)
 
     /** 拆掉全部浮层(服务断开时)。 */
     fun closeAll() {

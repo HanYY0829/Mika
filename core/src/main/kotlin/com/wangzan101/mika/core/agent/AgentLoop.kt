@@ -312,6 +312,8 @@ class AgentLoop(
     /** 回答追问;没有在等的问题(已超时、已答过)时返回 false,由界面告诉用户回答来晚了。 */
     suspend fun answerInput(text: String): Boolean = user.answerInput(text)
 
+    fun cancelInput(askId: String): Boolean = user.cancelInput(askId)
+
     suspend fun answerConfirmation(approved: Boolean) = answerConfirmation(if (approved) ConfirmChoice.Once else ConfirmChoice.Deny)
 
     suspend fun answerConfirmation(choice: ConfirmChoice) = user.answerConfirmation(choice)
