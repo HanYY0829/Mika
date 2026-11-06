@@ -12,6 +12,8 @@ import com.wangzan101.mika.core.wechat.WechatApiException
 import com.wangzan101.mika.core.wechat.WechatUpdates
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
@@ -19,14 +21,18 @@ import java.io.IOException
 class WechatChannel(
     private val store: WechatStore,
     private val api: WechatApi,
+    private val activeAsk: (String) -> Delivery.Ask? = { null },
     private val log: (String) -> Unit = { Log.i(TAG, it) },
 ) : Channel {
     override val id = ID
     override val confirms = false
     @Volatile private var sink: ChannelInputSink? = null
+    private val pollLock = Mutex()
 
-    override fun isAlive(peer: ChannelPeer): Boolean =
-        peer.channelId == id && store.enabled() && store.account() != null
+    override fun isAlive(peer: ChannelPeer): Boolean {
+        val account = store.account()
+        return peer.channelId == id && store.enabled() && account != null && peer.peerId == account.ownerId
+    }
 
     override fun start(sink: ChannelInputSink): AutoCloseable {
         this.sink = sink
@@ -62,13 +68,16 @@ class WechatChannel(
     }
 
     /** 先补交上次未登记的消息，再取新消息；任务登记处做最终幂等。 */
-    suspend fun pollOnce(): WechatUpdates? {
-        val input = sink ?: return null
+    suspend fun pollOnce(): WechatUpdates? = pollLock.withLock {
+        val input = sink ?: return@withLock null
+        val account = store.account()?.takeIf { store.enabled() } ?: return@withLock null
         store.pending().forEach { pending ->
-            input.receive(ChannelInput.Text(pending.peer, pending.messageId, pending.text))
+            if (store.account() != account || pending.peer.peerId != account.ownerId || sink !== input) return@withLock null
+            input.receive(ChannelInput.Text(pending.peer, pending.messageId, pending.text, pending.replyToAskId))
         }
-        val account = store.account() ?: return null
-        val updates = api.updates(account, store.cursor())
+        val updates = api.updatesCancellable(account, store.cursor())
+        // 换绑或停止后，旧请求的结果不能再写入新会话，也不能推进新账号的游标。
+        if (store.account() != account || sink !== input || !store.enabled()) return@withLock null
         updates.msgs.forEach { message ->
             val owner = account.ownerId
             if (message.fromUserId != owner) return@forEach
@@ -76,12 +85,16 @@ class WechatChannel(
             val text = message.userText() ?: return@forEach
             val messageId = message.messageId ?: return@forEach
             val peer = store.peer(owner)
-            if (store.journal(messageId, peer, text)) {
-                input.receive(ChannelInput.Text(peer, messageId, text))
+            if (store.account() != account || sink !== input || !store.enabled()) return@withLock null
+            val askId = activeAsk(peer.threadId)
+                ?.takeIf { it.kind == Delivery.Ask.Kind.Input }
+                ?.askId
+            if (store.journal(messageId, peer, text, askId)) {
+                input.receive(ChannelInput.Text(peer, messageId, text, askId))
             }
         }
-        if (updates.cursor.isNotEmpty()) store.saveCursor(updates.cursor)
-        return updates
+        if (updates.cursor.isNotEmpty() && store.account() == account && store.enabled()) store.saveCursor(updates.cursor)
+        updates
     }
 
     companion object {

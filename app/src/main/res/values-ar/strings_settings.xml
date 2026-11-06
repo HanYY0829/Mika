@@ -94,6 +94,8 @@
     <string name="capsule_mode_off_detail">الإشعارات فقط</string>
     <string name="capsule_mode_tasks_detail">تظهر أثناء تنفيذ المهمة أو انتظارها لك، ثم تختفي بعد بضع ثوانٍ</string>
     <string name="capsule_mode_always_detail">تُبقي أيقونة Mika على الشاشة حتى عند عدم وجود مهام</string>
+    <string name="capsule_idle_opacity">عتامة الكبسولة عند السكون</string>
+    <string name="capsule_idle_opacity_detail">بعد ثوانٍ من دون لمسها؛ يبقى كل ما يحتاج إلى انتباهك ظاهرًا بالكامل</string>
     <string name="routes_saved">المسارات المحفوظة</string>
     <string name="loading">جارٍ التحميل</string>
     <plurals name="routes_count">
@@ -181,4 +183,8 @@
     <string name="mcp_servers_status_fail">فشل الاتصال: %1$s</string>
     <string name="mcp_servers_refresh_all">اختبار الكل</string>
     <string name="mcp_servers_allowlist">الأدوات المسموح بها (مفصولة بفواصل، فارغ = الكل)</string>
+    <string name="quit_title">إنهاء Mika تمامًا</string>
+    <string name="quit_row_sub">إيقاف مهام الخلفية وإخفاء الكبسولة العائمة</string>
+    <string name="quit_confirm_body">ستتوقف المهام الجارية، وستختفي الكبسولة العائمة والإشعارات. افتح Mika مرة أخرى ليعود كل شيء.</string>
+    <string name="quit_confirm_action">إنهاء</string>
 </resources>

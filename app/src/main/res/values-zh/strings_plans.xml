@@ -6,6 +6,7 @@
     <string name="trigger_not_started">定时任务未启动</string>
     <string name="trigger_interrupted_body">定时任务运行中断，结果还不能确认。请先查看实际情况；Mika 不会自动重复操作。</string>
     <string name="trigger_unconfirmed">定时任务结果待确认</string>
+    <string name="trigger_unlock_failed">定时任务无法唤醒或解锁手机。请在下次执行前手动解锁，或在「设置 › 连接电脑」中检查「允许远程亮屏与解锁」及已保存的锁屏凭据。</string>
     <string name="trigger_alarm_title">定时任务需要「闹钟和提醒」权限</string>
     <string name="trigger_alarm_body">没有这个权限,定时任务到点可能不准时,甚至不会启动。点这里去开启。</string>
     <string name="op_failed">操作失败</string>
@@ -39,6 +40,10 @@
     <string name="plans_never_run">还没执行过</string>
     <string name="plans_delivered">已送达</string>
     <string name="plans_unchanged">条件未变化</string>
+    <string name="plans_not_met">条件未满足</string>
+    <string name="plans_cooldown">冷却期内</string>
+    <string name="plans_condition_each">每次满足都执行：%1$s · %2$s</string>
+    <string name="plans_last_value">上次 %1$s · %2$s · %3$s</string>
     <string name="plans_running_now">执行中</string>
     <string name="trigger_deleted">定时任务已删除</string>
     <string name="trigger_busy">这条任务仍在执行</string>

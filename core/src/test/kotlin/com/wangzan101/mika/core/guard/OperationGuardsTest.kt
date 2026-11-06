@@ -86,6 +86,24 @@ class OperationGuardsTest {
         assertNull(recovered.stop)
     }
 
+    @Test fun treeBlindStopNeedsItsOwnEvidenceWithinTheNoEffectRun() {
+        val unrelated = OperationGuards()
+        repeat(2) { assertTrue(unrelated.effect("no_effect").isEmpty()) }
+        val ordinary = unrelated.effect("no_effect", treeBlind = true).single()
+        assertEquals(Severity.Warn, ordinary.severity)
+        assertNull(ordinary.evidence["treeBlind"])
+        assertNull(unrelated.stop)
+
+        // 同一轮无效果里已有两次空树点击,紧接的滚动也没效果时可以在第三次停下;
+        // 单独滚动到底仍只走普通阶梯,不会被当成注入不响应。
+        val mixed = OperationGuards()
+        assertTrue(mixed.effect("no_effect", treeBlind = true).isEmpty())
+        assertEquals(Severity.Warn, mixed.effect("no_effect", treeBlind = true).single().severity)
+        val stopped = mixed.effect("no_effect").single()
+        assertEquals(Severity.Stop, stopped.severity)
+        assertEquals(2, stopped.evidence["treeBlindActions"]!!.jsonPrimitive.int)
+    }
+
     @Test fun backAndForthBetweenTwoStatesDoesNotStopProgress() {
         val g = OperationGuards()
         g.frame("s0", 1L)

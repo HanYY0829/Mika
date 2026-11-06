@@ -6,6 +6,7 @@
     <string name="trigger_not_started">예약 작업이 시작되지 않았어요</string>
     <string name="trigger_interrupted_body">예약 작업이 중단되어 결과를 확인할 수 없어요. 실제로 어떻게 됐는지 먼저 확인하세요. Mika는 자동으로 다시 실행하지 않아요.</string>
     <string name="trigger_unconfirmed">예약 작업 결과를 확인해야 해요</string>
+    <string name="trigger_unlock_failed">예약 작업이 화면을 켜거나 잠금을 해제하지 못했어요. 다음 실행 전에 직접 잠금을 해제하거나, 설정 › 컴퓨터 연결에서 “원격 깨우기 및 잠금 해제 허용”과 저장된 화면 잠금 정보를 확인하세요.</string>
     <string name="trigger_alarm_title">예약 작업에는 “알람 및 리마인더” 권한이 필요해요</string>
     <string name="trigger_alarm_body">권한이 없으면 예약 작업이 늦게 실행되거나 실행되지 않을 수 있어요. 여기를 눌러 켜세요.</string>
     <string name="op_failed">문제가 생겼어요</string>
@@ -39,6 +40,10 @@
     <string name="plans_never_run">아직 실행된 적 없어요</string>
     <string name="plans_delivered">전달됨</string>
     <string name="plans_unchanged">조건 변화 없음</string>
+    <string name="plans_not_met">조건 미충족</string>
+    <string name="plans_cooldown">쿨다운 기간 내</string>
+    <string name="plans_condition_each">조건이 맞을 때마다 실행: %1$s · %2$s</string>
+    <string name="plans_last_value">마지막 %1$s · %2$s · %3$s</string>
     <string name="plans_running_now">실행 중</string>
     <string name="trigger_deleted">예약 작업이 삭제되었어요</string>
     <string name="trigger_busy">이 작업이 아직 실행 중이에요</string>

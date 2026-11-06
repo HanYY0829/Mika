@@ -578,13 +578,15 @@ private fun ModelContextControl(ui: ModelSetupUi, role: ModelRole,
     if (!open) return
     var window by rememberSaveable(cfg.id) { mutableStateOf(saved.windowTokens?.toString().orEmpty()) }
     var trigger by rememberSaveable(cfg.id) { mutableStateOf(saved.triggerTokens?.toString().orEmpty()) }
+    var readTimeout by rememberSaveable(cfg.id) { mutableStateOf(saved.readTimeoutSeconds?.toString().orEmpty()) }
     var saveFailed by remember { mutableStateOf(false) }
     fun positiveInt(text: String) = text.trim().takeIf { it.all { c -> c in '0'..'9' } }?.toIntOrNull()?.takeIf { it > 0 }
-    val settings = ModelContextSettings(positiveInt(window), positiveInt(trigger))
+    val settings = ModelContextSettings(positiveInt(window), positiveInt(trigger), positiveInt(readTimeout))
     val modelWindow = cfg.capabilities.contextTokens
     val limits = settings.limits(modelWindow)
     val badWindow = window.isNotBlank() && settings.windowTokens == null
     val badTrigger = trigger.isNotBlank() && (settings.triggerTokens == null || (!badWindow && settings.triggerTokens != limits.trigger))
+    val badReadTimeout = readTimeout.isNotBlank() && settings.readTimeoutSeconds == null
     val keyboard = KeyboardOptions(keyboardType = KeyboardType.Number)
     MikaDialog(
         onDismissRequest = { open = false },
@@ -609,15 +611,21 @@ private fun ModelContextControl(ui: ModelSetupUi, role: ModelRole,
                             limits.minTrigger.coerceAtLeast(1), limits.usable))
                         else if (badTrigger) Text(stringResource(R.string.model_context_integer))
                     }, isError = badTrigger)
+                OutlinedTextField(readTimeout, { readTimeout = it; saveFailed = false },
+                    modifier = Modifier.fillMaxWidth().testTag("context-read-timeout"), singleLine = true, keyboardOptions = keyboard,
+                    label = { Text(stringResource(R.string.model_context_read_timeout)) },
+                    placeholder = { Text(stringResource(R.string.model_context_auto, 120)) },
+                    supportingText = if (badReadTimeout) ({ Text(stringResource(R.string.model_context_integer)) }) else null,
+                    isError = badReadTimeout)
                 if (!badWindow && (trigger.isBlank() || settings.triggerTokens != null)) Text(stringResource(R.string.model_context_effective, limits.window, limits.trigger),
                     modifier = Modifier.testTag("context-effective"))
-                TextButton(onClick = { window = ""; trigger = ""; saveFailed = false }) { Text(stringResource(R.string.reset)) }
+                TextButton(onClick = { window = ""; trigger = ""; readTimeout = ""; saveFailed = false }) { Text(stringResource(R.string.reset)) }
                 if (saveFailed) Text(stringResource(R.string.model_context_save_failed), color = MikaTheme.colors.bad)
             }
         },
         confirmButton = { TextButton(onClick = {
             if (onSave(cfg.id, settings)) open = false else saveFailed = true
-        }, enabled = !badWindow && !badTrigger, modifier = Modifier.testTag("context-save")) { Text(stringResource(R.string.save)) } },
+        }, enabled = !badWindow && !badTrigger && !badReadTimeout, modifier = Modifier.testTag("context-save")) { Text(stringResource(R.string.save)) } },
         dismissButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.cancel)) } },
     )
 }

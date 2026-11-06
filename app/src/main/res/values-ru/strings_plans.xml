@@ -6,6 +6,7 @@
     <string name="trigger_not_started">Задача по расписанию не запустилась</string>
     <string name="trigger_interrupted_body">Задача по расписанию была прервана, и её результат подтвердить нельзя. Сначала проверьте, что произошло на самом деле; Mika не будет повторять её автоматически.</string>
     <string name="trigger_unconfirmed">Нужно проверить результат задачи по расписанию</string>
+    <string name="trigger_unlock_failed">Задаче по расписанию не удалось пробудить или разблокировать телефон. Разблокируйте его перед следующим запуском или проверьте «Разрешить удалённое пробуждение и разблокировку» и сохранённые данные блокировки экрана в разделе «Настройки › Подключить компьютер».</string>
     <string name="trigger_alarm_title">Для задач по расписанию нужно разрешение «Будильники и напоминания»</string>
     <string name="trigger_alarm_body">Без него задачи по расписанию могут запускаться с опозданием или не запускаться вовсе. Нажмите здесь, чтобы включить его.</string>
     <string name="op_failed">Что-то пошло не так</string>
@@ -42,6 +43,10 @@
     <string name="plans_never_run">Ещё не запускалась</string>
     <string name="plans_delivered">Доставлено</string>
     <string name="plans_unchanged">Условие не изменилось</string>
+    <string name="plans_not_met">Условие не выполнено</string>
+    <string name="plans_cooldown">Интервал ещё не прошёл</string>
+    <string name="plans_condition_each">Запускается каждый раз, когда: %1$s · %2$s</string>
+    <string name="plans_last_value">Последний раз: %1$s · %2$s · %3$s</string>
     <string name="plans_running_now">Выполняется</string>
     <string name="trigger_deleted">Задача по расписанию удалена</string>
     <string name="trigger_busy">Эта задача ещё выполняется</string>

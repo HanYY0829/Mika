@@ -4,6 +4,7 @@
     <string name="model_context_note">تُستخدم القيم التلقائية للحقول الفارغة. تُطبّق الإعدادات في المهمة التالية على جميع الأدوار التي تستخدم هذا المزوّد وهذا النموذج.</string>
     <string name="model_context_window">نافذة السياق (رموز)</string>
     <string name="model_context_trigger">حد بدء ضغط السياق (رموز)</string>
+    <string name="model_context_read_timeout">مهلة القراءة (بالثواني)</string>
     <string name="model_context_auto">تلقائي · %1$d</string>
     <string name="model_context_integer">أدخل عددًا صحيحًا موجبًا.</string>
     <string name="model_context_range">النطاق المسموح (رموز) · %1$d–%2$d</string>

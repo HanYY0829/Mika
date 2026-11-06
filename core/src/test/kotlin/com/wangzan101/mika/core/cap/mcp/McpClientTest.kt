@@ -128,7 +128,7 @@ class McpClientTest {
     @Test fun oneToolAssemblyFailureBecomesDiagnosableToolError() = runBlocking {
         val endpoint = FakeEndpoint()
         val descriptor = endpoint.offered.single()
-        val assembled = assembleMcpTool("mcp:demo", endpoint, descriptor) {
+        val assembled = assembleMcpTool("mcp:demo", endpoint, descriptor, "mcp_demo__search") {
             throw IllegalStateException("schema adapter exploded")
         }
         assertEquals("mcp_demo__search", assembled.tool.name)
@@ -242,5 +242,116 @@ class McpClientTest {
             .judge("mcp_demo__send", buildJsonObject {}, Origin.Model(1))
         assertEquals(Decision.Clear, decision)
         assertEquals(0, endpoint.calls)
+    }
+
+    private class NamedEndpoint(override val serverId: String, names: List<String>) : McpEndpoint {
+        val descriptors = names.map { McpToolDescriptor(it, it, buildJsonObject { put("type", "object") }) }
+        val called = mutableListOf<String>()
+        override fun tools() = descriptors
+        override suspend fun call(name: String, arguments: JsonObject): McpResult {
+            called += name
+            return McpResult("ok")
+        }
+    }
+
+    private fun namesByOriginal(tools: ToolDispatcher): Map<String, String> =
+        tools.definitions().filter { it.name.startsWith("mcp_") }.associate { it.description to it.name }
+
+    private val validName = Regex("^[A-Za-z0-9_]{1,$MCP_TOOL_NAME_MAX}$")
+
+    @Test fun longAndSanitizedNamesStayUniqueAndRouteToOriginalTools() = runBlocking {
+        val uuid = "3f2b6c1e-8d4a-4b7e-9c21-5a6f0e1d2c3b"
+        val originals = listOf(
+            "list_repository_collaborators",
+            "list_allowed_directories",
+            "get-user",
+            "get_user",
+            "查询天气",
+            "搜索新闻",
+            "search",
+        )
+        val endpoint = NamedEndpoint(uuid, originals)
+        val tools = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(endpoint)))
+        val names = namesByOriginal(tools)
+        assertEquals(originals.toSet(), names.keys)
+        assertEquals(originals.size, names.values.toSet().size)
+        assertTrue(names.toString(), names.values.all(validName::matches))
+        assertEquals("mcp_${mcpSafe(uuid)}__search", names["search"])
+        assertEquals("mcp_demo__get_user_186aa1ca", mcpToolName("demo", "get-user", short = true))
+        assertEquals(MCP_TOOL_NAME_MAX, mcpToolName(uuid, "a".repeat(100)).length)
+        for (original in originals) {
+            val result = tools.execute(Part.ToolCall("call-$original", names.getValue(original), "{}"), ActionPass())
+            assertEquals(JsonPrimitive(true), result.content["ok"])
+        }
+        assertEquals(originals, endpoint.called)
+    }
+
+    @Test fun aPlainNameOccupyingAGeneratedShortNameDoesNotBreakRegistration() = runBlocking {
+        val occupied = "get_user_186aa1ca"
+        val originals = listOf("get-user", "get_user", occupied)
+        fun create(listed: List<String>) = toolDispatcher(
+            FakeScreen(),
+            mcpServers = listOf(McpConnection(NamedEndpoint("demo", listed))),
+        )
+        val tools = create(originals)
+        val names = namesByOriginal(tools)
+        assertEquals(3, names.values.toSet().size)
+        assertTrue(names.toString(), names.values.all(validName::matches))
+        assertEquals("mcp_demo__$occupied", names[occupied])
+        assertEquals(names, namesByOriginal(create(originals.reversed())))
+        for (original in originals) {
+            assertEquals(JsonPrimitive(true), tools.execute(
+                Part.ToolCall("call-$original", names.getValue(original), "{}"), ActionPass(),
+            ).content["ok"])
+        }
+    }
+
+    @Test fun aPlainNameOccupyingALongToolsShortNameAlsoGetsResolved() {
+        val long = "a".repeat(100)
+        val occupied = mcpToolName("demo", long).removePrefix("mcp_demo__")
+        val originals = listOf(long, occupied)
+        val names = mcpToolNames("demo", originals)
+        assertEquals(2, names.toSet().size)
+        assertTrue(names.all(validName::matches))
+        assertEquals(mcpToolName("demo", occupied), names[1])
+        assertEquals(names, mcpToolNames("demo", originals.reversed()).reversed())
+    }
+
+    @Test fun syntheticToolsShareTheSameUniqueNamespace() {
+        val endpoint = object : McpEndpoint {
+            override val serverId = "demo"
+            private val originals = listOf("get-user", "get_user", "get_user_186aa1ca")
+            override fun tools() = originals.map {
+                McpToolDescriptor(it, it, buildJsonObject { put("type", "object") })
+            }
+            override suspend fun call(name: String, arguments: JsonObject) = McpResult("ok")
+            override fun resources() = listOf(McpResourceDescriptor("file://a", "A"))
+            override fun prompts() = listOf(McpPromptDescriptor("summarize", "Summarize"))
+        }
+        val definitions = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(endpoint)))
+            .definitions().filter { it.name.startsWith("mcp_") }
+        assertEquals(5, definitions.size)
+        assertEquals(5, definitions.map { it.name }.toSet().size)
+        assertTrue("mcp_demo__resource_read" in definitions.map { it.name })
+        assertTrue("mcp_demo__prompt_get" in definitions.map { it.name })
+    }
+
+    @Test fun duplicateListingsKeepTheFirstDeclarationAndReportDegradation() {
+        fun descriptor(name: String, description: String) =
+            McpToolDescriptor(name, description, buildJsonObject { put("type", "object") })
+        val endpoint = FakeEndpoint().apply {
+            offered = listOf(
+                descriptor("search", "first"),
+                descriptor("search", "second"),
+                descriptor("write", "Write"),
+                descriptor("search", "third"),
+            )
+        }
+        val tools = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(endpoint)))
+        val definitions = tools.definitions().filter { it.name.startsWith("mcp_") }
+        assertEquals(listOf("mcp_demo__search", "mcp_demo__write"), definitions.map { it.name })
+        assertEquals("first", definitions.first().description)
+        val diagnostics = tools.promptSections(tools.definitions()).joinToString("\n")
+        assertTrue(diagnostics, "'search': listed 3 times, only the first is used" in diagnostics)
     }
 }

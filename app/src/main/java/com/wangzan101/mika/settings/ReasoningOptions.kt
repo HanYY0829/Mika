@@ -14,7 +14,12 @@ data class ReasoningOptions(val levels: List<String>, val fromProvider: Boolean)
         private val manualLevels = listOf("none", "minimal", "low", "medium", "high", "xhigh", "max")
 
         fun of(config: ProviderConfig, listed: ListedModel?): ReasoningOptions? {
-            listed?.reasoningEfforts?.let { return ReasoningOptions(it, fromProvider = true) }
+            listed?.reasoningEfforts?.let { declared ->
+                // 套餐接口的模型目录曾把服务端不接受的 ultra 列为可选。目录也是外部输入:
+                // 这一条接入只展示请求层真正认识的档位,不能让坏元数据把每次调用都变成 HTTP 400。
+                val levels = if (config.kind == ProviderConfig.Kind.ChatGpt) declared.filter(manualLevels::contains) else declared
+                return ReasoningOptions(levels, fromProvider = true)
+            }
             // 仍返回空选项,使已保存的旧档位能在界面恢复默认。
             if (listed?.reasoning == false) return ReasoningOptions(emptyList(), fromProvider = true)
             return when (ProviderStore.adapterFor(config, listed?.endpoint).first) {

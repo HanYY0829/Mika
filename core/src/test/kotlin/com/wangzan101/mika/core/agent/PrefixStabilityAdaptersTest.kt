@@ -87,7 +87,7 @@ class PrefixStabilityAdaptersTest {
         )
         override val keys = setOf("instructions", "tools", "input")
         override val replay = "ENC"
-        override val compactions = listOf(12, 22)
+        override val compactions = listOf(12, 21, 30)
         override fun zone0(body: JsonObject) = body["instructions"].toString() + body["tools"]
         override fun messages(body: JsonObject) = body["input"]!!.jsonArray.map { it.toString() }
         override fun tools(body: JsonObject) = body["tools"]!!.jsonArray.map { it.toString() to it.jsonObject.str("name")!! }

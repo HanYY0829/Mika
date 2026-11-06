@@ -32,6 +32,7 @@
     <string name="task_waiting_display">待機中: 別のタスクが終わってから始まります</string>
     <string name="task_no_phone_helper">スマホの操作の準備ができていません。Mika で「スマホの操作を設定」を済ませてください。ウェブとファイルのタスクには影響しません。</string>
     <string name="task_no_a11y">Mika のユーザー補助サービスがオフです。システム設定の「ユーザー補助」で Mika をオンにしてください。</string>
+    <string name="task_a11y_not_running">Mika のユーザー補助サービスは有効ですが、Android がまだ接続していません。システム設定の「ユーザー補助」で Mika を一度オフにしてから、もう一度オンにしてください。Android にブロックされる場合は、先に Mika のアプリ情報で「制限された設定」を許可してください。</string>
     <string name="task_error">タスクのエラー: %1$s</string>
     <string name="task_app_blocked">「%1$s」は無効になっているため、Mika は読み取りも操作もできません。「設定 › アプリのアクセス」で許可してから、もう一度お試しください。</string>
     <string name="task_app_this_app">このアプリ</string>

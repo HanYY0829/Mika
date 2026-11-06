@@ -95,12 +95,13 @@ class RunRecovery(
                     tr(R.string.recover_maybe_delivered)))
             }
         } else {
+            val said = run.userText ?: run.goal
             val turnId = "interrupted:${run.id.value}"
             if (conversations.turns(run.threadId).none { it.runId == turnId }) {
-                conversations.append(run.threadId, Turn(run.goal, tr(R.string.recover_interrupted_turn), "failed", runId = turnId))
+                conversations.append(run.threadId, Turn(said, tr(R.string.recover_interrupted_turn), "failed", runId = turnId))
             }
             outbox.deliver(channel, peer, Delivery.Notice(turnId, run.threadId,
-                tr(R.string.recover_interrupted, run.goal.take(40))))
+                tr(R.string.recover_interrupted, said.take(40))))
         }
     }
 

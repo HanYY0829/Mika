@@ -19,7 +19,7 @@ data class TriggerDefinition(
     val enabled: Boolean = true,
     /** 到点后只在没有前台任务时执行；忙时看门狗稍后重查。 */
     val idleOnly: Boolean = false,
-    /** 上一次有效检查是否满足条件；用于只在状态变化时执行动作。 */
+    /** 上一次有效检查是否满足条件(冷却期内跳过的那次不算);用于只在状态变化时执行动作。 */
     val lastConditionMet: Boolean? = null,
     /** 固定提醒原文；非空时到点直接送达，不启动模型。 */
     val reminderText: String? = null,
@@ -27,11 +27,23 @@ data class TriggerDefinition(
     val calendarTime: String? = null,
     val calendarZone: String? = null,
     val calendarDays: List<Int> = emptyList(),
+    /** 有条件时:只在条件刚满足时执行(默认),或每次检查满足都执行。 */
+    val notifyWhen: ConditionNotify = ConditionNotify.BecomesMet,
+    /** 两次派发动作之间至少隔这么久;冷却期内满足的推迟到冷却结束后再算。 */
+    val cooldownMs: Long? = null,
+    /** 最近一次有效检查记下的关键值。 */
+    val lastValue: String? = null,
+    /** 比较基准:上次派发动作时的值;从没派发过时是第一次检查到的值。 */
+    val baselineValue: String? = null,
+    val baselineAtMs: Long? = null,
+    /** 上次因条件满足而派发动作的那次检查的计划时间,冷却从这里算。 */
+    val lastFiredAtMs: Long? = null,
 ) {
     init {
         require(id.isNotBlank() && threadId.isNotBlank() && goal.isNotBlank())
         require(nextAtMs >= 0 && (intervalMs == null || intervalMs > 0))
         require(calendarTime == null || (intervalMs == null && calendarZone != null && calendarDays.all { it in 1..7 }))
+        require(cooldownMs == null || cooldownMs > 0)
     }
 }
 

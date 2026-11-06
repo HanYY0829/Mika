@@ -6,6 +6,7 @@
     <string name="trigger_not_started">La tarea programada no se inició</string>
     <string name="trigger_interrupted_body">Una tarea programada se interrumpió y no se puede confirmar su resultado. Comprueba primero qué pasó en realidad; Mika no la repetirá automáticamente.</string>
     <string name="trigger_unconfirmed">Hay que revisar el resultado de una tarea programada</string>
+    <string name="trigger_unlock_failed">La tarea programada no pudo activar ni desbloquear el teléfono. Desbloquéalo antes de la próxima ejecución o revisa «Permitir activación y desbloqueo remotos» y la credencial del bloqueo de pantalla guardada en Ajustes › Conectar un ordenador.</string>
     <string name="trigger_alarm_title">Las tareas programadas necesitan el permiso “Alarmas y recordatorios”</string>
     <string name="trigger_alarm_body">Sin él, las tareas programadas pueden ejecutarse tarde o no ejecutarse. Toca aquí para activarlo.</string>
     <string name="op_failed">Algo salió mal</string>
@@ -41,6 +42,10 @@
     <string name="plans_never_run">Aún no se ha ejecutado</string>
     <string name="plans_delivered">Entregada</string>
     <string name="plans_unchanged">La condición no cambió</string>
+    <string name="plans_not_met">La condición no se cumplió</string>
+    <string name="plans_cooldown">Dentro del intervalo mínimo</string>
+    <string name="plans_condition_each">Se ejecuta cada vez que: %1$s · %2$s</string>
+    <string name="plans_last_value">Última %1$s · %2$s · %3$s</string>
     <string name="plans_running_now">En ejecución</string>
     <string name="trigger_deleted">Se eliminó la tarea programada</string>
     <string name="trigger_busy">Esta tarea sigue en ejecución</string>

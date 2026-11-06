@@ -6,6 +6,7 @@
     <string name="trigger_not_started">Tugas terjadwal tidak dimulai</string>
     <string name="trigger_interrupted_body">Tugas terjadwal terhenti dan hasilnya tidak bisa dipastikan. Periksa dulu apa yang sebenarnya terjadi; Mika tidak akan mengulanginya otomatis.</string>
     <string name="trigger_unconfirmed">Hasil tugas terjadwal perlu diperiksa</string>
+    <string name="trigger_unlock_failed">Tugas terjadwal tidak dapat membangunkan atau membuka kunci ponsel. Buka kunci sebelum eksekusi berikutnya, atau periksa “Izinkan bangun dan buka kunci jarak jauh” serta kredensial kunci layar tersimpan di Setelan › Hubungkan komputer.</string>
     <string name="trigger_alarm_title">Tugas terjadwal memerlukan izin “Alarm &amp; pengingat”</string>
     <string name="trigger_alarm_body">Tanpanya, tugas terjadwal bisa terlambat atau tidak berjalan sama sekali. Ketuk di sini untuk mengaktifkannya.</string>
     <string name="op_failed">Terjadi kesalahan</string>
@@ -39,6 +40,10 @@
     <string name="plans_never_run">Belum pernah berjalan</string>
     <string name="plans_delivered">Terkirim</string>
     <string name="plans_unchanged">Kondisi tidak berubah</string>
+    <string name="plans_not_met">Kondisi tidak terpenuhi</string>
+    <string name="plans_cooldown">Dalam masa tunggu</string>
+    <string name="plans_condition_each">Berjalan setiap kali terpenuhi: %1$s · %2$s</string>
+    <string name="plans_last_value">Terakhir %1$s · %2$s · %3$s</string>
     <string name="plans_running_now">Berjalan</string>
     <string name="trigger_deleted">Tugas terjadwal sudah dihapus</string>
     <string name="trigger_busy">Tugas ini masih berjalan</string>

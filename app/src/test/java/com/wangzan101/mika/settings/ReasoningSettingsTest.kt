@@ -177,7 +177,7 @@ class ReasoningSettingsTest {
         assertNull(ReasoningOptions.of(old.configFor(ModelRole.Main)!!, oldListed))
     }
 
-    @Test fun metadataRefreshKeepsTheSavedChoiceButAllowsResettingAnUnavailableLevel() {
+    @Test fun metadataRefreshDropsAnUnavailableChoiceAndUsesServerDefault() {
         val s = store()
         val p = connected(s)
         s.use(ModelRole.Main, p.id, "m", caps)
@@ -185,9 +185,27 @@ class ReasoningSettingsTest {
         s.connect("Responses", ProviderConfig.Kind.OpenAiResponses, "https://example.test/v1", "k",
             listOf(ListedModel("m", reasoning = false)))
         val reloaded = store()
-        assertEquals("high", reloaded.roles.value.reasoningEffort(ModelRole.Main))
+        assertNull(reloaded.roles.value.reasoningEffort(ModelRole.Main))
         assertFalse(reloaded.setReasoningEffort(ModelRole.Main, "high"))
         assertTrue(reloaded.setReasoningEffort(ModelRole.Main, null))
+        reloaded.modelFor(ModelRole.Main)
+        assertNull(setups.last().reasoningEffort)
+    }
+
+    @Test fun chatGptCatalogCannotIntroduceUltraAndAnOldUltraChoiceFallsBackToDefault() {
+        val s = store()
+        val p = s.connect("ChatGPT", ProviderConfig.Kind.ChatGpt, "https://example.test/v1", "k",
+            listOf(ListedModel("m", reasoningEfforts = listOf("low", "ultra", "max"))))
+        s.use(ModelRole.Main, p.id, "m", caps)
+        val listed = s.provider(p.id)!!.models!!.single()
+        assertEquals(listOf("low", "max"), ReasoningOptions.of(s.configFor(ModelRole.Main)!!, listed)!!.levels)
+        assertFalse(s.setReasoningEffort(ModelRole.Main, "ultra"))
+        assertTrue(s.setReasoningEffort(ModelRole.Main, "low"))
+        // 模拟旧版本已经落盘的 ultra:读入时清掉,不能继续发出去让每次调用都 HTTP 400。
+        val file = tmp.root.resolve("providers.json")
+        file.writeText(file.readText().replace("\"reasoningEffort\":\"low\"", "\"reasoningEffort\":\"ultra\""))
+        val reloaded = store()
+        assertNull(reloaded.roles.value.reasoningEffort(ModelRole.Main))
         reloaded.modelFor(ModelRole.Main)
         assertNull(setups.last().reasoningEffort)
     }

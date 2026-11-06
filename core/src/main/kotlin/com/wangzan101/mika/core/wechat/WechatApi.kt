@@ -1,5 +1,6 @@
 package com.wangzan101.mika.core.wechat
 
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -10,13 +11,18 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import java.io.IOException
 import java.util.Base64
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.random.Random
 
 private const val DEFAULT_BASE_URL = "https://ilinkai.weixin.qq.com"
@@ -137,9 +143,17 @@ class WechatApi(
         return execute(Request.Builder().url(url).headers(headers()).get().build(), WechatQrStatus.serializer())
     }
 
-    fun updates(account: WechatAccount, cursor: String): WechatUpdates {
+    fun updates(account: WechatAccount, cursor: String): WechatUpdates =
+        execute(updatesRequest(account, cursor), WechatUpdates.serializer())
+
+    /** 长轮询随调用协程取消，避免停止或换账号后旧请求继续与新请求并行。 */
+    suspend fun updatesCancellable(account: WechatAccount, cursor: String): WechatUpdates =
+        executeCancellable(updatesRequest(account, cursor), WechatUpdates.serializer())
+
+    private fun updatesRequest(account: WechatAccount, cursor: String): Request {
         val body = UpdatesRequest(cursor, WechatBaseInfo(channelVersion))
-        return post(account, "getupdates", body, UpdatesRequest.serializer(), WechatUpdates.serializer())
+        val payload = json.encodeToString(UpdatesRequest.serializer(), body).toRequestBody(jsonBody)
+        return Request.Builder().url(endpoint(account.baseUrl, "getupdates")).headers(headers(account.token)).post(payload).build()
     }
 
     fun sendText(account: WechatAccount, peerId: String, clientId: String, text: String, contextToken: String?) {
@@ -157,21 +171,44 @@ class WechatApi(
         return execute(request, responseSerializer)
     }
 
-    private fun <T> execute(request: Request, serializer: kotlinx.serialization.DeserializationStrategy<T>): T {
-        client.newCall(request).execute().use { response ->
-            val text = response.body?.string().orEmpty()
-            if (!response.isSuccessful) throw WechatHttpException(response.code)
-            if (text.isBlank()) throw IOException("WeChat returned an empty response")
-            val result = json.decodeFromString(serializer, text)
-            val (code, message) = when (result) {
-                is WechatQrStart -> result.ret to result.errmsg
-                is WechatQrStatus -> result.ret to result.errmsg
-                is WechatUpdates -> result.ret to result.errmsg
-                else -> 0 to null
+    private fun <T> execute(request: Request, serializer: kotlinx.serialization.DeserializationStrategy<T>): T =
+        client.newCall(request).execute().use { response -> decode(response, serializer) }
+
+    private suspend fun <T> executeCancellable(request: Request,
+        serializer: kotlinx.serialization.DeserializationStrategy<T>): T = suspendCancellableCoroutine { continuation ->
+        val call = client.newCall(request)
+        continuation.invokeOnCancellation { call.cancel() }
+        call.enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                if (continuation.isActive) continuation.resumeWithException(e)
             }
-            if (code != 0) throw WechatApiException(code, message ?: "WeChat API error $code")
-            return result
+
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+                    try {
+                        val result = decode(it, serializer)
+                        if (continuation.isActive) continuation.resume(result)
+                    } catch (e: Exception) {
+                        if (continuation.isActive) continuation.resumeWithException(e)
+                    }
+                }
+            }
+        })
+    }
+
+    private fun <T> decode(response: Response, serializer: kotlinx.serialization.DeserializationStrategy<T>): T {
+        val text = response.body?.string().orEmpty()
+        if (!response.isSuccessful) throw WechatHttpException(response.code)
+        if (text.isBlank()) throw IOException("WeChat returned an empty response")
+        val result = json.decodeFromString(serializer, text)
+        val (code, message) = when (result) {
+            is WechatQrStart -> result.ret to result.errmsg
+            is WechatQrStatus -> result.ret to result.errmsg
+            is WechatUpdates -> result.ret to result.errmsg
+            else -> 0 to null
         }
+        if (code != 0) throw WechatApiException(code, message ?: "WeChat API error $code")
+        return result
     }
 
     private fun endpoint(base: String, path: String) =

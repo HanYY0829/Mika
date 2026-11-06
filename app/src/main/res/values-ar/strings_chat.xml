@@ -14,6 +14,7 @@
     <string name="chat_example_ai_apps">اعثر على تطبيقات الذكاء الاصطناعي المثبتة على هاتفي، واسأل كلًّا منها عمّا يتقنه، ثم قارن إجاباتها.</string>
     <string name="chat_working_on">جارٍ العمل على %1$s</string>
     <string name="chat_working">جارٍ العمل</string>
+    <string name="share_draft_failed">تعذّرت إضافة المحتوى المشارَك إلى محادثة جديدة</string>
     <string name="chat_wait_previous_task">سيبدأ بعد اكتمال المهمة السابقة</string>
     <string name="chat_wait_unlock">بانتظار إلغاء قفل الهاتف</string>
     <string name="chat_waiting_for_you">بانتظارك</string>
@@ -83,10 +84,10 @@
     <string name="chat_unverified_because">اكتمل، لكن تعذّر التحقق: %1$s</string>
     <string name="chat_wait_answer">بانتظار إجابتك</string>
     <string name="chat_wait_approval">بانتظار موافقتك</string>
-    <string name="steer_received">تم — الخطوة التالية</string>
+    <string name="steer_received">تم الاستلام — ستعدّل الخطوة التالية المهمة الحالية</string>
     <string name="steer_joined">أُضيفت إلى المهمة الحالية</string>
     <string name="steer_interrupted_reply">قوطعت رسالتك</string>
-    <string name="steer_next">أُضيفت إلى قائمة انتظار المهمة التالية</string>
+    <string name="steer_next">انتهت المهمة الحالية؛ أُضيفت إلى قائمة الانتظار كمهمة تالية</string>
     <string name="steer_cancelled">أُلغيت</string>
     <plurals name="chat_steps_done">
         <item quantity="zero">لا توجد خطوات (%1$d)</item>
@@ -175,7 +176,23 @@
     <string name="chat_edit_message">تعديل الرسالة</string>
     <string name="chat_withdraw_message">سحب الرسالة</string>
     <string name="pip_close">إغلاق العرض المصغّر لهذه المهمة</string>
+    <string name="pip_unmute">إرجاع الصوت</string>
     <string name="pip_reopen">عرض الشاشة</string>
     <string name="pip_closed_needs_you">تتطلب تدخّلك</string>
     <string name="pip_closed_hint">أُغلقت لهذه المهمة. انقر على «عرض الشاشة» أسفل اليمين، أو افتح «الشاشات في الخلفية» من القائمة الجانبية.</string>
+    <string name="follow_up_steer">توجيه</string>
+    <string name="follow_up_queue">انتظار</string>
+    <string name="follow_up_steer_hint">ستعدّل الخطوة التالية المهمة الحالية</string>
+    <string name="follow_up_steer_hint_paused">المهمة متوقفة مؤقتًا؛ سيسري هذا عند متابعتها</string>
+    <string name="follow_up_steer_hint_queued">سيسري هذا عند بدء المهمة</string>
+    <string name="follow_up_queue_hint">تبدأ بعد انتهاء المهمة الحالية</string>
+    <string name="follow_up_count">في الانتظار · %1$d</string>
+    <string name="follow_up_edit">تعديل</string>
+    <string name="follow_up_cancel">إلغاء</string>
+    <string name="follow_up_start_now">ابدأ الآن</string>
+    <string name="follow_up_idle_hint">ستعمل واحدة تلو الأخرى عند بدء مهمة</string>
+    <string name="follow_up_already_started">بدأت هذه المهمة بالفعل؛ أوقفها مباشرة إذا لزم</string>
+    <string name="chat_placeholder_queue">اكتب المهمة التالية…</string>
+    <string name="voice_placeholder_queue">تحدّث عن المهمة التالية…</string>
+    <string name="steer_received_paused">تم الاستلام — سيُستخدم عند متابعة المهمة</string>
 </resources>

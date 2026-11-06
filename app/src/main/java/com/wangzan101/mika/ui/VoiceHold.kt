@@ -564,12 +564,12 @@ internal fun VoiceConverting(modifier: Modifier = Modifier) {
     }
 }
 
-/** 能按住说话时的灰字：在可用输入区域里居中，不额外放话筒图标。 */
+/** 能按住说话时的灰字：在可用输入区域里居中；[followUp] 决定任务在跑时说「插话」还是「排下一件」。 */
 @Composable
-internal fun VoicePlaceholder(mode: ComposerMode, modifier: Modifier = Modifier) {
+internal fun VoicePlaceholder(mode: ComposerMode, followUp: FollowUpMode = FollowUpMode.Steer, modifier: Modifier = Modifier) {
     val c = MikaTheme.colors
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-        Text(ChatCopy.voicePlaceholder(mode), style = MikaType.Body, color = c.ink3, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(ChatCopy.voicePlaceholder(mode, followUp), style = MikaType.Body, color = c.ink3, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

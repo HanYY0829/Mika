@@ -63,4 +63,6 @@
     <string name="mcp_cli_network_sub">احفظ الرمز في ملف خاص على الكمبيوتر، ثم استبدل /path/to/token في الأمر بمسار ذلك الملف. إذا كنت تستخدم Skill فقط، فاطلب من الوكيل استخدام العميل المرفق بها.</string>
     <string name="mcp_copy_token">نسخ الرمز</string>
     <string name="mcp_cli_connection_check">يتحقق connect من الاتصال. يؤدي نجاح الطلب إلى تحديث الوقت أعلاه.</string>
+    <string name="mcp_history_title">السماح بعرض السجل</string>
+    <string name="mcp_history_detail">السماح لأجهزة الكمبيوتر الموثقة عبر USB والشبكة الخاصة بقراءة المحادثات والتتبع التفصيلي. الإعداد متوقف افتراضيًا.</string>
 </resources>

@@ -34,6 +34,7 @@
     <string name="task_waiting_display">Na fila: começa quando a outra tarefa terminar</string>
     <string name="task_no_phone_helper">O controle do celular não está pronto. Conclua “Configurar o controle do celular” no Mika. Tarefas de web e de arquivos não são afetadas.</string>
     <string name="task_no_a11y">O serviço de acessibilidade do Mika está desativado. Ative o Mika em Acessibilidade nas configurações do sistema.</string>
+    <string name="task_a11y_not_running">O serviço de acessibilidade do Mika está ativado, mas o Android ainda não se conectou a ele. Desative o Mika e ative-o novamente em Acessibilidade nas configurações do sistema. Se o Android impedir isso, permita primeiro as configurações restritas nas informações do Mika.</string>
     <string name="task_error">Erro na tarefa: %1$s</string>
     <string name="task_app_blocked">“%1$s” está desativado, então o Mika não pode lê-lo nem operá-lo. Permita-o em Configurações › Acesso a apps e tente de novo.</string>
     <string name="task_app_this_app">Este app</string>

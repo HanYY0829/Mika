@@ -36,6 +36,8 @@ class FileRunStateStore(private val file: File) : RunStore {
                     o["runSucceeded"]?.jsonPrimitive?.contentOrNull?.toBooleanStrictOrNull(),
                     channelPeer(o),
                     o["channelMessageId"]?.jsonPrimitive?.contentOrNull,
+                    o["userText"]?.jsonPrimitive?.contentOrNull,
+                    o["followUpId"]?.jsonPrimitive?.contentOrNull,
                 )
             }
         }.onFailure {
@@ -59,6 +61,8 @@ class FileRunStateStore(private val file: File) : RunStore {
                 put("channelId", peer.channelId); put("peerId", peer.peerId); put("threadId", peer.threadId)
             }) }
             put("channelMessageId", r.channelMessageId)
+            put("userText", r.userText)
+            put("followUpId", r.followUpId)
         } }).toString()
         val temp = File(file.parentFile, file.name + ".tmp")
         FileOutputStream(temp).use { out -> out.write(json.toByteArray(Charsets.UTF_8)); out.fd.sync() }

@@ -34,6 +34,7 @@
     <string name="task_waiting_display">En cola: empieza cuando termine la otra tarea</string>
     <string name="task_no_phone_helper">El control del teléfono no está listo. Termina “Configurar el control del teléfono” en Mika. Las tareas web y de archivos no se ven afectadas.</string>
     <string name="task_no_a11y">El servicio de accesibilidad de Mika está desactivado. Activa Mika en Accesibilidad, en los ajustes del sistema.</string>
+    <string name="task_a11y_not_running">El servicio de accesibilidad de Mika está activado, pero Android no se ha conectado a él. Desactiva Mika y vuelve a activarlo en Accesibilidad, en los ajustes del sistema. Si Android lo impide, permite primero los ajustes restringidos en la información de Mika.</string>
     <string name="task_error">Error en la tarea: %1$s</string>
     <string name="task_app_blocked">“%1$s” está desactivada, así que Mika no puede leerla ni manejarla. Permítela en Ajustes › Acceso a apps e inténtalo de nuevo.</string>
     <string name="task_app_this_app">Esta app</string>

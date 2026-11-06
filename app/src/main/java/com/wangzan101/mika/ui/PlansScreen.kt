@@ -25,6 +25,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.wangzan101.mika.core.trigger.CONDITION_COOLDOWN
+import com.wangzan101.mika.core.trigger.CONDITION_NOT_MET
+import com.wangzan101.mika.core.trigger.ConditionNotify
 import com.wangzan101.mika.core.trigger.TriggerDefinition
 import com.wangzan101.mika.core.trigger.TriggerWindow
 import com.wangzan101.mika.core.trigger.TriggerWindowState
@@ -183,14 +186,16 @@ private fun PlanRow(plan: TriggerDefinition, last: TriggerWindow?, first: Boolea
         else -> tr(R.string.plans_once)
     }
     val when_ = if (plan.enabled) tr(R.string.plans_next, repeat, formatPlanTime(plan.nextAtMs)) else "$repeat · $status"
-    val subtitle = plan.conditionGoal?.let { tr(R.string.plans_condition, it, when_) } ?: when_
+    val subtitle = plan.conditionGoal?.let {
+        tr(if (plan.notifyWhen == ConditionNotify.EachTimeMet) R.string.plans_condition_each else R.string.plans_condition, it, when_)
+    } ?: when_
     val c = MikaTheme.colors
     val delivered = last?.state == TriggerWindowState.Delivered
     // 一次性的任务做完后不能再打开;循环的和从没跑过的可以
     val canToggle = plan.enabled || plan.intervalMs != null || plan.calendarTime != null || last == null
     ListRow(
         null, plan.reminderText ?: plan.goal, subtitle, first = first,
-        detail = last?.let { tr(R.string.plans_last, formatPlanTime(it.dueAtMs), windowLabel(it.state)) } ?: tr(R.string.plans_never_run),
+        detail = last?.let { lastResult(plan, it) } ?: tr(R.string.plans_never_run),
         detailColor = if (delivered) c.ok else c.ink3,
         onClick = onClick,
     ) { MikaSwitch(plan.enabled, onToggle, enabled = canToggle) }
@@ -198,9 +203,20 @@ private fun PlanRow(plan: TriggerDefinition, last: TriggerWindow?, first: Boolea
 
 private val PLAN_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 private fun formatPlanTime(ms: Long): String = PLAN_TIME.format(Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()))
-private fun windowLabel(state: TriggerWindowState): String = when (state) {
+/** 上次结果:时间、结果;那次检查记下了值时一起显示(检查失败、结果未知的那一次没有值,不拿更早的充数)。 */
+private fun lastResult(plan: TriggerDefinition, w: TriggerWindow): String {
+    val value = plan.lastValue?.takeIf { w.state in setOf(TriggerWindowState.Skipped, TriggerWindowState.ActionDispatched, TriggerWindowState.Delivered) }
+    return if (value != null) tr(R.string.plans_last_value, formatPlanTime(w.dueAtMs), windowLabel(w), value)
+    else tr(R.string.plans_last, formatPlanTime(w.dueAtMs), windowLabel(w))
+}
+
+private fun windowLabel(w: TriggerWindow): String = when (w.state) {
     TriggerWindowState.Delivered -> tr(R.string.plans_delivered)
-    TriggerWindowState.Skipped -> tr(R.string.plans_unchanged)
+    TriggerWindowState.Skipped -> when (w.reason) {
+        CONDITION_NOT_MET -> tr(R.string.plans_not_met)
+        CONDITION_COOLDOWN -> tr(R.string.plans_cooldown)
+        else -> tr(R.string.plans_unchanged)
+    }
     TriggerWindowState.Failed -> tr(R.string.plans_check_failed)
     TriggerWindowState.Unknown -> tr(R.string.plans_result_pending)
     TriggerWindowState.Claimed, TriggerWindowState.Dispatched, TriggerWindowState.ActionDispatched -> tr(R.string.plans_running_now)

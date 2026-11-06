@@ -35,7 +35,8 @@
     <string name="metrics_output_tokens">رموز الإخراج</string>
     <string name="usage_cached">إصابات ذاكرة التخزين المؤقت</string>
     <string name="metrics_no_usage">لم يُبلّغ عن الاستخدام</string>
-    <string name="metrics_all_calls">كل طلبات النموذج</string>
+    <string name="metrics_all_calls">كل استدعاءات النموذج المنطقية</string>
+    <string name="metrics_all_http_calls">كل طلبات HTTP</string>
     <plurals name="metrics_all_calls_value">
         <item quantity="zero">%1$d (يشمل الطلبات الجانبية وإعادات المحاولة)</item>
         <item quantity="one">%1$d (يشمل الطلبات الجانبية وإعادات المحاولة)</item>

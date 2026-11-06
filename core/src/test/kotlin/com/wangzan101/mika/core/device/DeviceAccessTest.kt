@@ -29,6 +29,7 @@ class DeviceAccessTest {
         var current = DeviceState(false, true, true, true, true, true)
         var wakes = 0
         var dismisses = 0
+        var reveals = 0
         var entries = 0
         var inputWorks = true
         var readyTarget = true
@@ -45,6 +46,7 @@ class DeviceAccessTest {
             if (!current.secure) current = current.copy(keyguardShowing = false, deviceLocked = false)
             return true
         }
+        override suspend fun revealCredential(): Boolean { reveals++; return true }
         override suspend fun credentialReady(kind: CredentialKind): Boolean { targetHook(); return readyTarget && (visibleKind == null || visibleKind == kind) }
         override suspend fun enter(credential: DeviceCredential): Boolean {
             entries++
@@ -168,6 +170,44 @@ class DeviceAccessTest {
         assertEquals(0, p.entries)
         assertFalse(s.attemptBlocked)
         assertTrue(s.last!!.value.all { it == '\u0000' })
+    }
+
+    @Test fun secureKeyguardGetsOneGenericRevealBeforeReportingUnsupported() = runTest {
+        val p = Port().apply { readyTarget = false }
+        val s = Store()
+        val d = DeviceAccess(p, s, 10, 30)
+        assertEquals("unsupported_keyguard", d.unlock().status)
+        assertEquals(1, p.reveals)
+        assertEquals(0, p.entries)
+        // 下一次明确调用是新的一次解锁流程,可以重新导航;同一次绝不反复滑。
+        assertEquals("unsupported_keyguard", d.unlock().status)
+        assertEquals(2, p.reveals)
+        assertFalse(s.attemptBlocked)
+    }
+
+    @Test fun revealCanExposeTheAlreadyStoredCredentialKind() = runTest {
+        val p = Port().apply {
+            readyTarget = false
+            targetHook = { if (reveals > 0) readyTarget = true }
+        }
+        val s = Store()
+        assertEquals("unlocked", DeviceAccess(p, s, 10, 50).unlock().status)
+        assertEquals(1, p.reveals)
+        assertEquals(1, p.entries)
+        assertFalse(s.attemptBlocked)
+    }
+
+    @Test fun readyOrManuallyUnlockedKeyguardIsNotNeedlesslySwiped() = runTest {
+        val ready = Port()
+        assertEquals("unlocked", DeviceAccess(ready, Store(), 10, 30).unlock().status)
+        assertEquals(0, ready.reveals)
+        val manual = Port().apply {
+            readyTarget = false
+            targetHook = { current = current.copy(keyguardShowing = false, deviceLocked = false) }
+        }
+        assertEquals("unlocked", DeviceAccess(manual, Store(), 10, 30).unlock().status)
+        assertEquals(0, manual.reveals)
+        assertEquals(0, manual.entries)
     }
 
     @Test fun concurrentRequestsSubmitTheCredentialOnlyOnce() = runTest {

@@ -149,13 +149,15 @@ class TaskRegistryTest {
 
     @Test fun messagesAtFinishingBoundaryAreKeptInOrder() {
         val run = (registry.tryStart("thread", "原来的") as StartResult.Started).run
-        assertFalse(registry.deferOrStart("thread", "first"))
-        assertFalse(registry.deferOrStart("thread", "second"))
+        assertFalse(registry.deferOrStart("thread", "first", "id-1"))
+        assertFalse(registry.deferOrStart("thread", "second", "id-2"))
         // 对话还有任务:不交出
-        assertEquals(emptyList<Pair<String, String>>(), registry.takeReady())
+        assertEquals(emptyList<QueuedFollowUp>(), registry.takeReady())
         registry.onEnded(run)
-        assertEquals(listOf("thread" to "first", "thread" to "second"), registry.takeReady())
-        assertEquals(emptyList<Pair<String, String>>(), registry.takeReady())
+        // 同一对话一次只取一件;第一件跑完之前第二件继续排着
+        assertEquals(listOf("first"), registry.takeReady().map { it.text })
+        assertEquals(listOf("second"), registry.takeReady().map { it.text })
+        assertEquals(emptyList<QueuedFollowUp>(), registry.takeReady())
     }
 
     // 收尾和留话同时发生:要么当场开始,要么留下后在收尾时交出,不会两头都落空
@@ -163,11 +165,11 @@ class TaskRegistryTest {
         repeat(200) { i ->
             val run = (registry.tryStart("t$i", "原来的") as StartResult.Started).run
             var startedNow = false
-            val t = Thread { startedNow = registry.deferOrStart("t$i", "插话") }
+            val t = Thread { startedNow = registry.deferOrStart("t$i", "插话", "id-$i") }
             t.start()
             registry.onEnded(run)
             t.join()
-            val handedOut = registry.takeReady().any { it.first == "t$i" }
+            val handedOut = registry.takeReady().any { it.conversationId == "t$i" }
             assertTrue("message $i lost or duplicated", startedNow != handedOut)
         }
     }
@@ -176,9 +178,9 @@ class TaskRegistryTest {
     @Test fun deferredMessageStartsWhenItsConversationIsFree() {
         val a = (registry.tryStart("a", "一") as StartResult.Started).run
         registry.tryStart("b", "别的对话")
-        assertFalse(registry.deferOrStart("a", "下一件"))
+        assertFalse(registry.deferOrStart("a", "下一件", "id-a"))
         registry.onEnded(a)
-        assertEquals(listOf("a" to "下一件"), registry.takeReady())
-        assertTrue(registry.deferOrStart("c", "空着的对话"))
+        assertEquals(listOf("下一件"), registry.takeReady().map { it.text })
+        assertTrue(registry.deferOrStart("c", "空着的对话", "id-c"))
     }
 }

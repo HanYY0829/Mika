@@ -23,7 +23,7 @@ object ModelHttp {
 
     /** OpenAI 兼容接口(对话、转写同一套)的错误映射。[model] 是请求的模型名。 */
     fun openAiError(status: Int, retryAfter: String?, body: String, model: String): ModelError =
-        ModelAccessErrors.of(status, body, model) ?: when {
+        ModelAccessErrors.of(status, body, model) ?: reasoningEffortRejected(status, body) ?: when {
             status == 401 -> ModelError.Auth()
             status == 402 || body.contains("insufficient_quota") -> ModelError.QuotaExceeded()
             status == 429 -> ModelError.RateLimited(HttpSupport.retryAfterMs(retryAfter))
@@ -36,6 +36,19 @@ object ModelHttp {
 
     /** HTTP 400 的报错说请求超出了模型的上下文(见 [saysContextTooLong])。OpenAI 兼容、Responses、Anthropic 三种接口共用;本机跑的服务三种接口都可能开。 */
     fun contextTooLong(status: Int, body: String): Boolean = status == 400 && saysContextTooLong(body)
+
+    /** HTTP 400 明确指出思考强度参数无效。只认参数名或完整的协议字段,不从任意“unsupported”文字猜。 */
+    fun reasoningEffortRejected(status: Int, body: String): ModelError.ReasoningEffortRejected? {
+        if (status != 400) return null
+        val root = runCatching { json.parseToJsonElement(body) as? JsonObject }.getOrNull()
+        val error = root?.get("error") as? JsonObject
+        val param = (error?.get("param") as? JsonPrimitive)?.contentOrNull ?: (root?.get("param") as? JsonPrimitive)?.contentOrNull
+        val lower = body.lowercase()
+        val namesParameter = param in setOf("reasoning.effort", "reasoning_effort") ||
+            (param == null && ("reasoning.effort" in lower || "reasoning_effort" in lower))
+        val rejected = listOf("invalid", "unsupported", "not supported", "unknown").any { it in lower }
+        return if (namesParameter && rejected) ModelError.ReasoningEffortRejected(ModelAccessErrors.detail(body)) else null
+    }
 
     /**
      * 报错内容说请求超出了模型的上下文。各家原话不同(`context_length_exceeded`、「maximum context length」、

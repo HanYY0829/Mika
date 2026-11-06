@@ -63,6 +63,7 @@
     <string name="turn_on_go">تفعيل</string>
     <string name="banner_a11y_not_running">خدمة إمكانية الوصول لا تعمل</string>
     <string name="banner_a11y_not_running_detail">أوقفها ثم فعّلها مجددًا</string>
+    <string name="banner_a11y_restricted_detail">اسمح بالإعدادات المقيّدة من صفحة معلومات تطبيق Mika</string>
     <string name="banner_a11y_locked">لم يُفتح قفل الهاتف منذ تشغيله، لذا لا تعمل خدمة إمكانية الوصول</string>
     <string name="banner_a11y_locked_detail">ستعود للعمل بعد فتح قفل الهاتف؛ لا حاجة لتغيير أي إعداد</string>
     <string name="banner_no_model">لا يوجد نموذج صالح بعد</string>
@@ -78,6 +79,7 @@
     <string name="explain_a11y_off">فعّل خدمة إمكانية الوصول</string>
     <string name="explain_a11y_off_body">يستخدم Mika خدمة إمكانية الوصول لقراءة شاشته الافتراضية والتحكم بها. ابحث عن Mika ضمن إمكانية الوصول في إعدادات النظام (قد تجدها في بعض الهواتف ضمن «التطبيقات التي تم تنزيلها» أو «الخدمات المثبّتة») ثم فعّلها.</string>
     <string name="explain_a11y_not_running_body">تُظهر إعدادات النظام أن خدمة إمكانية الوصول في Mika مفعّلة، لكنها لا تعمل فعليًا (يحدث هذا غالبًا بعد إيقاف Mika إجباريًا). أوقف Mika من إعدادات إمكانية الوصول ثم فعّله مجددًا.</string>
+    <string name="explain_a11y_restricted_body">قد يمنع Android ربط خدمة إمكانية الوصول بالتطبيقات المثبّتة من خارج متجر تطبيقات إلى أن تسمح بالإعدادات المقيّدة. افتح معلومات تطبيق Mika، ثم افتح القائمة واختر «السماح بالإعدادات المقيّدة» إن كان هذا الخيار متاحًا. بعد ذلك أوقف Mika ثم فعّله مجددًا ضمن إمكانية الوصول.</string>
     <string name="explain_no_model">أضف نموذجًا</string>
     <string name="explain_no_model_body">يحتاج Mika إلى نموذج لغوي كبير يدعم استدعاء الأدوات كي يفكر ويتصرف. أدخل عنوان URL لموفّر الخدمة واسم النموذج ومفتاح API.</string>
     <string name="explain_focus">يُنصح بـ Android 14 أو أحدث</string>

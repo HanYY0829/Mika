@@ -37,6 +37,7 @@
     <string name="task_waiting_display">في قائمة الانتظار: تبدأ بعد انتهاء المهمة الأخرى</string>
     <string name="task_no_phone_helper">التحكم بالهاتف غير جاهز. أكمل «إعداد التحكم بالهاتف» في Mika. لا تتأثر مهام الويب والملفات.</string>
     <string name="task_no_a11y">خدمة إمكانية الوصول في Mika متوقفة. فعّل Mika ضمن إمكانية الوصول في إعدادات النظام.</string>
+    <string name="task_a11y_not_running">خدمة إمكانية الوصول في Mika مفعّلة، لكن Android لم يتصل بها. أوقف Mika ثم أعد تشغيله ضمن إمكانية الوصول في إعدادات النظام. إذا منع Android ذلك، فاسمح أولًا بالإعدادات المقيّدة في معلومات تطبيق Mika.</string>
     <string name="task_error">خطأ في المهمة: %1$s</string>
     <string name="task_app_blocked">«%1$s» معطّل، لذا لا يستطيع Mika قراءته أو تشغيله. اسمح به من الإعدادات › الوصول إلى التطبيقات ثم حاول مجددًا.</string>
     <string name="task_app_this_app">هذا التطبيق</string>

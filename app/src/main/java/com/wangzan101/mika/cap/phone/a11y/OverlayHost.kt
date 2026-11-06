@@ -293,6 +293,15 @@ class OverlayWindow internal constructor(
     }
 
     /**
+     * 整个窗口显示或隐藏。只把 Compose 内容清空会等下一次排版和换帧,旧帧可能还留在系统的窗口画布上;
+     * 关闭、交替两个窗口时必须显式切换可见性,不能拿空内容当作已经不可见。
+     */
+    fun setVisible(visible: Boolean) {
+        if (!isOpen) return
+        frame.visibility = if (visible) View.VISIBLE else View.INVISIBLE
+    }
+
+    /**
      * 能不能接收键盘:要在浮层里打字时打开(输入法才会弹出来对着它),收起时立刻关上,把焦点还给下面的 App。
      */
     fun setFocusable(focusable: Boolean) {

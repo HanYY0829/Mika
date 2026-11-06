@@ -91,6 +91,20 @@ class ConfirmationGate {
         return Permit.Mismatch(reason)
     }
 
+    /**
+     * 不在屏上的一步(工具声明了要问,如会改动东西的 root 命令):同意的就是这一条,申报一字不差才放行。
+     * 有同意时不论结果都用掉它。
+     */
+    @Synchronized fun permitsExactly(ask: ConfirmationRequest, step: Int): Permit {
+        val g = grant ?: return Permit.NoGrant
+        grant = null
+        return when {
+            step - g.step > MAX_STEPS -> Permit.Mismatch("the approval expired ($MAX_STEPS steps)")
+            g.request != ask -> Permit.Mismatch("approved a different action than this one")
+            else -> Permit.Allowed
+        }
+    }
+
     /** 读屏里一个带字的元素都没有(自绘界面、画布)。 */
     private fun textless(s: ScreenSnapshot) = s.elements.none { it.name.isNotBlank() }
 

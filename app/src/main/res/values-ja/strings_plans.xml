@@ -6,6 +6,7 @@
     <string name="trigger_not_started">スケジュールされたタスクが開始されませんでした</string>
     <string name="trigger_interrupted_body">スケジュールされたタスクが中断され、結果を確認できません。まず実際に何が起きたかを確認してください。Mika が自動でやり直すことはありません。</string>
     <string name="trigger_unconfirmed">スケジュールされたタスクの結果を確認してください</string>
+    <string name="trigger_unlock_failed">スケジュールされたタスクでスマートフォンのスリープ解除またはロック解除ができませんでした。次回の実行前に手動でロックを解除するか、「設定 › パソコンと接続」で「リモートでのスリープ解除とロック解除を許可」と保存済みの画面ロックの認証情報を確認してください。</string>
     <string name="trigger_alarm_title">スケジュールされたタスクには「アラームとリマインダー」の権限が必要です</string>
     <string name="trigger_alarm_body">権限がないと、スケジュールされたタスクが遅れたり、実行されなかったりすることがあります。ここをタップしてオンにしてください。</string>
     <string name="op_failed">問題が発生しました</string>
@@ -39,6 +40,10 @@
     <string name="plans_never_run">まだ実行されていません</string>
     <string name="plans_delivered">通知済み</string>
     <string name="plans_unchanged">条件は変わっていません</string>
+    <string name="plans_not_met">条件を満たしていません</string>
+    <string name="plans_cooldown">クールダウン期間内</string>
+    <string name="plans_condition_each">条件を満たすたびに実行: %1$s · %2$s</string>
+    <string name="plans_last_value">前回 %1$s · %2$s · %3$s</string>
     <string name="plans_running_now">実行中</string>
     <string name="trigger_deleted">スケジュールされたタスクを削除しました</string>
     <string name="trigger_busy">このタスクはまだ実行中です</string>

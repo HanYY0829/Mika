@@ -11,6 +11,7 @@ import android.util.Log
 import com.wangzan101.mika.MikaApp
 import com.wangzan101.mika.R
 import com.wangzan101.mika.i18n.tr
+import com.wangzan101.mika.settings.FeatureFlags
 import com.wangzan101.mika.task.TaskService
 
 /** 只保活微信长轮询；任务执行仍由 TaskService 管理。 */
@@ -21,13 +22,13 @@ class WechatService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         TaskService.ensureChannels(this)
-        if (intent?.action == ACTION_TURN_OFF) runtime.setEnabled(false)
+        if (intent?.action == ACTION_TURN_OFF && !FeatureFlags.get(this).quitRequested()) runtime.setEnabled(false)
         val foreground = runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 startForeground(NOTIFICATION_ID, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
             } else startForeground(NOTIFICATION_ID, notification())
         }.onFailure { Log.w("MikaWechat", "WeChat service could not enter the foreground", it) }.isSuccess
-        if (!foreground || !runtime.sync()) {
+        if (!foreground || FeatureFlags.get(this).quitRequested() || !runtime.sync()) {
             runtime.stop()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()

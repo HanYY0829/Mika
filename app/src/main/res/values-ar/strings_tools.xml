@@ -15,6 +15,7 @@
     <string name="tool_check_dialog">التحقق من مربعات الحوار</string>
     <string name="tool_gesture">إيماءة متعددة اللمس</string>
     <string name="tool_shell">أمر النظام</string>
+    <string name="tool_root">أمر Root</string>
     <string name="tool_find_element">العثور على عنصر على الشاشة</string>
     <string name="tool_collect">الجمع عبر الشاشات</string>
     <string name="tool_phone_run">تنفيذ عدة إجراءات على الهاتف</string>

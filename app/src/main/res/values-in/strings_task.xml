@@ -32,6 +32,7 @@
     <string name="task_waiting_display">Dalam antrean: dimulai setelah tugas lain selesai</string>
     <string name="task_no_phone_helper">Kontrol ponsel belum siap. Selesaikan “Siapkan kontrol ponsel” di Mika. Tugas web dan berkas tidak terpengaruh.</string>
     <string name="task_no_a11y">Layanan aksesibilitas Mika nonaktif. Aktifkan Mika di Aksesibilitas pada setelan sistem.</string>
+    <string name="task_a11y_not_running">Layanan aksesibilitas Mika sudah aktif, tetapi Android belum menghubungkannya. Nonaktifkan Mika lalu aktifkan lagi di Aksesibilitas pada setelan sistem. Jika Android mencegahnya, izinkan dulu setelan dibatasi di info aplikasi Mika.</string>
     <string name="task_error">Galat tugas: %1$s</string>
     <string name="task_app_blocked">“%1$s” dinonaktifkan, jadi Mika tidak bisa membaca atau mengoperasikannya. Izinkan di Pengaturan › Akses aplikasi dan coba lagi.</string>
     <string name="task_app_this_app">Aplikasi ini</string>

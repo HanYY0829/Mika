@@ -6,6 +6,7 @@
     <string name="trigger_not_started">A tarefa agendada não foi iniciada</string>
     <string name="trigger_interrupted_body">Uma tarefa agendada foi interrompida e não é possível confirmar o resultado. Verifique primeiro o que realmente aconteceu; o Mika não vai repeti-la automaticamente.</string>
     <string name="trigger_unconfirmed">O resultado da tarefa agendada precisa ser verificado</string>
+    <string name="trigger_unlock_failed">A tarefa agendada não conseguiu ativar nem desbloquear o telefone. Desbloqueie-o antes da próxima execução ou verifique “Permitir ativação e desbloqueio remotos” e a credencial do bloqueio de tela salva em Configurações › Conectar um computador.</string>
     <string name="trigger_alarm_title">As tarefas agendadas precisam da permissão “Alarmes e lembretes”</string>
     <string name="trigger_alarm_body">Sem ela, as tarefas agendadas podem atrasar ou não rodar. Toque aqui para ativá-la.</string>
     <string name="op_failed">Algo deu errado</string>
@@ -41,6 +42,10 @@
     <string name="plans_never_run">Ainda não foi executada</string>
     <string name="plans_delivered">Entregue</string>
     <string name="plans_unchanged">Condição inalterada</string>
+    <string name="plans_not_met">Condição não atendida</string>
+    <string name="plans_cooldown">Dentro do intervalo mínimo</string>
+    <string name="plans_condition_each">Executa sempre que: %1$s · %2$s</string>
+    <string name="plans_last_value">Última %1$s · %2$s · %3$s</string>
     <string name="plans_running_now">Em execução</string>
     <string name="trigger_deleted">A tarefa agendada foi excluída</string>
     <string name="trigger_busy">Esta tarefa ainda está em execução</string>
