@@ -6,6 +6,7 @@ import androidx.compose.ui.res.stringResource
 import com.wangzan101.mika.settings.ProviderConnection
 import android.app.ActivityManager
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Column
 import com.wangzan101.mika.ui.components.MikaDialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -264,7 +265,17 @@ fun SettingsScreen(
         MikaDialog(
             onDismissRequest = { explaining = null },
             title = { Text(e.title) },
-            text = { Text(e.body) },
+            text = {
+                Column {
+                    Text(e.body)
+                    e.secondaryAction?.let { (label, destination) ->
+                        TextButton(onClick = {
+                            explaining = null
+                            fix(destination)
+                        }) { Text(label) }
+                    }
+                }
+            },
             confirmButton = {
                 if (e.action != null && e.fix != null) {
                     TextButton({ explaining = null; fix(e.fix) }) { Text(e.action) }

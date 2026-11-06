@@ -32,7 +32,13 @@ enum class Fix {
 data class BannerCopy(val title: String, val detail: String, val link: String)
 
 /** 点开问题时的说明:用大白话讲清楚是什么、怎么办;[fix] 为空表示没有一键修复。 */
-data class Explanation(val title: String, val body: String, val action: String?, val fix: Fix?)
+data class Explanation(
+    val title: String,
+    val body: String,
+    val action: String?,
+    val fix: Fix?,
+    val secondaryAction: Pair<String, Fix>? = null,
+)
 
 object StatusCopy {
     /** 不经模型连做几步时卡片和通知上的说法。 */
@@ -148,7 +154,11 @@ object StatusCopy {
             BuiltinShellStatus.Running -> error("not a problem")
         }
         is Problem.Accessibility -> when (p.state) {
-            AccessibilityState.Off -> BannerCopy(tr(R.string.banner_a11y_off), tr(R.string.banner_a11y_off_detail), tr(R.string.turn_on_go))
+            AccessibilityState.Off -> BannerCopy(
+                tr(R.string.banner_a11y_off),
+                tr(if (p.restrictedSettings) R.string.banner_a11y_restricted_detail else R.string.banner_a11y_off_detail),
+                tr(R.string.turn_on_go),
+            )
             // 开机后还没解锁过时服务本来就绑不上:解锁后会自己恢复,不让用户去关掉再打开
             AccessibilityState.EnabledNotRunning -> when {
                 p.userLocked -> BannerCopy(tr(R.string.banner_a11y_locked), tr(R.string.banner_a11y_locked_detail), tr(R.string.view))
@@ -177,8 +187,9 @@ object StatusCopy {
         is Problem.Accessibility -> when (p.state) {
             AccessibilityState.Off -> Explanation(
                 tr(R.string.explain_a11y_off),
-                tr(R.string.explain_a11y_off_body),
+                tr(if (p.restrictedSettings) R.string.explain_a11y_restricted_off_body else R.string.explain_a11y_off_body),
                 tr(R.string.chat_go_settings), Fix.OpenAccessibility,
+                secondaryAction = if (p.restrictedSettings) PhoneSetupCopy.APP_INFO to Fix.OpenAppInfo else null,
             )
             AccessibilityState.EnabledNotRunning -> when {
                 p.userLocked -> Explanation(

@@ -157,13 +157,16 @@ data class Provider(
         kind != ProviderConfig.Kind.ChatGpt && kind != ProviderConfig.Kind.Xai && models?.isEmpty() == true && model !in verifiedModels
 }
 
+/** OkHttp 把超时换算为 Int 毫秒，秒数必须在换算后仍能存下。 */
+internal val MODEL_READ_TIMEOUT_SECONDS = 1..(Int.MAX_VALUE / 1_000)
+
 /** 留空的窗口沿用所选模型配置，留空的触发点交给核心自动计算，留空的读超时用全局默认(120 秒)。 */
 data class ModelContextSettings(val windowTokens: Int? = null, val triggerTokens: Int? = null, val readTimeoutSeconds: Int? = null) {
     fun limits(modelWindow: Int): ContextLimits = ContextLimits.of(windowTokens ?: modelWindow, triggerTokens)
 
     fun validFor(modelWindow: Int): Boolean = (windowTokens == null || windowTokens > 0) &&
         (triggerTokens == null || (triggerTokens > 0 && triggerTokens == limits(modelWindow).trigger)) &&
-        (readTimeoutSeconds == null || readTimeoutSeconds > 0)
+        (readTimeoutSeconds == null || readTimeoutSeconds in MODEL_READ_TIMEOUT_SECONDS)
 }
 
 /** 一个用途选了什么:一个具体模型、用主模型,或不用(只有看图可以不用)。 */
@@ -793,7 +796,7 @@ class ProviderStore(
         } else adapterBase
         val defaultHttp = http
         val http = setup.readTimeoutSeconds
-            ?.takeIf { it > 0 }
+            ?.takeIf { it in MODEL_READ_TIMEOUT_SECONDS }
             ?.let { seconds -> defaultHttp.newBuilder().readTimeout(seconds.toLong(), TimeUnit.SECONDS).build() }
             ?: defaultHttp
         return when (kind) {
@@ -952,7 +955,7 @@ class ProviderStore(
         contextSettings = (o["contextSettings"] as? JsonObject).orEmpty().mapNotNull { (model, raw) ->
             val entry = raw as? JsonObject ?: return@mapNotNull null
             val settings = ModelContextSettings(entry.positiveInt("windowTokens"), entry.positiveInt("triggerTokens"),
-                entry.positiveInt("readTimeoutSeconds"))
+                entry.positiveInt("readTimeoutSeconds")?.takeIf { it in MODEL_READ_TIMEOUT_SECONDS })
             if (settings == ModelContextSettings()) null else model to settings
         }.toMap(),
         visionOverrides = (o["visionOverrides"] as? JsonObject).orEmpty().mapNotNull { (model, raw) ->

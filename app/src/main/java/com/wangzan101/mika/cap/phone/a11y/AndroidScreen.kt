@@ -238,7 +238,7 @@ class AndroidScreen(
         display.current?.latestFramePng()
     }
 
-    /** 最近一次启动开始的时刻;到这次启动之后的帧为止,不把旧帧当画面(见 [FrameFreshness])。 */
+    /** 最近一次启动开始的单调时钟时刻（纳秒），与虚拟屏生产者的帧时间戳比较。 */
     @Volatile private var frameGuardSince: Long? = null
 
     /** 此刻能不能把 Agent 屏的最新帧交给模型:启动后还没收到新帧时不给,直到新帧到达才解除。 */
@@ -744,7 +744,7 @@ class AndroidScreen(
         val before = if (hasDisplay) topWindowPackage().takeIf { it != chooserPackage } else null
         val id = display.get().displayId
         // 画面新鲜度从这次启动开始算:之后的截图、认字只认这之后到的帧(见 FrameFreshness)
-        val startedAt = SystemClock.uptimeMillis()
+        val startedAt = System.nanoTime()
         beforeOpen(packageName, user)
         fun launch() = when {
             user != null -> shell.startAppInUser(id, packageName, user, cold)
@@ -784,7 +784,7 @@ class AndroidScreen(
         }
         val before = if (hasDisplay) topWindowPackage().takeIf { it != chooserPackage } else null
         val id = display.get().displayId
-        val startedAt = SystemClock.uptimeMillis()
+        val startedAt = System.nanoTime()
         beforeOpen(packageName, null)
         val code = runCatching { shell.startShare(id, packageName, text) }.getOrDefault(ShellService.START_ERROR)
         if (code != ShellService.START_OK) notOpened(packageName, null)
@@ -806,7 +806,7 @@ class AndroidScreen(
     suspend fun openOwnPage(intent: Intent): ActionResult = withContext(Dispatchers.IO) {
         val before = if (hasDisplay) topWindowPackage().takeIf { it != chooserPackage } else null
         val id = display.get().displayId
-        val startedAt = SystemClock.uptimeMillis()
+        val startedAt = System.nanoTime()
         when (runCatching { shell.startSystemAction(id, intent, null) }.getOrDefault(ShellService.START_ERROR)) {
             ShellService.START_OK -> Unit
             ShellService.START_INVALID_LINK -> return@withContext ActionResult.Failed("own_page_not_allowed")
@@ -958,7 +958,7 @@ class AndroidScreen(
         if (checkOtherTasks && expected != null && !reserve(expected)) return@withContext IN_USE_BY_OTHER
         val before = ScreenReader.topPackage(windows())
         val beforeTree = treeHash()
-        val startedAt = SystemClock.uptimeMillis()
+        val startedAt = System.nanoTime()
         // 事先知道由谁打开的(指定了 App、设置页、只有一个 App 接的链接):启动前先静上
         val early = expected ?: linkHandler(action, uri)
         early?.let { beforeOpen(it, null) }
@@ -1072,7 +1072,7 @@ class AndroidScreen(
         val id = display.get().displayId
         val topBefore = ScreenReader.topPackage(windows())
         val beforeTree = treeHash()
-        val startedAt = SystemClock.uptimeMillis()
+        val startedAt = System.nanoTime()
         val w = armSpillWatch()
         // 接手的页面要求的权限(设闹钟)shell 可能没有:备一个以 Mika 身份启动的
         val asMika = PendingIntent.getActivity(a11y, SYSTEM_ACTION_REQUEST, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)

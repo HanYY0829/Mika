@@ -129,13 +129,30 @@ class ProviderStoreTest {
         }
     }
 
-    @Test fun aNonPositiveReadTimeoutIsRejected() {
+    @Test fun readTimeoutMustFitOkHttpRange() {
         val s = store()
         val first = connected(s)
         s.use(ModelRole.Main, first.id, "m1", none)
         val cfg = s.configFor(ModelRole.Main)!!
         assertFalse(s.setModelContext(cfg.id, ModelContextSettings(readTimeoutSeconds = 0)))
         assertFalse(s.setModelContext(cfg.id, ModelContextSettings(readTimeoutSeconds = -5)))
+        assertFalse(s.setModelContext(cfg.id, ModelContextSettings(readTimeoutSeconds = 2_147_484)))
+        assertTrue(s.setModelContext(cfg.id, ModelContextSettings(readTimeoutSeconds = 2_147_483)))
+    }
+
+    @Test fun previouslySavedOversizeReadTimeoutFallsBackWithoutLosingContextLimits() {
+        val s = store()
+        val first = connected(s)
+        s.use(ModelRole.Main, first.id, "m1", none)
+        val cfg = s.configFor(ModelRole.Main)!!
+        assertTrue(s.setModelContext(cfg.id, ModelContextSettings(1_000_000, 600_000, 600)))
+        val file = tmp.root.resolve("providers.json")
+        file.writeText(file.readText().replace("\"readTimeoutSeconds\":600", "\"readTimeoutSeconds\":2147484"))
+
+        val reloaded = store()
+        assertEquals(ModelContextSettings(1_000_000, 600_000), reloaded.provider(first.id)!!.contextSettings["m1"])
+        assertEquals(1_000_000, reloaded.modelFor(ModelRole.Main)!!.capabilities.contextTokens)
+        assertNull(setups.last().readTimeoutSeconds)
     }
 
     /** 预设改了默认上下文后,按旧默认存下的配置读入时跟上去;用户改过的和写了每模型窗口的不动(见 repairStaleContextDefaults)。 */

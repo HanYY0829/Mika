@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wangzan101.mika.core.model.ModelRole
 import com.wangzan101.mika.settings.ModelContextSettings
+import com.wangzan101.mika.settings.MODEL_READ_TIMEOUT_SECONDS
 import com.wangzan101.mika.settings.ModelOption
 import com.wangzan101.mika.settings.ModelOptions
 import com.wangzan101.mika.settings.ProviderConfig
@@ -581,7 +582,8 @@ private fun ModelContextControl(ui: ModelSetupUi, role: ModelRole,
     var readTimeout by rememberSaveable(cfg.id) { mutableStateOf(saved.readTimeoutSeconds?.toString().orEmpty()) }
     var saveFailed by remember { mutableStateOf(false) }
     fun positiveInt(text: String) = text.trim().takeIf { it.all { c -> c in '0'..'9' } }?.toIntOrNull()?.takeIf { it > 0 }
-    val settings = ModelContextSettings(positiveInt(window), positiveInt(trigger), positiveInt(readTimeout))
+    val settings = ModelContextSettings(positiveInt(window), positiveInt(trigger),
+        positiveInt(readTimeout)?.takeIf { it in MODEL_READ_TIMEOUT_SECONDS })
     val modelWindow = cfg.capabilities.contextTokens
     val limits = settings.limits(modelWindow)
     val badWindow = window.isNotBlank() && settings.windowTokens == null
@@ -615,7 +617,9 @@ private fun ModelContextControl(ui: ModelSetupUi, role: ModelRole,
                     modifier = Modifier.fillMaxWidth().testTag("context-read-timeout"), singleLine = true, keyboardOptions = keyboard,
                     label = { Text(stringResource(R.string.model_context_read_timeout)) },
                     placeholder = { Text(stringResource(R.string.model_context_auto, 120)) },
-                    supportingText = if (badReadTimeout) ({ Text(stringResource(R.string.model_context_integer)) }) else null,
+                    supportingText = if (badReadTimeout) ({
+                        Text("${stringResource(R.string.model_context_integer)} (1–${MODEL_READ_TIMEOUT_SECONDS.last})")
+                    }) else null,
                     isError = badReadTimeout)
                 if (!badWindow && (trigger.isBlank() || settings.triggerTokens != null)) Text(stringResource(R.string.model_context_effective, limits.window, limits.trigger),
                     modifier = Modifier.testTag("context-effective"))

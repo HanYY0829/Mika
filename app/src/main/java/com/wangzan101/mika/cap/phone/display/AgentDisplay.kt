@@ -50,8 +50,8 @@ class AgentDisplay(
     private var frameGeometry = DisplayFrameGeometry(bufferWidth, bufferHeight, Surface.ROTATION_0)
     private var lastProcessedAt = 0L
     private var pending = false
-    /** 最近一次收到帧的时刻(SystemClock.uptimeMillis);还没收到过为 0。画面新鲜度判定用(见 a11y.FrameFreshness)。 */
-    @Volatile private var frameArrivedAt = 0L
+    /** 虚拟屏生产者的单调时钟纳秒时间戳，与整帧和缩略帧一起在 frameLock 下发布。 */
+    private var frameTimestampNanos = 0L
     @Volatile private var released = false
 
     private val paint = Paint(Paint.FILTER_BITMAP_FLAG)
@@ -108,7 +108,8 @@ class AgentDisplay(
                 }
                 bmp!!.copyPixelsFromBuffer(plane.buffer.rewind())
                 hasFrame = true
-                frameArrivedAt = SystemClock.uptimeMillis()
+                // 限速或线程调度会延后消费，不能把复制位图的时刻记成帧时刻。
+                frameTimestampNanos = image.timestamp
                 frameGeometry = capturedGeometry
                 _frames.value = uprightDisplayFrame(bmp, capturedGeometry, capturedGeometry.previewWidth(PREVIEW_SHORT_SIDE), paint)
             }
@@ -127,8 +128,10 @@ class AgentDisplay(
         }
     }
 
-    /** 最近一次收到帧的时刻;还没收到过为 null。 */
-    fun lastFrameAt(): Long? = frameArrivedAt.takeIf { it > 0 }
+    /** 最新已发布帧的单调时钟纳秒时间戳。 */
+    fun lastFrameAt(): Long? = synchronized(frameLock) {
+        frameTimestampNanos.takeIf { !released && it > 0 }
+    }
 
     /** OCR 使用原始尺寸的画面副本，避免 PNG 编码和解码；调用方负责 recycle。 */
     fun latestFrameBitmap(): Bitmap? = synchronized(frameLock) {
@@ -139,7 +142,6 @@ class AgentDisplay(
     fun release() {
         if (released) return
         released = true
-        frameArrivedAt = 0
         runCatching { shell.releaseDisplay(displayId) }
         closeLocal()
         _frames.value = null

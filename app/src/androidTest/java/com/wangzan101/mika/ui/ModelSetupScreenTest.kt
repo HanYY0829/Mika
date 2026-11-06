@@ -164,7 +164,7 @@ class ModelSetupScreenTest {
             save.assertIsNotEnabled()
         }
         trigger.performTextReplacement("600000")
-        for (invalid in listOf("0", "-1", "1e6", "2147483648")) {
+        for (invalid in listOf("0", "-1", "1e6", "2147484", "2147483648")) {
             readTimeout.performTextReplacement(invalid)
             save.assertIsNotEnabled()
         }
