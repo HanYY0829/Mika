@@ -5,6 +5,10 @@ on:
     # Daily 03:00 Asia/Shanghai (19:00 UTC previous day)
     - cron: '0 19 * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sync-upstream.yml'
 
 permissions:
   contents: write
