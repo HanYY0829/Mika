@@ -58,6 +58,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          initial_head="$(git rev-parse HEAD)"
           state_file=".github/upstream-sync-state"
           review_file=".github/UPSTREAM_WORKFLOWS_PENDING.md"
           upstream_sha="$(git rev-parse upstream/main)"
@@ -135,10 +136,14 @@ jobs:
           fi
 
           if git diff --cached --quiet; then
-            echo "Already up to date (in selected sync mode)."
-            exit 0
+            # A successful git merge may already have created a commit.
+            # Even without staged changes, that new HEAD still needs pushing.
+            if [[ "$(git rev-parse HEAD)" == "$initial_head" ]]; then
+              echo "Already up to date (in selected sync mode)."
+              exit 0
+            fi
+          else
+            git diff --cached --check
+            git commit -m "Sync upstream Mika to $(git rev-parse --short=12 upstream/main)"
           fi
-
-          git diff --cached --check
-          git commit -m "Sync upstream Mika to $(git rev-parse --short=12 upstream/main)"
           git push origin HEAD:main
