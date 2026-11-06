@@ -29,9 +29,50 @@ jobs:
           git remote add upstream https://github.com/wangzan101/Mika.git
           git fetch upstream main
 
-      - name: Merge upstream without overwriting local changes
+      - name: Sync upstream source while preserving local changes
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git merge --no-edit upstream/main
+
+          # The default GITHUB_TOKEN cannot push upstream workflow-file changes.
+          # Apply source changes as a new fork-only commit, excluding upstream workflows.
+          # Track the last applied upstream commit so patches are never applied twice.
+          state_file=".github/upstream-sync-state"
+          upstream_sha="$(git rev-parse upstream/main)"
+          if [[ -f "$state_file" ]]; then
+            base_sha="$(cat "$state_file")"
+          else
+            # Bootstrap from the last upstream commit already merged into this fork.
+            base_sha="$(git merge-base HEAD upstream/main)"
+          fi
+
+          if [[ ! "$base_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Invalid upstream sync baseline: $base_sha" >&2
+            exit 1
+          fi
+          git cat-file -e "${base_sha}^{commit}"
+          if ! git merge-base --is-ancestor "$base_sha" "$upstream_sha"; then
+            echo "Upstream history changed; refusing unsafe sync." >&2
+            exit 1
+          fi
+
+          patch="$RUNNER_TEMP/mika-upstream.patch"
+          git diff --binary --full-index "$base_sha" "$upstream_sha" \
+            -- . ':(exclude).github/workflows/**' > "$patch"
+          if [[ -s "$patch" ]]; then
+            # Fail safely on overlapping local changes rather than overwriting them.
+            git apply --3way --index "$patch"
+          fi
+
+          printf '%s\n' "$upstream_sha" > "$state_file"
+          git add "$state_file"
+          if git diff --cached --quiet; then
+            echo "Already up to date (non-workflow files)."
+            exit 0
+          fi
+
+          git diff --cached --check
+          git commit -m "Sync upstream Mika to ${upstream_sha:0:12} (except workflows)"
           git push origin HEAD:main
