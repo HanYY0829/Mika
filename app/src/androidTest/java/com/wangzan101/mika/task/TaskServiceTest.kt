@@ -340,7 +340,7 @@ class TaskServiceTest {
 
             model.feed("phone_launch_app", """{"package":"$SETTINGS"}""")
             val end = awaitState { it is TaskState.Failed } as TaskState.Failed
-            val expected = context.getString(com.wangzan101.mika.R.string.trigger_unlock_failed)
+            val expected = context.getString(com.wangzan101.mika.R.string.trigger_unlock_failed) + " [disabled]"
             assertEquals(expected, end.reason)
             assertEquals(FailKind.Environment, end.kind)
 

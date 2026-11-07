@@ -115,6 +115,7 @@ class TaskService : Service() {
 
     internal val clipLock get() = center.clipLock
     internal val takeoverQueue get() = center.takeoverQueue
+    internal fun rememberRecord(run: TaskRun, recordId: String) = center.markRecord(run, recordId)
     /** 几个任务共用的屏幕常亮锁。 */
     internal val wakeLock by lazy { SharedWakeLock(ScreenWakeLock(this)) }
 
@@ -156,6 +157,7 @@ class TaskService : Service() {
 
     /** 取这个对话的下一件;只取一件,由 startNew 登记或放回。 */
     private fun drainReady(conversationId: String?) {
+        if (teachingBlocks()) return
         center.takeReady(conversationId).forEach(::startFollowUp)
     }
 
@@ -298,10 +300,22 @@ class TaskService : Service() {
         return START_NOT_STICKY
     }
 
+    /** 正在采集或暂停的示范里不开始任务，也不把排队项取走。 */
+    private fun teachingBlocks(): Boolean {
+        val app = application as? com.wangzan101.mika.MikaApp ?: return false
+        return app.teachReady && app.teach.blocksTasks()
+    }
+
     private fun begin(newGoal: String, requestedConversation: String?,
         provenance: RunProvenance = RunProvenance(), triggerKey: String? = null,
         triggerActionGoal: String? = null, triggerThreadId: String? = null, mcpExternalId: String? = null, messageId: String? = null,
         channelPeer: ChannelPeer? = null, channelMessageId: String? = null, triggerCondition: String? = null) {
+        if (teachingBlocks()) {
+            if (provenance.origin == RunOrigin.Ui) {
+                android.widget.Toast.makeText(this, tr(R.string.teach_blocked_task), android.widget.Toast.LENGTH_LONG).show()
+            }
+            return
+        }
         parallel = FeatureFlags.get(this).speedFlags().parallelTasks
         // 同一对话里正在执行或排队的任务收到新原话时，交给它的 Inbox。
         requestedConversation?.let(center::byConversation)?.let { existing ->
@@ -337,6 +351,13 @@ class TaskService : Service() {
         triggerActionGoal: String? = null, triggerThreadId: String? = null, mcpExternalId: String? = null,
         followUp: QueuedFollowUp? = null, triggerCondition: String? = null,
         channelPeer: ChannelPeer? = null, channelMessageId: String? = null) {
+        if (teachingBlocks()) {
+            if (followUp != null) center.followUps.add(followUp)
+            else if (provenance.origin == RunOrigin.Ui) {
+                android.widget.Toast.makeText(this, tr(R.string.teach_blocked_task), android.widget.Toast.LENGTH_LONG).show()
+            }
+            return
+        }
         parallel = FeatureFlags.get(this).speedFlags().parallelTasks
         // 别的对话的任务正在跑、并行关着(或已到上限)时不丢:登记处让它排在后面,那个任务收尾时放出来。
         // 对话页先等服务空下来再交过来,但查完到交到之间别处(定时、电脑)可能先开始了一个,这里同样排上
@@ -439,7 +460,7 @@ class TaskService : Service() {
                 run.shellDied = true
                 TaskState.Failed(SHELL_DIED, FailKind.Environment)
             } catch (e: UnattendedLockException) {
-                TaskState.Failed(e.message, FailKind.Environment)
+                TaskState.Failed(e.message.orEmpty(), FailKind.Environment)
             } catch (e: com.wangzan101.mika.core.access.AppAccessDenied) {
                 val reason = when (e.code) {
                     "app_blocked" -> tr(R.string.task_app_blocked, e.packageName ?: tr(R.string.task_app_this_app))
@@ -461,6 +482,7 @@ class TaskService : Service() {
             run.end(end)
             if (!run.conditionCheck) recordTurn(store, run, end, run.runId.value, run.sharedFiles.value, run.joinedSteers(), run.usedGroups, run.joinedInterrupted(), run.joinedFinished())
             stopRunId?.let { summarizeStop(run, it, draft, store) }
+            if (end is TaskState.Failed && !run.conditionCheck) run.runId.value?.let { summarizeFailure(run, it, end.reason, store) }
             if (run.conditionCheck) {
                 val outcome = if (end is TaskState.Succeeded) ConditionOutcome.parse(end.answer)
                     else ConditionOutcome.Error((end as? TaskState.Failed)?.reason ?: tr(R.string.task_condition_interrupted))
@@ -527,6 +549,18 @@ class TaskService : Service() {
                 }
             } finally {
                 taskState._summarizing.update { it - runId }
+            }
+        }
+    }
+
+    /** 失败通知仍只给短原因;对话里补上已确认的进度,下一次「继续」不会把它当成没做过。 */
+    private fun summarizeFailure(run: TaskRun, runId: String, reason: String, store: ConversationStore) {
+        MemoryRuntime.of(this).scope.launch {
+            val text = runCatching { run.checkpointSummary() }
+                .onFailure { if (it is CancellationException) throw it; Log.w(TAG, "failure summary failed", it) }.getOrNull()
+            if (text != null) withContext(Dispatchers.IO) {
+                runCatching { store.updateTurn(run.conversationId, runId) { it.copy(outcome = reason + "\n" + text) } }
+                    .onFailure { Log.w(TAG, "could not save failure summary", it) }
             }
         }
     }

@@ -46,6 +46,7 @@ import com.wangzan101.mika.task.TaskRecovery
 import com.wangzan101.mika.task.TriggerOutcomes
 import com.wangzan101.mika.task.TaskService
 import com.wangzan101.mika.task.TaskCenterState
+import com.wangzan101.mika.teach.TeachRuntime
 import com.wangzan101.mika.ui.ChatViewModel
 import com.wangzan101.mika.ui.TaskActions
 import kotlinx.coroutines.CoroutineScope
@@ -110,7 +111,8 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
         com.wangzan101.mika.mcp.McpRuntime(this, settings,
             com.wangzan101.mika.settings.McpUsbSettings(settingsDir,
                 bootId = { android.provider.Settings.Global.getString(contentResolver, android.provider.Settings.Global.BOOT_COUNT) ?: "null" },
-                infoFile = { getExternalFilesDir(null)?.let { java.io.File(it, com.wangzan101.mika.core.mcp.McpUsb.INFO_FILE) } }),
+                infoFile = { getExternalFilesDir(null)?.let { java.io.File(it, com.wangzan101.mika.core.mcp.McpUsb.INFO_FILE) } },
+                migrateTaskOwner = remoteTasks::migrateUsbOwner),
             remoteTasks, deviceAccess,
             com.wangzan101.mika.settings.RelaySettings(settingsDir, com.wangzan101.mika.settings.KeystoreKeyCipher("mika-remote-relay")),
             history)
@@ -195,11 +197,13 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
             TaskService.ensureChannels(app)
             TaskService.notifyDelivery(app, delivery, TaskService.nextResultId())
         }
+        val labels = com.wangzan101.mika.ui.ToolLabels(com.wangzan101.mika.core.assembly.knownTools())
         RunRecovery(runStore, outbox, { id -> if (id == LocalChannel.ID) local else wechat.channelFor(id) }, object : TriggerOutcomes {
             override fun interrupted(key: String, reason: String) = TriggerRuntime.interrupted(app, key, reason)
             override fun delivered(key: String) = TriggerRuntime.delivered(app, key)
             override fun actionFailed(key: String, reason: String) = TriggerRuntime.actionFailed(app, key, reason)
-        }, conversations, scope)
+        }, conversations, scope, records = com.wangzan101.mika.record.RunStore(app).reader(), label = labels::label,
+            appLabel = { com.wangzan101.mika.confirm.ConfirmationNotifier.appLabel(app, it) })
     }
 
     /** 站点登记表(登录过的网站等):设置页和标签池共用。 */
@@ -220,7 +224,7 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
     /** 最近一次系统分享尚未发送的草稿和它的私有图片副本。 */
     val sharedDrafts: SharedDraftStore by lazy { SharedDraftStore(java.io.File(filesDir, "shared-drafts")) }
 
-    /** 删对话(侧栏长按):连带它的任务、定时任务和工作区。 */
+    /** 删对话(侧栏长按):停掉它的当前任务并删工作区,保留定时任务。 */
     val conversationDeleter: ConversationDeleter by lazy {
         val app = this
         ConversationDeleter(
@@ -230,7 +234,6 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
             },
             cancelTasks = { id -> taskState.runs.value.filter { it.conversationId == id }.forEach { TaskService.cancel(app, it.key) } },
             schedulesOf = { id -> TriggerRuntime.list(app).filter { it.threadId == id }.map { it.id } },
-            removeSchedule = { TriggerRuntime.remove(app, it) },
             deleteWorkspace = { id ->
                 // 工作区里有附件、用户发来的屏幕、任务写的文件;沙箱里的命令碰得到这里,和命令、导入、重置互斥着删
                 SandboxDirs(app).deleteWorkspace(id)
@@ -265,6 +268,11 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
 
     /** 浮在别的 App 上的悬浮胶囊。 */
     val capsule: CapsuleController by lazy { CapsuleController(this, taskState, foreground, resources.takeoverQueue) }
+
+    /** 人工示范。onCreate 里建好；在那之前的无障碍事件不采集。 */
+    lateinit var teach: TeachRuntime
+        private set
+    val teachReady: Boolean get() = ::teach.isInitialized
 
     /** 对话页的状态跟进程走:界面关了再打开,正在跑的任务的步骤还在。 */
     val chat: ChatViewModel by lazy {
@@ -351,6 +359,10 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
                     androidx.core.content.FileProvider.getUriForFile(app, com.wangzan101.mika.chat.AttachFilesProvider.authority(app.packageName), file).toString()
                 }.orEmpty()
             },
+            teaching = { teach.blocksTasks() },
+            onTeachingBlocked = {
+                android.widget.Toast.makeText(app, tr(R.string.teach_blocked_task), android.widget.Toast.LENGTH_LONG).show()
+            },
         )
     }
 
@@ -361,6 +373,8 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
         // 界面以外的文字(通知、服务、悬浮胶囊)按 App 语言取
         AppLanguage.applyDefaultLocale(this)
         UiText.source = ResourceTexts { AppLanguage.resources(this) }
+        teach = TeachRuntime(this, taskState)
+        teach.recover()
         registerActivityLifecycleCallbacks(foreground)
         val flags = FeatureFlags.get(this)
         // 用户点了「完全退出」:进程可能被无障碍服务重新拉起。胶囊照样接线(开关按退出算关着,见 CapsuleController),

@@ -12,6 +12,9 @@
     <string name="chat_example_multi_step">Temukan tiga earbud nirkabel dengan rating tinggi di bawah US$100 di Amazon dan bandingkan kelebihan serta kekurangannya.</string>
     <string name="chat_example_alarms">Pasang alarm pukul 9.40, 9.50, dan 10.00 besok pagi.</string>
     <string name="chat_example_ai_apps">Temukan aplikasi AI yang terpasang di ponsel saya, tanyakan kepada masing-masing apa keunggulannya, lalu bandingkan jawabannya.</string>
+    <string name="chat_example_replace_title">Ganti draf saat ini?</string>
+    <string name="chat_example_replace_body">Tugas yang direkomendasikan akan mengganti teks yang sudah Anda ketik.</string>
+    <string name="chat_example_replace_action">Ganti draf</string>
     <string name="chat_working_on">Bekerja di %1$s</string>
     <string name="chat_working">Bekerja</string>
     <string name="share_draft_failed">Konten yang dibagikan tidak dapat ditambahkan ke percakapan baru</string>
@@ -42,6 +45,10 @@
     <string name="chat_continue">Lanjutkan</string>
     <string name="chat_not_done">Belum selesai</string>
     <string name="chat_stopped">Dihentikan.</string>
+    <string name="chat_resume_checkpoint">Lanjutkan dari titik terakhir</string>
+    <string name="chat_restart_task">Mulai ulang</string>
+    <string name="chat_resume_request">Lanjutkan dari titik terakhir: %1$s</string>
+    <string name="chat_restart_request">Mulai ulang dari awal: %1$s</string>
     <string name="chat_view_source">Lihat sumber</string>
     <string name="chat_open">Buka</string>
     <string name="chat_attach_rejected">Gagal menambahkan: %1$s (setiap berkas harus di bawah 200 MB)</string>
@@ -61,7 +68,7 @@
     <string name="drawer_delete_body">“%1$s” dan berkas di dalamnya akan dihapus.</string>
     <string name="drawer_delete_running">Tugasnya yang sedang berjalan akan dihentikan.</string>
     <plurals name="drawer_delete_schedules">
-        <item quantity="other">%1$d tugas terjadwal di obrolan ini juga akan dihapus.</item>
+        <item quantity="other">%1$d tugas terjadwal di obrolan ini akan dipertahankan.</item>
     </plurals>
     <string name="drawer_actions">Opsi obrolan</string>
     <string name="drawer_rename">Ganti nama</string>

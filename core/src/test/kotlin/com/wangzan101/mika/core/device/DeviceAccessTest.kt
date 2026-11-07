@@ -38,7 +38,9 @@ class DeviceAccessTest {
         var targetHook: () -> Unit = {}
         var visibleKind: CredentialKind? = null
         var detect: (() -> CredentialKind?)? = null
+        var diagnostics: List<String> = emptyList()
         override suspend fun detectedCredentialKind() = detect?.invoke() ?: visibleKind
+        override suspend fun credentialDiagnostics() = diagnostics
         override suspend fun state() = current
         override suspend fun wake(): Boolean { wakes++; if (!falselyReportsWake) current = current.copy(interactive = true); return true }
         override suspend fun dismiss(): Boolean {
@@ -116,6 +118,25 @@ class DeviceAccessTest {
         assertEquals(0, p.entries)
     }
 
+    @Test fun unsupportedKeyguardReturnsDiagnosticsWithoutCredentials() = runTest {
+        val p = Port().apply {
+            readyTarget = false
+            diagnostics = listOf("systemui_windows=1", "field[id=com.android.systemui:id/pinEntry,match=none]")
+        }
+        val s = Store()
+        val result = DeviceAccess(p, s, 10, 30).unlock()
+        assertEquals("unsupported_keyguard", result.status)
+        assertEquals(p.diagnostics, result.keyguardDiagnostics)
+        assertEquals(p.diagnostics, result.toJson()["keyguard_diagnostics"]?.let { json ->
+            (json as kotlinx.serialization.json.JsonArray).map { (it as kotlinx.serialization.json.JsonPrimitive).content }
+        })
+        val wire = result.toJson().toString()
+        assertFalse(wire.contains("123456"))
+        assertFalse(s.attemptBlocked)
+        assertEquals(0, p.entries)
+        assertTrue(s.last!!.value.all { it == '\u0000' })
+    }
+
     @Test fun wrongStoredKindIsReportedWithoutSubmittingOrBlockingTheCredential() = runTest {
         for (stored in CredentialKind.entries) {
             val visible = CredentialKind.entries.single { it != stored }
@@ -157,8 +178,10 @@ class DeviceAccessTest {
         for (r in listOf(d.state(), d.wake())) {
             assertNull(r.storedKind)
             assertNull(r.detectedKind)
+            assertTrue(r.keyguardDiagnostics.isEmpty())
             assertFalse(r.toJson().containsKey("stored_kind"))
             assertFalse(r.toJson().containsKey("detected_kind"))
+            assertFalse(r.toJson().containsKey("keyguard_diagnostics"))
             assertFalse(r.toJson().containsKey("message"))
         }
     }

@@ -35,6 +35,8 @@ interface DeviceAccessPort {
     suspend fun credentialReady(kind: CredentialKind): Boolean
     /** 只读识别当前唯一的系统凭据框;未知、歧义或平台不支持时返回 null,不聚焦或输入。 */
     suspend fun detectedCredentialKind(): CredentialKind? = null
+    /** 认不出凭据页时给出不含屏上文字和凭据的受限诊断,便于定位通用识别规则的缺口。 */
+    suspend fun credentialDiagnostics(): List<String> = emptyList()
     suspend fun enter(credential: DeviceCredential): Boolean
 }
 
@@ -50,7 +52,8 @@ interface DeviceAccessStore {
 
 data class DeviceAccessResult(val status: String, val state: DeviceState?, val enabled: Boolean,
     val credentialConfigured: Boolean, val attemptBlocked: Boolean,
-    val storedKind: CredentialKind? = null, val detectedKind: CredentialKind? = null)
+    val storedKind: CredentialKind? = null, val detectedKind: CredentialKind? = null,
+    val keyguardDiagnostics: List<String> = emptyList())
 
 /** 整个进程共用一份。并发调用串行化,成功依据系统状态,不依据按键或命令的返回码。 */
 class DeviceAccess(private val port: DeviceAccessPort, private val store: DeviceAccessStore,
@@ -111,10 +114,11 @@ class DeviceAccess(private val port: DeviceAccessPort, private val store: Device
                 if (!store.enabled) return@withLock result("disabled", current)
                 if (!current.helperAvailable) return@withLock result("helper_unavailable", current)
                 val detected = port.detectedCredentialKind()
+                val diagnostics = port.credentialDiagnostics()
                 if (detected != null && detected != it.kind) {
-                    return@withLock result("credential_kind_mismatch", current, it.kind, detected)
+                    return@withLock result("credential_kind_mismatch", current, it.kind, detected, diagnostics)
                 }
-                return@withLock result("unsupported_keyguard", current)
+                return@withLock result("unsupported_keyguard", current, keyguardDiagnostics = diagnostics)
             }
             if (!store.enabled) return@withLock result("disabled", read())
             if (!store.beginAttempt(it)) return@withLock result("attempt_blocked", read())
@@ -146,6 +150,8 @@ class DeviceAccess(private val port: DeviceAccessPort, private val store: Device
         while (s != null && !done(s) && waited < waitMs) { delay(pollMs); waited += pollMs; s = read() }
         return s
     }
-    private fun result(status: String, s: DeviceState? = null, storedKind: CredentialKind? = null, detectedKind: CredentialKind? = null) =
-        DeviceAccessResult(status, s, store.enabled, store.credentialConfigured, store.attemptBlocked, storedKind, detectedKind)
+    private fun result(status: String, s: DeviceState? = null, storedKind: CredentialKind? = null, detectedKind: CredentialKind? = null,
+        keyguardDiagnostics: List<String> = emptyList()) =
+        DeviceAccessResult(status, s, store.enabled, store.credentialConfigured, store.attemptBlocked, storedKind, detectedKind,
+            keyguardDiagnostics)
 }

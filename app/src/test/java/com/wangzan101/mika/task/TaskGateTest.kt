@@ -60,6 +60,7 @@ class TaskGateTest {
                 unlocks++
                 systemLocked = false
                 locked.value = false
+                "unlocked"
             }) { true }
 
         refreshed.pass { reported += it }
@@ -75,6 +76,7 @@ class TaskGateTest {
         val unattended = TaskGate(locked, shellUp, unattendedUnlock = {
             unlocks++
             locked.value = false
+            "unlocked"
         }) { true }
 
         unattended.pass { reported += it }
@@ -86,11 +88,14 @@ class TaskGateTest {
     @Test
     fun unattendedTaskFailsWhenUnlockIsUnavailable() = runTest {
         locked.value = true
-        val unattended = TaskGate(locked, shellUp, unattendedUnlock = { }) { true }
+        val unattended = TaskGate(locked, shellUp, unattendedUnlock = { "unsupported_keyguard" }) { true }
 
         val result = withTimeoutOrNull(1_000) { runCatching { unattended.pass { reported += it } } }
 
-        assertTrue(result?.exceptionOrNull() is UnattendedLockException)
+        val error = result?.exceptionOrNull()
+        assertTrue(error is UnattendedLockException)
+        assertEquals("unsupported_keyguard", (error as UnattendedLockException).status)
+        assertTrue(error.message.orEmpty().endsWith("[unsupported_keyguard]"))
         assertEquals(TaskState.Held(TaskGate.LOCKED), reported.last())
     }
 
@@ -98,7 +103,10 @@ class TaskGateTest {
     fun unattendedTaskTrustsRefreshedSystemStateOverAttemptOutcome() = runTest {
         locked.value = true
         // 流程因权限等原因返回时，用户可能刚好已经手动解锁；实际系统状态才是依据。
-        val unattended = TaskGate(locked, shellUp, unattendedUnlock = { locked.value = false }) { true }
+        val unattended = TaskGate(locked, shellUp, unattendedUnlock = {
+            locked.value = false
+            "disabled"
+        }) { true }
 
         unattended.pass { reported += it }
 

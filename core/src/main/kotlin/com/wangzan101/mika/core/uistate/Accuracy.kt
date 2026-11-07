@@ -103,6 +103,20 @@ interface TextField {
 private fun normText(s: String) = s.filterNot { it.isWhitespace() }
 
 /**
+ * 读回是不是「原提示语 + 空白 + 目标文字」这种有歧义的形式。
+ * 它可能是控件把标签和正文拼在了一起,也可能用户正文本来就以标签开头;不能删前缀或判成匹配,调用方应停止重试并报 UNKNOWN。
+ */
+fun ambiguousFieldReadback(shown: String, placeholder: String?, typing: String?): Boolean {
+    val label = placeholder?.trim()?.takeIf { it.isNotEmpty() } ?: return false
+    val wanted = typing?.trim()?.takeIf { it.isNotEmpty() } ?: return false
+    val value = shown.trim()
+    if (!value.startsWith(label) || !value.endsWith(wanted)) return false
+    val separatorLength = value.length - label.length - wanted.length
+    if (separatorLength <= 0) return false
+    return value.substring(label.length, label.length + separatorLength).all { it.isWhitespace() }
+}
+
+/**
  * 写入 [text] 并读回核对,不一致重试,最多 [attempts] 次;[settle] 在每次写入后等输入框更新。
  * 只认「写入后读到的文字恰好是目标」;写入前就已经是目标时先清空,清不掉就无法区分写没写进去,返回 UNKNOWN。
  * 空串表示清空,读回为空即 MATCH。

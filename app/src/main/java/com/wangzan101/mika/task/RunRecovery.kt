@@ -3,7 +3,9 @@ package com.wangzan101.mika.task
 import com.wangzan101.mika.R
 import com.wangzan101.mika.i18n.tr
 import com.wangzan101.mika.chat.ConversationStore
+import com.wangzan101.mika.core.agent.StopSummary
 import com.wangzan101.mika.core.agent.Turn
+import com.wangzan101.mika.core.record.RunRecords
 import com.wangzan101.mika.core.run.Channel
 import com.wangzan101.mika.core.run.ChannelPeer
 import com.wangzan101.mika.core.run.Delivery
@@ -13,6 +15,7 @@ import com.wangzan101.mika.core.run.RunId
 import com.wangzan101.mika.core.run.RunPhase
 import com.wangzan101.mika.core.run.RunStore
 import com.wangzan101.mika.core.run.StoredRun
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -42,6 +45,9 @@ class RunRecovery(
     private val triggers: TriggerOutcomes,
     private val conversations: ConversationStore,
     private val scope: CoroutineScope,
+    private val records: RunRecords? = null,
+    private val label: (String) -> String = { it },
+    private val appLabel: (String) -> String = { it },
 ) {
     private val done = AtomicBoolean(false)
     private val lock = Mutex()
@@ -98,11 +104,28 @@ class RunRecovery(
             val said = run.userText ?: run.goal
             val turnId = "interrupted:${run.id.value}"
             if (conversations.turns(run.threadId).none { it.runId == turnId }) {
-                conversations.append(run.threadId, Turn(said, tr(R.string.recover_interrupted_turn), "failed", runId = turnId))
+                val reason = tr(R.string.recover_interrupted_turn)
+                val summary = interruptedSummary(run, said)
+                conversations.append(run.threadId, Turn(said, listOfNotNull(reason, summary).joinToString("\n"), "failed", runId = turnId))
             }
             outbox.deliver(channel, peer, Delivery.Notice(turnId, run.threadId,
                 tr(R.string.recover_interrupted, said.take(40))))
         }
+    }
+
+    /** 只读上次落盘的事件补交代;记录已清理或读不出时仍保留通用中断原因。 */
+    private suspend fun interruptedSummary(run: StoredRun, said: String): String? {
+        val id = run.recordId ?: return null
+        val events = try {
+            records?.events(id).orEmpty()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            return null
+        }
+        if (!StopSummary.worthSaying(events, null)) return null
+        val text = StopSummary.plain(said, events, null, label, appLabel)
+        return text.take(RECOVERY_SUMMARY_CHARS) + if (text.length > RECOVERY_SUMMARY_CHARS) "…" else ""
     }
 
     private fun finish(run: StoredRun, reply: String) {
@@ -110,5 +133,9 @@ class RunRecovery(
         run.triggerWindowKey?.let { key ->
             if (run.runSucceeded == false) triggers.actionFailed(key, reply) else triggers.delivered(key)
         }
+    }
+
+    private companion object {
+        const val RECOVERY_SUMMARY_CHARS = 2_400
     }
 }

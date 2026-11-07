@@ -12,6 +12,9 @@
     <string name="chat_example_multi_step">اعثر على Amazon على ثلاث سماعات أذن لاسلكية عالية التقييم بسعر أقل من 100 دولار، وقارن مزاياها وعيوبها.</string>
     <string name="chat_example_alarms">اضبط المنبهات للساعة 9:40 و9:50 و10:00 صباح الغد.</string>
     <string name="chat_example_ai_apps">اعثر على تطبيقات الذكاء الاصطناعي المثبتة على هاتفي، واسأل كلًّا منها عمّا يتقنه، ثم قارن إجاباتها.</string>
+    <string name="chat_example_replace_title">استبدال المسودة الحالية؟</string>
+    <string name="chat_example_replace_body">ستستبدل المهمة المقترحة ما كتبته بالفعل.</string>
+    <string name="chat_example_replace_action">استبدال المسودة</string>
     <string name="chat_working_on">جارٍ العمل على %1$s</string>
     <string name="chat_working">جارٍ العمل</string>
     <string name="share_draft_failed">تعذّرت إضافة المحتوى المشارَك إلى محادثة جديدة</string>
@@ -47,6 +50,10 @@
     <string name="chat_continue">متابعة</string>
     <string name="chat_not_done">لم يكتمل</string>
     <string name="chat_stopped">تم الإيقاف.</string>
+    <string name="chat_resume_checkpoint">المتابعة من نقطة التوقف</string>
+    <string name="chat_restart_task">البدء من جديد</string>
+    <string name="chat_resume_request">تابع من نقطة التوقف: %1$s</string>
+    <string name="chat_restart_request">ابدأ من جديد: %1$s</string>
     <string name="chat_view_source">عرض المصدر</string>
     <string name="chat_open">فتح</string>
     <string name="chat_attach_rejected">تعذّر الإضافة: %1$s (يجب أن يكون حجم كل ملف أقل من 200 MB)</string>
@@ -66,12 +73,12 @@
     <string name="drawer_delete_body">سيتم حذف «%1$s» والملفات الموجودة فيها.</string>
     <string name="drawer_delete_running">سيتم إيقاف المهمة قيد التشغيل فيها.</string>
     <plurals name="drawer_delete_schedules">
-        <item quantity="zero">لن تُحذف مهام مجدولة أخرى في هذه المحادثة (%1$d).</item>
-        <item quantity="one">سيتم أيضًا حذف مهمة مجدولة واحدة (%1$d) في هذه المحادثة.</item>
-        <item quantity="two">سيتم أيضًا حذف مهمتين مجدولتين (%1$d) في هذه المحادثة.</item>
-        <item quantity="few">سيتم أيضًا حذف %1$d من المهام المجدولة في هذه المحادثة.</item>
-        <item quantity="many">سيتم أيضًا حذف %1$d مهمة مجدولة في هذه المحادثة.</item>
-        <item quantity="other">سيتم أيضًا حذف %1$d مهمة مجدولة في هذه المحادثة.</item>
+        <item quantity="zero">لن تُحذف أي مهام مجدولة في هذه المحادثة (%1$d).</item>
+        <item quantity="one">سيتم الاحتفاظ بمهمة مجدولة واحدة (%1$d) في هذه المحادثة.</item>
+        <item quantity="two">سيتم الاحتفاظ بمهمتين مجدولتين (%1$d) في هذه المحادثة.</item>
+        <item quantity="few">سيتم الاحتفاظ بـ %1$d مهام مجدولة في هذه المحادثة.</item>
+        <item quantity="many">سيتم الاحتفاظ بـ %1$d مهمة مجدولة في هذه المحادثة.</item>
+        <item quantity="other">سيتم الاحتفاظ بـ %1$d مهمة مجدولة في هذه المحادثة.</item>
     </plurals>
     <string name="drawer_actions">خيارات المحادثة</string>
     <string name="drawer_rename">إعادة تسمية</string>

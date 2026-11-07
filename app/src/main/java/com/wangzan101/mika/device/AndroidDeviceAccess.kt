@@ -68,22 +68,40 @@ internal class AndroidDeviceAccessPort(context: Context, private val helper: () 
 
     /** 只读识别当前唯一的系统凭据输入目标,不聚焦、不输入,不按容器名字推测锁屏类型。 */
     override suspend fun detectedCredentialKind(): CredentialKind? = withContext(Dispatchers.IO) {
-        credentialFields().singleOrNull()?.kind
+        scanCredentialFields().targets.singleOrNull()?.kind
+    }
+
+    /** MCP 可直接带回的受限诊断:只有 SystemUI 窗口、密码节点和数字键盘的技术属性,没有节点文字。 */
+    override suspend fun credentialDiagnostics(): List<String> = withContext(Dispatchers.IO) {
+        scanCredentialFields().diagnostics.also { Log.i(TAG, "keyguard diagnostics: ${it.joinToString()}") }
     }
 
     private data class CredentialTarget(val node: AccessibilityNodeInfo?, val window: AccessibilityWindowInfo, val kind: CredentialKind)
+    private data class CredentialScan(val targets: List<CredentialTarget>, val diagnostics: List<String>)
 
-    private fun credentialFields(): List<CredentialTarget> {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return emptyList()
-        if (!power.isInteractive || !keyguard.isKeyguardLocked || !keyguard.isDeviceLocked) return emptyList()
-        val service = ScreenAccessibility.instance.value ?: return emptyList<CredentialTarget>().also { Log.i(TAG, "keyguard: accessibility off") }
+    private fun credentialFields(): List<CredentialTarget> = scanCredentialFields().targets
+
+    private fun scanCredentialFields(): CredentialScan {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return CredentialScan(emptyList(), listOf("api_below_33"))
+        }
+        if (!power.isInteractive || !keyguard.isKeyguardLocked || !keyguard.isDeviceLocked) {
+            return CredentialScan(emptyList(), listOf("keyguard_not_active"))
+        }
+        val service = ScreenAccessibility.instance.value
+            ?: return CredentialScan(emptyList(), listOf("accessibility_unavailable")).also {
+                Log.i(TAG, "keyguard: accessibility off")
+            }
         val fields = mutableListOf<CredentialTarget>()
         val pinPads = mutableListOf<CredentialTarget>()
+        val diagnostics = mutableListOf<String>()
         var passwordNodes = 0
         val systemUi = service.windowsOn(Display.DEFAULT_DISPLAY).mapNotNull { w ->
             w.root?.takeIf { it.packageName?.toString() == SYSTEM_UI }?.let { w to it }
         }
-        for ((window, root) in systemUi) {
+        diagnostics += "systemui_windows=${systemUi.size}"
+        for ((windowIndex, pair) in systemUi.withIndex()) {
+            val (window, root) = pair
             val digits = mutableSetOf<Char>()
             val candidates = mutableListOf<AccessibilityNodeInfo>()
             val padKeys = mutableListOf<KeyguardPinPad.DigitKey>()
@@ -107,22 +125,30 @@ internal class AndroidDeviceAccessPort(context: Context, private val helper: () 
             visit(root, 0)
             passwordNodes += candidates.size
             val pad = KeyguardFields.isDigitPad(digits)
+            val bounds = Rect().also(window::getBoundsInScreen)
+            val pinLayout = KeyguardPinPad.matches(padKeys,
+                KeyguardPinPad.Bounds(bounds.left, bounds.top, bounds.right, bounds.bottom))
+            diagnostics += KeyguardDiagnostics.window(windowIndex, window.isFocused, candidates.size,
+                digits.size, padKeys.size, pinLayout)
             for (n in candidates) {
                 val cls = n.inputType and InputType.TYPE_MASK_CLASS
+                val numeric = cls == InputType.TYPE_CLASS_NUMBER
+                val untyped = n.inputType == InputType.TYPE_NULL
                 val kind = CredentialKind.entries.singleOrNull { kind ->
                     KeyguardFields.matches(kind, n.viewIdResourceName.orEmpty(), n.className?.toString().orEmpty(), n.isPassword,
-                        n.isEditable, numeric = cls == InputType.TYPE_CLASS_NUMBER, untyped = n.inputType == InputType.TYPE_NULL, digitPad = pad)
-                } ?: continue
-                fields += CredentialTarget(n, window, kind)
+                        n.isEditable, numeric = numeric, untyped = untyped, digitPad = pad)
+                }
+                if (diagnostics.count { it.startsWith("field[") } < MAX_FIELD_DIAGNOSTICS) {
+                    diagnostics += KeyguardDiagnostics.field(n.viewIdResourceName, n.className, n.isEditable,
+                        numeric, untyped, pad, n.isFocused, kind)
+                }
+                if (kind != null) fields += CredentialTarget(n, window, kind)
             }
-            val bounds = Rect().also(window::getBoundsInScreen)
-            if (KeyguardPinPad.matches(padKeys,
-                    KeyguardPinPad.Bounds(bounds.left, bounds.top, bounds.right, bounds.bottom))) {
-                pinPads += CredentialTarget(null, window, CredentialKind.Pin)
-            }
+            if (pinLayout) pinPads += CredentialTarget(null, window, CredentialKind.Pin)
         }
         // 有密码节点时沿用原路径,即使它无法识别也不猜测;没有时才考虑纯数字 PIN 页。
-        return if (passwordNodes == 0) pinPads else fields
+        val targets = if (passwordNodes == 0) pinPads else fields
+        return CredentialScan(targets, diagnostics.take(MAX_DIAGNOSTICS))
     }
 
     override suspend fun enter(credential: DeviceCredential): Boolean {
@@ -137,5 +163,7 @@ internal class AndroidDeviceAccessPort(context: Context, private val helper: () 
     private companion object {
         const val TAG = "MikaDeviceAccess"
         const val SYSTEM_UI = "com.android.systemui"
+        const val MAX_FIELD_DIAGNOSTICS = 8
+        const val MAX_DIAGNOSTICS = 20
     }
 }

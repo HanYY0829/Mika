@@ -221,4 +221,27 @@ class AccuracyTest {
         assertEquals(Verification.MATCH, type(FakeField("旧内容"), ""))
         assertEquals(Verification.MISMATCH, type(FakeField("旧内容", clearable = false), ""))
     }
+
+    @Test fun labelReadbackIsAmbiguousWithoutChangingTheUsersText() {
+        assertEquals(true, ambiguousFieldReadback("Search results", "Search", "results"))
+        assertEquals(true, ambiguousFieldReadback("Search\n\tresults", "Search", "results"))
+        assertEquals(true, ambiguousFieldReadback("  Search  results  ", "Search", "results"))
+        assertEquals(false, ambiguousFieldReadback("Searchresults", "Search", "results"))
+        assertEquals(false, ambiguousFieldReadback("Search results", "Search", "Search results"))
+        assertEquals(false, ambiguousFieldReadback("Search results", "Search", "result"))
+        assertEquals(false, ambiguousFieldReadback("Search results", null, "results"))
+        assertEquals(false, ambiguousFieldReadback("Search results", "Search", ""))
+        // 用户正文恰好等于目标时由调用方优先按精确读回处理,不走这个歧义判断。
+        assertEquals(false, ambiguousFieldReadback("results", "Search", "results"))
+    }
+
+    @Test fun ambiguousReadbackStopsBeforeTheSecondWrite() {
+        val f = object : TextField {
+            var writes = 0
+            override fun read(): String? = if (writes == 0) "" else null
+            override fun write(text: String): Boolean { writes++; return true }
+        }
+        assertEquals(Verification.UNKNOWN, runBlocking { typeAndVerify(f, "results") })
+        assertEquals(1, f.writes)
+    }
 }

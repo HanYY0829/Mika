@@ -33,6 +33,7 @@ import android.util.Log
 import android.view.Display
 import android.view.InputDevice
 import android.view.InputEvent
+import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.Surface
@@ -1095,18 +1096,69 @@ class ShellService(
         return injectPair(down, up, displayId) { exec("input", "-d", "$displayId", "keyevent", "$keyCode") == 0 }
     }
 
-    /** Ctrl+A / Ctrl+V:修饰键写在按键事件的 metaState 里(App 按它认组合键),只放行这两个,只发到 Mika 自己的屏(粘贴不能落到用户的屏上)。 */
-    override fun injectCtrlKey(displayId: Int, keyCode: Int): Boolean {
-        if (!ownDisplay(displayId)) return false
+    /** 自有虚拟屏上的 Ctrl+A / Ctrl+V,同时发送修饰键按下和抬起;松开修饰键失败不会把已经发出的正文判成未发送。 */
+    override fun injectCtrlKey(displayId: Int, keyCode: Int): Int {
+        if (!ownDisplay(displayId)) return AsciiTextKeys.NOT_SENT
         if (keyCode != KeyEvent.KEYCODE_A && keyCode != KeyEvent.KEYCODE_V) {
             Log.w(TAG, "refused ctrl key $keyCode")
-            return false
+            return AsciiTextKeys.NOT_SENT
         }
         val now = SystemClock.uptimeMillis()
         val meta = KeyEvent.META_CTRL_ON or KeyEvent.META_CTRL_LEFT_ON
-        val down = KeyEvent(now, now, KeyEvent.ACTION_DOWN, keyCode, 0, meta, VIRTUAL_KEYBOARD, 0, 0, InputDevice.SOURCE_KEYBOARD)
-        val up = KeyEvent.changeAction(down, KeyEvent.ACTION_UP)
-        return injectPair(down, up, displayId) { false }
+        fun event(code: Int, action: Int, modifiers: Int) = KeyEvent(
+            now, SystemClock.uptimeMillis(), action, code, 0, modifiers,
+            VIRTUAL_KEYBOARD, 0, 0, InputDevice.SOURCE_KEYBOARD,
+        )
+        var modifierDown = false
+        try {
+            if (!inject(event(KeyEvent.KEYCODE_CTRL_LEFT, KeyEvent.ACTION_DOWN, 0), displayId)) return AsciiTextKeys.NOT_SENT
+            modifierDown = true
+            if (!inject(event(keyCode, KeyEvent.ACTION_DOWN, meta), displayId)) return AsciiTextKeys.NOT_SENT
+            val up = event(keyCode, KeyEvent.ACTION_UP, meta)
+            return if (inject(up, displayId) || inject(up, displayId)) AsciiTextKeys.DISPATCHED else AsciiTextKeys.UNCONFIRMED
+        } finally {
+            if (modifierDown) {
+                val up = event(KeyEvent.KEYCODE_CTRL_LEFT, KeyEvent.ACTION_UP, 0)
+                if (ownDisplay(displayId) && !inject(up, displayId) && !inject(up, displayId)) {
+                    Log.w(TAG, "could not release Ctrl on display $displayId")
+                }
+            }
+        }
+    }
+
+    @SuppressLint("DiscouragedPrivateApi")
+    override fun injectAsciiText(displayId: Int, taskId: Int, packageName: String, text: String): Int {
+        if (displayId <= Display.DEFAULT_DISPLAY || !ownDisplay(displayId) || taskId < 0 || !AsciiTextKeys.supports(text)) {
+            return AsciiTextKeys.NOT_SENT
+        }
+        val (events, targetUid) = runCatching {
+            val task = tasksOn(displayId).firstOrNull() ?: return AsciiTextKeys.NOT_SENT
+            val top = TASK_INFO.getField("topActivity").get(task) as? ComponentName
+            if (TASK_INFO.getField("taskId").getInt(task) != taskId || top?.packageName != packageName) {
+                return AsciiTextKeys.NOT_SENT
+            }
+            val uid = if (Build.VERSION.SDK_INT >= 33) {
+                val user = TASK_INFO.getField("userId").getInt(task)
+                val pm = context.packageManager
+                (pm.javaClass.getMethod("getPackageUidAsUser", String::class.java, Int::class.java, Int::class.java)
+                    .invoke(pm, packageName, 0, user) as Int).takeIf { it >= 0 } ?: return AsciiTextKeys.NOT_SENT
+            } else null
+            val keys = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD).getEvents(text.toCharArray())
+                ?.takeIf { it.isNotEmpty() } ?: return AsciiTextKeys.NOT_SENT
+            keys to uid
+        }.getOrElse { return AsciiTextKeys.NOT_SENT }
+
+        for (event in events) {
+            if (!ownDisplay(displayId) || (targetUid == null && topTaskId(displayId) != taskId)) {
+                return AsciiTextKeys.UNCONFIRMED
+            }
+            event.source = InputDevice.SOURCE_KEYBOARD
+            val sent = if (targetUid != null) injectTo(event, displayId, targetUid)
+                else inject(event, displayId, waitForFinish = true)
+            // A failed dispatch can leave a prefix. Never replay it through another input route.
+            if (!sent) return AsciiTextKeys.UNCONFIRMED
+        }
+        return AsciiTextKeys.DISPATCHED
     }
 
     override fun listUsers(): String? = sh("pm", "list", "users").takeIf { it.first == 0 }?.second
@@ -1261,6 +1313,8 @@ class ShellService(
      */
     override fun setClipText(text: String): Int = synchronized(clipLock) {
         try {
+            // 上次还原因读不到而没完成时,先再还原一次;仍读不到就不能覆盖此刻可能属于用户的新内容。
+            if (clipSaved && !restoreClip()) return CLIP_UNREADABLE
             if (!clipSaved) {
                 if (!canReadClipboard()) return CLIP_UNREADABLE
                 val prior = clipboard.primaryClip
@@ -1281,16 +1335,17 @@ class ShellService(
             markSensitive(clip)
             clipboard.setPrimaryClip(clip)
             ourText = text
-            CLIP_SET
+            // Android can silently decline the write. Never paste a clipboard we didn't set.
+            if (nowState(text) == ShellClip.Now.Ours) CLIP_SET else CLIP_FAILED
         } catch (t: Throwable) {
             Log.w(TAG, "setClipText failed", t)
             CLIP_FAILED
         }
     }
 
-    override fun restoreClip() = synchronized(clipLock) {
-        if (!clipSaved) return
-        runCatching {
+    override fun restoreClip(): Boolean = synchronized(clipLock) {
+        if (!clipSaved) return true
+        val finished = runCatching {
             val prior = savedClip
             val now = nowState(ourText)
             val action = ShellClip.restore(prior == null, now)
@@ -1300,10 +1355,17 @@ class ShellService(
                 ShellClip.Restore.Clear -> clipboard.clearPrimaryClip()
                 ShellClip.Restore.Leave -> Unit
             }
-        }.onFailure { Log.w(TAG, "restoreClip failed", it) }
-        savedClip = null
-        clipSaved = false
-        ourText = null
+            // 写入也可能被系统悄悄拒绝:再读一次,仍是 Mika 的或此刻读不到都保留记录,下次继续尝试。
+            // 用户已经复制了别的内容时保留用户的新内容,留底可以清掉。
+            val after = nowState(ourText)
+            after != ShellClip.Now.Ours && after != ShellClip.Now.Unreadable
+        }.onFailure { Log.w(TAG, "restoreClip failed", it) }.getOrDefault(false)
+        if (finished) {
+            savedClip = null
+            clipSaved = false
+            ourText = null
+        }
+        finished
     }
 
     override fun savedClipText(): String? = synchronized(clipLock) {
@@ -1311,7 +1373,7 @@ class ShellService(
         runCatching { savedClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text?.toString() }.getOrNull().orEmpty()
     }
 
-    override fun restoreClipText(original: String, ours: String) = synchronized(clipLock) {
+    override fun restoreClipText(original: String, ours: String): Boolean = synchronized(clipLock) {
         runCatching {
             val now = nowState(ours)
             val action = ShellClip.restore(original.isEmpty(), now)
@@ -1321,8 +1383,9 @@ class ShellService(
                 ShellClip.Restore.Clear -> clipboard.clearPrimaryClip()
                 ShellClip.Restore.Leave -> Unit
             }
-        }.onFailure { Log.w(TAG, "restoreClipText failed", it) }
-        Unit
+            val after = nowState(ours)
+            after != ShellClip.Now.Ours && after != ShellClip.Now.Unreadable
+        }.onFailure { Log.w(TAG, "restoreClipText failed", it) }.getOrDefault(false)
     }
 
     /** 剪贴板此刻是不是 Mika 放进去的 [ours];读不到(有内容但取不到)时不当成空的。 */

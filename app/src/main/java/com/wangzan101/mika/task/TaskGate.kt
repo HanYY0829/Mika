@@ -24,8 +24,8 @@ class TaskGate(
     private val shellAvailable: StateFlow<Boolean>,
     /** 写操作前同步重读系统锁屏状态，避免熄屏广播尚未处理时放行。 */
     private val refreshLocked: (() -> Unit)? = null,
-    /** 无人值守任务遇到锁屏时调用；返回前必须按系统状态刷新 [locked]。 */
-    private val unattendedUnlock: (suspend () -> Unit)? = null,
+    /** 无人值守任务遇到锁屏时调用;返回解锁状态,返回前必须按系统状态刷新 [locked]。 */
+    private val unattendedUnlock: (suspend () -> String)? = null,
     private val moveBack: suspend () -> Boolean,
 ) {
     private val movedAway = MutableStateFlow(false)
@@ -79,9 +79,9 @@ class TaskGate(
                     if (unattendedUnlock == null) {
                         locked.first { !it }
                     } else {
-                        unattendedUnlock.invoke()
+                        val status = unattendedUnlock.invoke()
                         // 无人值守时不能无限等用户来解锁；只认刷新后的系统状态，不认流程自称成功。
-                        if (locked.value) throw UnattendedLockException(tr(R.string.trigger_unlock_failed))
+                        if (locked.value) throw UnattendedLockException(tr(R.string.trigger_unlock_failed), status)
                     }
                 }
                 else -> {
@@ -129,5 +129,5 @@ class TaskGate(
     }
 }
 
-/** 无人值守任务无法通过系统锁屏；由任务服务转成有结果通知的失败终态。 */
-internal class UnattendedLockException(override val message: String) : Exception(message)
+/** 无人值守任务无法通过系统锁屏；保留不含凭据的状态码,由任务服务转成有结果通知的失败终态。 */
+internal class UnattendedLockException(message: String, val status: String) : Exception("$message [$status]")

@@ -12,6 +12,9 @@
     <string name="chat_example_multi_step">Find three highly rated wireless earbuds under $100 on Amazon and compare their pros and cons.</string>
     <string name="chat_example_alarms">Set alarms for 9:40, 9:50 and 10:00 tomorrow morning.</string>
     <string name="chat_example_ai_apps">Find the AI apps installed on my phone, ask each one what it does best, and compare their answers.</string>
+    <string name="chat_example_replace_title">Replace current draft?</string>
+    <string name="chat_example_replace_body">This recommendation will replace what you’ve already typed.</string>
+    <string name="chat_example_replace_action">Replace draft</string>
     <string name="chat_working_on">Working in %1$s</string>
     <string name="chat_working">Working</string>
     <string name="share_draft_failed">Couldn’t add this share to a new conversation</string>
@@ -43,6 +46,10 @@
     <string name="chat_continue">Continue</string>
     <string name="chat_not_done">Not finished</string>
     <string name="chat_stopped">Stopped.</string>
+    <string name="chat_resume_checkpoint">Resume from checkpoint</string>
+    <string name="chat_restart_task">Start over</string>
+    <string name="chat_resume_request">Continue from the checkpoint: %1$s</string>
+    <string name="chat_restart_request">Restart from the beginning: %1$s</string>
     <string name="chat_view_source">View source</string>
     <string name="chat_open">Open</string>
     <string name="chat_attach_rejected">Couldn’t add: %1$s (each file must be under 200 MB)</string>
@@ -62,8 +69,8 @@
     <string name="drawer_delete_body">“%1$s” and the files in it will be deleted.</string>
     <string name="drawer_delete_running">Its running task will be stopped.</string>
     <plurals name="drawer_delete_schedules">
-        <item quantity="one">%1$d scheduled task in this chat will be deleted too.</item>
-        <item quantity="other">%1$d scheduled tasks in this chat will be deleted too.</item>
+        <item quantity="one">%1$d scheduled task in this chat will be kept.</item>
+        <item quantity="other">%1$d scheduled tasks in this chat will be kept.</item>
     </plurals>
     <string name="drawer_actions">Chat options</string>
     <string name="drawer_rename">Rename</string>

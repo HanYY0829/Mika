@@ -677,6 +677,7 @@ class TaskRun(
                         val result = (service.application as MikaApp).deviceAccess.access.unlock()
                         states.refresh()
                         Log.i(TAG, "scheduled unlock finished: ${result.status}")
+                        result.status
                     }
                 } else null,
             ) {
@@ -691,6 +692,7 @@ class TaskRun(
                     runs.open(goal).also { opened ->
                         record = opened
                         _runId.value = opened.runId
+                        service.rememberRecord(this@TaskRun, opened.runId)
                         mcpExternalId?.let { ext ->
                             (service.application as? com.wangzan101.mika.MikaApp)?.remoteTasks?.rememberRun(ext, opened.runId)
                         }
@@ -963,7 +965,7 @@ class TaskRun(
 
                 override suspend fun returnWeb(loggedIn: Boolean): HandoverActivity? =
                     webStack?.let { w -> withContext(Dispatchers.Main) { w.returnFromTakeover(loggedIn) } }
-            }, side, queue = service.takeoverQueue)
+            }, side, queue = service.takeoverQueue, remind = { service.refreshNotifications(this@TaskRun) })
             takeover = handover
             handoverRef = handover
 
@@ -1151,6 +1153,27 @@ class TaskRun(
 
     /** 停止后有没有可交代的:做过至少一件事,或停下时已经写出了字。 */
     fun hasStopMaterial(draft: String?): Boolean = synchronized(activityLog) { activityLog.isNotEmpty() } || !draft.isNullOrBlank()
+
+    /** 真正失败后的断点交代:只按记录拼,不再请模型,也不把短失败原因改写成成功。 */
+    suspend fun checkpointSummary(): String? {
+        val k = kit
+        val runId = _runId.value
+        val recorded = withContext(Dispatchers.IO) {
+            try {
+                runId?.let { id -> k?.runStore?.events(id) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                null
+            }
+        }
+        val events = recorded?.takeIf { StopSummary.worthSaying(it, null) } ?: synchronized(activityLog) { activityLog.toList() }
+        if (!StopSummary.worthSaying(events, null)) return null
+        val labels = ToolLabels(knownTools())
+        return StopSummary.plain(k?.agent?.taskText ?: goal, events, null, labels::label) {
+            ConfirmationNotifier.appLabel(service, it)
+        }
+    }
 
     /**
      * 用户停止之后:按这次已经做了的事写几行交代(见 [StopSummary]),只读运行记录,不再操作任何东西。

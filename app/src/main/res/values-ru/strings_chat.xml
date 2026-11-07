@@ -12,6 +12,9 @@
     <string name="chat_example_multi_step">Найди на Amazon три модели беспроводных наушников с высоким рейтингом дешевле 100 долларов и сравни их плюсы и минусы.</string>
     <string name="chat_example_alarms">Поставь будильники на завтра на 9:40, 9:50 и 10:00 утра.</string>
     <string name="chat_example_ai_apps">Найди установленные на моём телефоне приложения с ИИ, спроси каждое, что у него получается лучше всего, и сравни ответы.</string>
+    <string name="chat_example_replace_title">Заменить текущий черновик?</string>
+    <string name="chat_example_replace_body">Рекомендуемая задача заменит уже введённый текст.</string>
+    <string name="chat_example_replace_action">Заменить черновик</string>
     <string name="chat_working_on">Работает в приложении «%1$s»</string>
     <string name="chat_working">Работает</string>
     <string name="share_draft_failed">Не удалось добавить материал в новый разговор</string>
@@ -45,6 +48,10 @@
     <string name="chat_continue">Продолжить</string>
     <string name="chat_not_done">Не завершено</string>
     <string name="chat_stopped">Остановлено.</string>
+    <string name="chat_resume_checkpoint">Продолжить с места остановки</string>
+    <string name="chat_restart_task">Начать заново</string>
+    <string name="chat_resume_request">Продолжи с места остановки: %1$s</string>
+    <string name="chat_restart_request">Начни заново: %1$s</string>
     <string name="chat_view_source">Показать источник</string>
     <string name="chat_open">Открыть</string>
     <string name="chat_attach_rejected">Не удалось добавить: %1$s (каждый файл должен быть меньше 200 МБ)</string>
@@ -64,10 +71,10 @@
     <string name="drawer_delete_body">Чат «%1$s» и файлы в нём будут удалены.</string>
     <string name="drawer_delete_running">Выполняемая в нём задача будет остановлена.</string>
     <plurals name="drawer_delete_schedules">
-        <item quantity="one">Также будет удалена %1$d задача по расписанию из этого чата.</item>
-        <item quantity="few">Также будут удалены %1$d задачи по расписанию из этого чата.</item>
-        <item quantity="many">Также будут удалены %1$d задач по расписанию из этого чата.</item>
-        <item quantity="other">Также будет удалена %1$d задачи по расписанию из этого чата.</item>
+        <item quantity="one">В этом чате будет сохранена %1$d задача по расписанию.</item>
+        <item quantity="few">В этом чате будут сохранены %1$d задачи по расписанию.</item>
+        <item quantity="many">В этом чате будут сохранены %1$d задач по расписанию.</item>
+        <item quantity="other">В этом чате будет сохранена %1$d задача по расписанию.</item>
     </plurals>
     <string name="drawer_actions">Действия с чатом</string>
     <string name="drawer_rename">Переименовать</string>

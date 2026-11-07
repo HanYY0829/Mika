@@ -12,6 +12,9 @@
     <string name="chat_example_multi_step">Encontre três fones de ouvido sem fio bem avaliados por menos de US$ 100 na Amazon e compare os prós e contras.</string>
     <string name="chat_example_alarms">Defina alarmes para amanhã às 9:40, 9:50 e 10:00.</string>
     <string name="chat_example_ai_apps">Encontre os apps de IA instalados no meu celular, pergunte a cada um no que é melhor e compare as respostas.</string>
+    <string name="chat_example_replace_title">Substituir o rascunho atual?</string>
+    <string name="chat_example_replace_body">A tarefa recomendada substituirá o que você já digitou.</string>
+    <string name="chat_example_replace_action">Substituir rascunho</string>
     <string name="chat_working_on">Trabalhando em %1$s</string>
     <string name="chat_working">Trabalhando</string>
     <string name="share_draft_failed">Não foi possível adicionar o conteúdo compartilhado a uma nova conversa</string>
@@ -44,6 +47,10 @@
     <string name="chat_continue">Continuar</string>
     <string name="chat_not_done">Não concluído</string>
     <string name="chat_stopped">Parado.</string>
+    <string name="chat_resume_checkpoint">Continuar do ponto de interrupção</string>
+    <string name="chat_restart_task">Começar de novo</string>
+    <string name="chat_resume_request">Continue do ponto de interrupção: %1$s</string>
+    <string name="chat_restart_request">Comece de novo: %1$s</string>
     <string name="chat_view_source">Ver origem</string>
     <string name="chat_open">Abrir</string>
     <string name="chat_attach_rejected">Não foi possível adicionar: %1$s (cada arquivo deve ter menos de 200 MB)</string>
@@ -63,9 +70,9 @@
     <string name="drawer_delete_body">“%1$s” e os arquivos dela serão excluídos.</string>
     <string name="drawer_delete_running">A tarefa em andamento será interrompida.</string>
     <plurals name="drawer_delete_schedules">
-        <item quantity="one">%1$d tarefa agendada desta conversa também será excluída.</item>
-        <item quantity="many">%1$d tarefas agendadas desta conversa também serão excluídas.</item>
-        <item quantity="other">%1$d tarefas agendadas desta conversa também serão excluídas.</item>
+        <item quantity="one">%1$d tarefa agendada desta conversa será mantida.</item>
+        <item quantity="many">%1$d tarefas agendadas desta conversa serão mantidas.</item>
+        <item quantity="other">%1$d tarefas agendadas desta conversa serão mantidas.</item>
     </plurals>
     <string name="drawer_actions">Opções da conversa</string>
     <string name="drawer_rename">Renomear</string>

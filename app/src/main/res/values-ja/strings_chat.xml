@@ -12,6 +12,9 @@
     <string name="chat_example_multi_step">Amazon で100ドル未満の高評価のワイヤレスイヤホンを3つ探し、メリットとデメリットを比較して</string>
     <string name="chat_example_alarms">明日の朝 9:40、9:50、10:00 にアラームをセットして</string>
     <string name="chat_example_ai_apps">スマホに入っている AI アプリを探し、それぞれに得意なことを聞いて、回答を比較して</string>
+    <string name="chat_example_replace_title">現在の下書きを置き換えますか？</string>
+    <string name="chat_example_replace_body">おすすめのタスクで、入力済みの内容が置き換えられます。</string>
+    <string name="chat_example_replace_action">下書きを置き換える</string>
     <string name="chat_working_on">%1$s で作業中</string>
     <string name="chat_working">作業中</string>
     <string name="share_draft_failed">共有された内容を新しい会話に追加できませんでした</string>
@@ -42,6 +45,10 @@
     <string name="chat_continue">続ける</string>
     <string name="chat_not_done">未完了</string>
     <string name="chat_stopped">停止しました。</string>
+    <string name="chat_resume_checkpoint">中断箇所から続ける</string>
+    <string name="chat_restart_task">最初からやり直す</string>
+    <string name="chat_resume_request">中断箇所から続ける：%1$s</string>
+    <string name="chat_restart_request">最初からやり直す：%1$s</string>
     <string name="chat_view_source">ソースを見る</string>
     <string name="chat_open">開く</string>
     <string name="chat_attach_rejected">追加できませんでした: %1$s(ファイルは 1 つあたり 200 MB 未満にしてください)</string>
@@ -61,7 +68,7 @@
     <string name="drawer_delete_body">「%1$s」とその中のファイルが削除されます。</string>
     <string name="drawer_delete_running">実行中のタスクは停止します。</string>
     <plurals name="drawer_delete_schedules">
-        <item quantity="other">このチャットのスケジュールされたタスク %1$d 件も削除されます。</item>
+        <item quantity="other">このチャットのスケジュールされたタスク %1$d 件は保持されます。</item>
     </plurals>
     <string name="drawer_actions">チャットのオプション</string>
     <string name="drawer_rename">名前を変更</string>

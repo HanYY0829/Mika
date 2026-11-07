@@ -3,6 +3,8 @@ package com.wangzan101.mika.task
 import com.wangzan101.mika.i18n.ChineseTexts
 import com.wangzan101.mika.chat.ConversationStore
 import com.wangzan101.mika.core.agent.Turn
+import com.wangzan101.mika.core.record.RunEvent
+import com.wangzan101.mika.core.record.RunRecords
 import com.wangzan101.mika.core.run.Channel
 import com.wangzan101.mika.core.run.ChannelInputSink
 import com.wangzan101.mika.core.run.ChannelPeer
@@ -42,12 +44,12 @@ class RunRecoveryTest {
         override fun actionFailed(key: String, reason: String) {}
     }
 
-    private inner class Rig(val scope: TestScope, channelId: String = LocalChannel.ID) {
+    private inner class Rig(val scope: TestScope, channelId: String = LocalChannel.ID, records: RunRecords? = null) {
         val store = MemoryRunStore()
         val channel = RecordingChannel(channelId)
         val outbox = Outbox()
         val conversations = ConversationStore(tmp.newFolder())
-        val recovery = RunRecovery(store, outbox, { channel }, NoTriggers, conversations, scope)
+        val recovery = RunRecovery(store, outbox, { channel }, NoTriggers, conversations, scope, records)
     }
 
     private fun run(id: String, phase: RunPhase = RunPhase.Running) = StoredRun(RunId(id), "thread-$id", "目标 $id", phase)
@@ -161,6 +163,28 @@ class RunRecoveryTest {
         assertEquals("failed", turns.single().status)
         assertEquals("目标 a", turns.single().userText)
         assertEquals("任务中断了，可以重新发起。", turns.single().outcome)
+    }
+
+    @Test fun interruptionIncludesPersistedProgressButNotificationStaysShort() = runTest(UnconfinedTestDispatcher()) {
+        val events = listOf(
+            RunEvent.Activity(1, 1, "act", "phone_calendar_bulk_insert", "日历"),
+            RunEvent.Criteria(2, listOf("36 条日程都已保存"), emptyList(),
+                progress = RunEvent.Progress("已加日程", 12, 36, "第 12 条")),
+        )
+        val records = object : RunRecords {
+            override suspend fun summary(runId: String) = null
+            override suspend fun events(runId: String) = events
+        }
+        val rig = Rig(this, records = records)
+        rig.store.save(run("a").copy(recordId = "detail-a"))
+
+        rig.recovery.recover()
+
+        val outcome = rig.conversations.turns("thread-a").single().outcome
+        assertTrue(outcome, outcome.startsWith("任务中断了，可以重新发起。"))
+        assertTrue(outcome, "已确认进度:已加日程 · 12/36 · 第 12 条" in outcome)
+        assertEquals("任务中断了，可以重新发起。", rig.conversations.turns("thread-a").single().outcome.lineSequence().first())
+        assertTrue((rig.channel.sent.single() as Delivery.Notice).text.length < 100)
     }
 
     // 条件检查运行的目标带着网页来的基准:中断时对话里记用户写的条件,不记生成的检查目标
