@@ -14,6 +14,7 @@ import com.wangzan101.mika.chat.RetryAttachmentStatus
 import com.wangzan101.mika.chat.ConversationStore
 import com.wangzan101.mika.chat.ConversationSummary
 import com.wangzan101.mika.chat.CurrentChat
+import com.wangzan101.mika.chat.DeleteBatch
 import com.wangzan101.mika.chat.DeleteImpact
 import com.wangzan101.mika.chat.SharedDraft
 import com.wangzan101.mika.chat.SharedDraftStore
@@ -1719,14 +1720,53 @@ class ChatViewModel(
      * 停任务、删定时任务、删文件在后台做(见 `ConversationDeleter`)。
      */
     fun deleteConversation(id: String) {
-        if (!deleting.add(id)) return
-        drafts.update { it - id }
-        sharedDrafts?.clear(id)
-        _deleted.update { it + id }
-        if (id == _ui.value.conversationId) startOver(id) else unpark(id)
+        deleteConversations(listOf(id), report = false)
+    }
+
+    /** 一次批量删除的进度和结果;侧栏在底部显示,提示完调 [clearDeleteBatch]。 */
+    private val _deleteBatch = MutableStateFlow<DeleteBatch?>(null)
+    val deleteBatch: StateFlow<DeleteBatch?> = _deleteBatch.asStateFlow()
+
+    fun clearDeleteBatch() {
+        _deleteBatch.value = null
+    }
+
+    /**
+     * 用户在侧栏多选后一次删掉 [ids]:当场把它们从侧栏拿掉,再逐条在后台删。
+     * 删的时候 [deleteBatch] 里写着一共几条、删完几条、失败几条,侧栏据此显示进度和结果。
+     */
+    fun deleteConversations(ids: Collection<String>) {
+        deleteConversations(ids, report = true)
+    }
+
+    private fun deleteConversations(ids: Collection<String>, report: Boolean) {
+        val targets = ids.filter { deleting.add(it) }
+        if (targets.isEmpty()) return
+        targets.forEach { id ->
+            drafts.update { it - id }
+            sharedDrafts?.clear(id)
+            _deleted.update { it + id }
+            if (id == _ui.value.conversationId) startOver(id) else unpark(id)
+        }
         releaseUnusedLibraryCopies()
+        if (report) _deleteBatch.value = DeleteBatch(targets.size, 0, 0)
         scope.launch {
-            try { removeConversation(id) } catch (e: CancellationException) { throw e } catch (e: Exception) { } finally { deleting -= id }
+            var done = 0
+            var failed = 0
+            // 一条删不掉(存储读写失败等)不挡住后面的;最后照实说几条失败
+            targets.forEach { id ->
+                try {
+                    removeConversation(id)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    failed++
+                } finally {
+                    deleting -= id
+                    done++
+                    if (report) _deleteBatch.value = DeleteBatch(targets.size, done, failed)
+                }
+            }
         }
     }
 
