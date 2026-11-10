@@ -16,7 +16,7 @@
     <string name="wechat_state_disconnected_detail">绑定后，可以在微信里直接给 Mika 安排任务</string>
     <string name="wechat_state_connecting_detail">正在连接微信…</string>
     <string name="wechat_state_connected_detail">微信私聊已接入 Mika，可以在微信里安排任务</string>
-    <string name="wechat_state_paused_detail">已暂停接收微信新消息，现有任务不受影响</string>
+    <string name="wechat_state_paused_detail">已暂停接收微信新消息和微信任务的自动解锁</string>
     <string name="wechat_state_failed_detail">暂时无法接收新消息，Mika 会自动重试</string>
     <string name="wechat_state_rebind_detail">本次登录已失效，请重新扫码绑定</string>
     <string name="wechat_state_waiting_detail">请在微信中完成授权确认</string>
@@ -33,6 +33,10 @@
     <string name="wechat_connection">连接</string>
     <string name="wechat_receive">接收微信任务</string>
     <string name="wechat_receive_sub">关闭后不再读取新消息</string>
+    <string name="wechat_allow_unlock">允许微信任务唤醒与解锁</string>
+    <string name="wechat_allow_unlock_sub">仅允许本人绑定微信的私聊任务尝试唤醒并解锁这台手机。</string>
+    <string name="wechat_allow_unlock_foot">默认关闭，重新绑定后关闭。请先在「%1$s › %2$s」开启「%3$s」，并在本机保存锁屏 PIN 或密码（如有）。本开关不会代为开启该权限，也不会使用微信消息中的凭据解锁。</string>
+    <string name="wechat_unlock_failed">微信任务未能唤醒或解锁手机。请手动解锁，或检查 Mika 微信设置中的唤醒与解锁授权，以及「设置 › 连接电脑」中的远程解锁权限和已保存凭据。</string>
     <string name="wechat_bound_account">绑定账号</string>
     <string name="wechat_current_account">当前微信用户</string>
     <string name="wechat_message_scope">消息范围</string>
@@ -40,7 +44,7 @@
     <string name="wechat_rebind">重新绑定</string>
     <string name="wechat_unbind">解除绑定</string>
     <string name="wechat_unbind_title">解除微信绑定？</string>
-    <string name="wechat_unbind_body">Mika 将停止接收微信新消息，并删除保存在本机的绑定信息。现有任务不受影响。</string>
+    <string name="wechat_unbind_body">Mika 将停止接收微信新消息，删除保存在本机的绑定信息，并撤销微信任务的自动解锁授权。</string>
     <string name="wechat_capabilities">首版能力</string>
     <string name="wechat_capability_text">私聊文本与真实任务</string>
     <string name="wechat_capability_replies">Mika 追问、任务结果与通知</string>

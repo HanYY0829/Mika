@@ -16,7 +16,7 @@
     <string name="wechat_state_disconnected_detail">Connect to assign Mika tasks directly from WeChat</string>
     <string name="wechat_state_connecting_detail">Connecting to WeChat…</string>
     <string name="wechat_state_connected_detail">WeChat private chats can now assign tasks to Mika</string>
-    <string name="wechat_state_paused_detail">New WeChat messages are paused; existing tasks continue</string>
+    <string name="wechat_state_paused_detail">Receiving new WeChat messages and automatic unlocking for WeChat tasks are paused</string>
     <string name="wechat_state_failed_detail">Can’t receive new messages right now; Mika will retry automatically</string>
     <string name="wechat_state_rebind_detail">This login is no longer valid. Scan a new QR code to reconnect</string>
     <string name="wechat_state_waiting_detail">Confirm authorization in WeChat</string>
@@ -33,6 +33,10 @@
     <string name="wechat_connection">Connection</string>
     <string name="wechat_receive">Receive WeChat tasks</string>
     <string name="wechat_receive_sub">When off, Mika stops reading new messages</string>
+    <string name="wechat_allow_unlock">Allow WeChat tasks to wake and unlock</string>
+    <string name="wechat_allow_unlock_sub">Only tasks from your own linked WeChat private chat can try to wake and unlock this phone.</string>
+    <string name="wechat_allow_unlock_foot">Off by default; rebinding turns it off. First enable “%3$s” in “%1$s › %2$s” and save your lock-screen PIN or password there, if you use one. This switch does not change that permission or use credentials sent through WeChat.</string>
+    <string name="wechat_unlock_failed">The WeChat task couldn’t wake or unlock the phone. Unlock it manually, or check wake and unlock permission in Mika’s WeChat settings, plus remote unlock permission and saved credentials in Settings › Connect a computer.</string>
     <string name="wechat_bound_account">Linked account</string>
     <string name="wechat_current_account">Current WeChat user</string>
     <string name="wechat_message_scope">Message scope</string>
@@ -40,7 +44,7 @@
     <string name="wechat_rebind">Link again</string>
     <string name="wechat_unbind">Unlink</string>
     <string name="wechat_unbind_title">Unlink WeChat?</string>
-    <string name="wechat_unbind_body">Mika stops receiving new WeChat messages and removes the saved binding from this phone. Existing tasks continue.</string>
+    <string name="wechat_unbind_body">Mika will stop receiving new WeChat messages, remove the saved binding from this phone, and revoke permission for WeChat tasks to unlock automatically.</string>
     <string name="wechat_capabilities">First version</string>
     <string name="wechat_capability_text">Private text and real tasks</string>
     <string name="wechat_capability_replies">Mika questions, results &amp; notices</string>

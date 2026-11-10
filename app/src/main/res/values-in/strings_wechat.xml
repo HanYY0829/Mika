@@ -16,7 +16,7 @@
     <string name="wechat_state_disconnected_detail">Tautkan untuk memberi tugas kepada Mika langsung dari WeChat</string>
     <string name="wechat_state_connecting_detail">Menghubungkan ke WeChat…</string>
     <string name="wechat_state_connected_detail">Chat pribadi WeChat kini dapat memberi tugas kepada Mika</string>
-    <string name="wechat_state_paused_detail">Pesan WeChat baru dijeda; tugas yang ada tetap berjalan</string>
+    <string name="wechat_state_paused_detail">Penerimaan pesan WeChat baru dan pembukaan kunci otomatis untuk tugas WeChat dijeda</string>
     <string name="wechat_state_failed_detail">Pesan baru belum dapat diterima; Mika akan mencoba lagi secara otomatis</string>
     <string name="wechat_state_rebind_detail">Login ini tidak lagi valid. Pindai kode QR baru untuk menghubungkan kembali</string>
     <string name="wechat_state_waiting_detail">Konfirmasi otorisasi di WeChat</string>
@@ -33,6 +33,10 @@
     <string name="wechat_connection">Koneksi</string>
     <string name="wechat_receive">Terima tugas WeChat</string>
     <string name="wechat_receive_sub">Saat dimatikan, Mika berhenti membaca pesan baru</string>
+    <string name="wechat_allow_unlock">Izinkan tugas WeChat membangunkan dan membuka kunci ponsel</string>
+    <string name="wechat_allow_unlock_sub">Hanya tugas dari chat pribadi akun WeChat Anda sendiri yang tertaut yang dapat mencoba membangunkan dan membuka kunci ponsel ini.</string>
+    <string name="wechat_allow_unlock_foot">Nonaktif secara default dan akan dinonaktifkan lagi setelah akun ditautkan ulang. Aktifkan “%3$s” terlebih dahulu di “%1$s › %2$s”, lalu simpan PIN atau kata sandi layar kunci di ponsel ini jika digunakan. Sakelar ini tidak mengubah izin tersebut atau menggunakan kredensial yang dikirim lewat WeChat.</string>
+    <string name="wechat_unlock_failed">Tugas WeChat tidak dapat membangunkan atau membuka kunci ponsel. Buka kuncinya secara manual, atau periksa izin membangunkan dan membuka kunci di pengaturan WeChat dalam Mika, serta izin buka kunci jarak jauh dan kredensial tersimpan di Pengaturan › Hubungkan komputer.</string>
     <string name="wechat_bound_account">Akun tertaut</string>
     <string name="wechat_current_account">Pengguna WeChat saat ini</string>
     <string name="wechat_message_scope">Cakupan pesan</string>
@@ -40,7 +44,7 @@
     <string name="wechat_rebind">Tautkan lagi</string>
     <string name="wechat_unbind">Hapus tautan</string>
     <string name="wechat_unbind_title">Hapus tautan WeChat?</string>
-    <string name="wechat_unbind_body">Mika berhenti menerima pesan WeChat baru dan menghapus informasi tautan yang tersimpan di ponsel ini. Tugas yang ada tetap berjalan.</string>
+    <string name="wechat_unbind_body">Mika berhenti menerima pesan WeChat baru, menghapus informasi tautan yang tersimpan di ponsel ini, dan mencabut izin buka kunci otomatis untuk tugas WeChat.</string>
     <string name="wechat_capabilities">Versi pertama</string>
     <string name="wechat_capability_text">Teks pribadi dan tugas nyata</string>
     <string name="wechat_capability_replies">Pertanyaan, hasil, dan pemberitahuan Mika</string>

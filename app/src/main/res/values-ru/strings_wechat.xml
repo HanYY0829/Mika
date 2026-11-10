@@ -16,7 +16,7 @@
     <string name="wechat_state_disconnected_detail">Привяжите аккаунт, чтобы давать задачи Mika прямо из WeChat</string>
     <string name="wechat_state_connecting_detail">Подключение к WeChat…</string>
     <string name="wechat_state_connected_detail">Теперь можно давать задачи Mika в личных чатах WeChat</string>
-    <string name="wechat_state_paused_detail">Новые сообщения WeChat приостановлены; текущие задачи продолжаются</string>
+    <string name="wechat_state_paused_detail">Получение новых сообщений WeChat и автоматическая разблокировка для задач WeChat приостановлены</string>
     <string name="wechat_state_failed_detail">Сейчас новые сообщения не поступают; Mika повторит попытку автоматически</string>
     <string name="wechat_state_rebind_detail">Этот вход больше не действителен. Отсканируйте новый QR-код для повторного подключения</string>
     <string name="wechat_state_waiting_detail">Подтвердите авторизацию в WeChat</string>
@@ -33,6 +33,10 @@
     <string name="wechat_connection">Подключение</string>
     <string name="wechat_receive">Получать задачи из WeChat</string>
     <string name="wechat_receive_sub">После выключения Mika перестанет читать новые сообщения</string>
+    <string name="wechat_allow_unlock">Разрешить задачам WeChat пробуждать и разблокировать телефон</string>
+    <string name="wechat_allow_unlock_sub">Только задачи из личного чата вашего привязанного аккаунта WeChat могут пытаться пробудить и разблокировать этот телефон.</string>
+    <string name="wechat_allow_unlock_foot">По умолчанию выключено; повторная привязка отключает разрешение. Сначала включите «%3$s» в разделе «%1$s › %2$s» и сохраните на этом телефоне PIN-код или пароль блокировки экрана, если он установлен. Этот переключатель не меняет указанное разрешение и не использует данные для разблокировки из сообщений WeChat.</string>
+    <string name="wechat_unlock_failed">Задаче WeChat не удалось пробудить или разблокировать телефон. Разблокируйте его вручную или проверьте разрешение на пробуждение и разблокировку в настройках WeChat в Mika, а также разрешение на удалённую разблокировку и сохранённые данные для разблокировки в разделе «Настройки › Подключить компьютер».</string>
     <string name="wechat_bound_account">Привязанный аккаунт</string>
     <string name="wechat_current_account">Текущий пользователь WeChat</string>
     <string name="wechat_message_scope">Область сообщений</string>
@@ -40,7 +44,7 @@
     <string name="wechat_rebind">Привязать снова</string>
     <string name="wechat_unbind">Отвязать</string>
     <string name="wechat_unbind_title">Отвязать WeChat?</string>
-    <string name="wechat_unbind_body">Mika перестанет получать новые сообщения WeChat и удалит данные привязки с этого телефона. Текущие задачи продолжатся.</string>
+    <string name="wechat_unbind_body">Mika перестанет получать новые сообщения WeChat, удалит данные привязки с этого телефона и отзовёт разрешение на автоматическую разблокировку для задач WeChat.</string>
     <string name="wechat_capabilities">Первая версия</string>
     <string name="wechat_capability_text">Личные тексты и настоящие задачи</string>
     <string name="wechat_capability_replies">Вопросы, результаты и уведомления Mika</string>

@@ -4,5 +4,5 @@
 Upstream workflow files below are not automatically applied without a specially authorized token.
 Ordinary source files continue to sync. Review these workflows before enabling them.
 
-- .github/workflows/ci.yml (upstream blob: f9e74228757bb4b479e144762186efe3fe09ca56, fork blob: missing)
+- .github/workflows/ci.yml (upstream blob: 6e621f3a31151c3f6e687cfb53fa61c26904e666, fork blob: missing)
 - .github/workflows/feishu-connector.yml (upstream blob: 013f5a9e270527d15445e1d8ff93ac641c6ee21e, fork blob: missing)

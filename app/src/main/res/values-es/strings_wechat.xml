@@ -16,7 +16,7 @@
     <string name="wechat_state_disconnected_detail">Vincula tu cuenta para asignar tareas a Mika directamente desde WeChat</string>
     <string name="wechat_state_connecting_detail">Conectando con WeChat…</string>
     <string name="wechat_state_connected_detail">Los chats privados de WeChat ya pueden asignar tareas a Mika</string>
-    <string name="wechat_state_paused_detail">Los mensajes nuevos están en pausa; las tareas actuales continúan</string>
+    <string name="wechat_state_paused_detail">La recepción de nuevos mensajes de WeChat y el desbloqueo automático para tareas de WeChat están en pausa</string>
     <string name="wechat_state_failed_detail">No se pueden recibir mensajes nuevos; Mika lo reintentará automáticamente</string>
     <string name="wechat_state_rebind_detail">Esta sesión ya no es válida. Escanea un código QR nuevo para reconectar</string>
     <string name="wechat_state_waiting_detail">Confirma la autorización en WeChat</string>
@@ -33,6 +33,10 @@
     <string name="wechat_connection">Conexión</string>
     <string name="wechat_receive">Recibir tareas de WeChat</string>
     <string name="wechat_receive_sub">Al desactivarlo, Mika deja de leer mensajes nuevos</string>
+    <string name="wechat_allow_unlock">Permitir que las tareas de WeChat activen y desbloqueen el teléfono</string>
+    <string name="wechat_allow_unlock_sub">Solo las tareas del chat privado de tu propia cuenta de WeChat vinculada pueden intentar activar y desbloquear este teléfono.</string>
+    <string name="wechat_allow_unlock_foot">Desactivado de forma predeterminada; al volver a vincular la cuenta, se desactiva. Primero activa «%3$s» en «%1$s › %2$s» y guarda en este teléfono el PIN o la contraseña de bloqueo de pantalla, si utilizas alguno. Este interruptor no cambia ese permiso ni usa credenciales enviadas por WeChat.</string>
+    <string name="wechat_unlock_failed">La tarea de WeChat no pudo activar o desbloquear el teléfono. Desbloquéalo manualmente o comprueba el permiso de activación y desbloqueo en los ajustes de WeChat de Mika, además del permiso de desbloqueo remoto y las credenciales guardadas en Ajustes › Conectar un ordenador.</string>
     <string name="wechat_bound_account">Cuenta vinculada</string>
     <string name="wechat_current_account">Usuario actual de WeChat</string>
     <string name="wechat_message_scope">Alcance de los mensajes</string>
@@ -40,7 +44,7 @@
     <string name="wechat_rebind">Vincular de nuevo</string>
     <string name="wechat_unbind">Desvincular</string>
     <string name="wechat_unbind_title">¿Desvincular WeChat?</string>
-    <string name="wechat_unbind_body">Mika dejará de recibir mensajes nuevos de WeChat y eliminará la vinculación guardada en este teléfono. Las tareas actuales continúan.</string>
+    <string name="wechat_unbind_body">Mika dejará de recibir mensajes nuevos de WeChat, eliminará la vinculación guardada en este teléfono y revocará el permiso de desbloqueo automático para las tareas de WeChat.</string>
     <string name="wechat_capabilities">Primera versión</string>
     <string name="wechat_capability_text">Texto privado y tareas reales</string>
     <string name="wechat_capability_replies">Preguntas, resultados y avisos de Mika</string>

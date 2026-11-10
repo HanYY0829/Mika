@@ -82,6 +82,7 @@ class WechatRuntime(
     private val _state = MutableStateFlow<WechatConnectionState>(
         if (store.account() == null) WechatConnectionState.NeedsBinding else WechatConnectionState.Off)
     val state: StateFlow<WechatConnectionState> = _state.asStateFlow()
+    val allowUnlock: StateFlow<Boolean> = store.allowUnlock
 
     fun channelFor(id: String) = channel.takeIf { id == WechatChannel.ID }
     fun acknowledge(messageId: String) = store.acknowledge(messageId)
@@ -129,6 +130,8 @@ class WechatRuntime(
             stop()
         }
     }
+
+    fun setUnlockAllowed(allowed: Boolean) = store.setUnlockAllowed(allowed)
 
     suspend fun startLogin(): WechatQrStart = withContext(Dispatchers.IO) { api.startLogin() }
 

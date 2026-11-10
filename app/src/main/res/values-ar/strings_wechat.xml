@@ -16,7 +16,7 @@
     <string name="wechat_state_disconnected_detail">اربط الحساب لإسناد مهام إلى Mika مباشرة من WeChat</string>
     <string name="wechat_state_connecting_detail">جارٍ الاتصال بـ WeChat…</string>
     <string name="wechat_state_connected_detail">يمكن الآن للدردشات الخاصة في WeChat إسناد مهام إلى Mika</string>
-    <string name="wechat_state_paused_detail">توقف استلام رسائل WeChat الجديدة؛ وتستمر المهام الحالية</string>
+    <string name="wechat_state_paused_detail">تم إيقاف استلام رسائل WeChat الجديدة وإلغاء القفل التلقائي لمهام WeChat مؤقتًا</string>
     <string name="wechat_state_failed_detail">تعذر استلام الرسائل الجديدة الآن؛ ستعيد Mika المحاولة تلقائيًا</string>
     <string name="wechat_state_rebind_detail">لم يعد تسجيل الدخول هذا صالحًا. امسح رمز QR جديدًا لإعادة الاتصال</string>
     <string name="wechat_state_waiting_detail">أكّد التفويض في WeChat</string>
@@ -33,6 +33,10 @@
     <string name="wechat_connection">الاتصال</string>
     <string name="wechat_receive">استلام مهام WeChat</string>
     <string name="wechat_receive_sub">عند الإيقاف، تتوقف Mika عن قراءة الرسائل الجديدة</string>
+    <string name="wechat_allow_unlock">السماح لمهام WeChat بإيقاظ الهاتف وإلغاء قفله</string>
+    <string name="wechat_allow_unlock_sub">يمكن فقط للمهام الواردة في المحادثة الخاصة لحسابك المرتبط على WeChat محاولة إيقاظ هذا الهاتف وإلغاء قفله.</string>
+    <string name="wechat_allow_unlock_foot">معطّل افتراضيًا، ويُعطّل عند إعادة ربط الحساب. فعّل أولًا «%3$s» في «%1$s › %2$s»، واحفظ على هذا الهاتف رمز PIN أو كلمة مرور قفل الشاشة إن كنت تستخدم أحدهما. هذا الخيار لا يغيّر ذلك الإذن ولا يستخدم بيانات القفل المُرسلة عبر WeChat.</string>
+    <string name="wechat_unlock_failed">تعذّر على مهمة WeChat إيقاظ الهاتف أو إلغاء قفله. ألغِ القفل يدويًا، أو تحقّق من إذن الإيقاظ وإلغاء القفل في إعدادات WeChat داخل Mika، ومن إذن إلغاء القفل عن بُعد وبيانات القفل المحفوظة في الإعدادات › توصيل كمبيوتر.</string>
     <string name="wechat_bound_account">الحساب المرتبط</string>
     <string name="wechat_current_account">مستخدم WeChat الحالي</string>
     <string name="wechat_message_scope">نطاق الرسائل</string>
@@ -40,7 +44,7 @@
     <string name="wechat_rebind">إعادة الربط</string>
     <string name="wechat_unbind">إلغاء الربط</string>
     <string name="wechat_unbind_title">هل تريد إلغاء ربط WeChat؟</string>
-    <string name="wechat_unbind_body">ستتوقف Mika عن استلام رسائل WeChat الجديدة وتحذف معلومات الربط المحفوظة على هذا الهاتف. وتستمر المهام الحالية.</string>
+    <string name="wechat_unbind_body">ستتوقف Mika عن استلام رسائل WeChat الجديدة، وتحذف معلومات الربط المحفوظة على هذا الهاتف، وتسحب الإذن بإلغاء القفل تلقائيًا لمهام WeChat.</string>
     <string name="wechat_capabilities">الإصدار الأول</string>
     <string name="wechat_capability_text">النصوص الخاصة والمهام الفعلية</string>
     <string name="wechat_capability_replies">أسئلة Mika والنتائج والإشعارات</string>

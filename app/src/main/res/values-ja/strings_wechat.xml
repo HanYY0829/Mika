@@ -16,7 +16,7 @@
     <string name="wechat_state_disconnected_detail">連携すると、WeChat から直接 Mika にタスクを依頼できます</string>
     <string name="wechat_state_connecting_detail">WeChat に接続しています…</string>
     <string name="wechat_state_connected_detail">WeChat の個別チャットから Mika にタスクを依頼できます</string>
-    <string name="wechat_state_paused_detail">WeChat の新着メッセージの受信を停止しています。実行中のタスクは継続します</string>
+    <string name="wechat_state_paused_detail">WeChat の新着メッセージの受信と、WeChat のタスクによる自動ロック解除を停止しています</string>
     <string name="wechat_state_failed_detail">新着メッセージを受信できません。Mika が自動で再試行します</string>
     <string name="wechat_state_rebind_detail">このログインは無効になりました。新しい QR コードをスキャンして再接続してください</string>
     <string name="wechat_state_waiting_detail">WeChat で認証を確認してください</string>
@@ -33,6 +33,10 @@
     <string name="wechat_connection">接続</string>
     <string name="wechat_receive">WeChat のタスクを受信</string>
     <string name="wechat_receive_sub">オフにすると新着メッセージを読み取らなくなります</string>
+    <string name="wechat_allow_unlock">WeChat のタスクによるスリープ解除とロック解除を許可</string>
+    <string name="wechat_allow_unlock_sub">連携した本人の WeChat アカウントからの個別チャットのタスクに限り、このスマートフォンのスリープ解除とロック解除を試みます。</string>
+    <string name="wechat_allow_unlock_foot">初期状態はオフで、再連携するとオフに戻ります。先に「%1$s › %2$s」で「%3$s」をオンにし、画面ロックに PIN またはパスワードを使っている場合は、この端末に保存してください。このスイッチはその権限を変更せず、WeChat で送られた認証情報をロック解除に使用しません。</string>
+    <string name="wechat_unlock_failed">WeChat のタスクでスマートフォンのスリープ解除またはロック解除ができませんでした。手動でロックを解除するか、Mika の WeChat 設定のスリープ解除とロック解除の権限、および「設定 › パソコンと接続」のリモートロック解除の権限と保存済みの認証情報を確認してください。</string>
     <string name="wechat_bound_account">連携中のアカウント</string>
     <string name="wechat_current_account">現在の WeChat ユーザー</string>
     <string name="wechat_message_scope">メッセージの範囲</string>
@@ -40,7 +44,7 @@
     <string name="wechat_rebind">再連携</string>
     <string name="wechat_unbind">連携解除</string>
     <string name="wechat_unbind_title">WeChat の連携を解除しますか？</string>
-    <string name="wechat_unbind_body">Mika は WeChat の新着メッセージの受信を停止し、このスマホに保存された連携情報を削除します。実行中のタスクは継続します。</string>
+    <string name="wechat_unbind_body">Mika は WeChat の新着メッセージの受信を停止し、このスマホに保存された連携情報を削除して、WeChat のタスクによる自動ロック解除の許可を取り消します。</string>
     <string name="wechat_capabilities">初版の機能</string>
     <string name="wechat_capability_text">個別チャットのテキストと実際のタスク</string>
     <string name="wechat_capability_replies">Mika からの質問、結果、通知</string>
