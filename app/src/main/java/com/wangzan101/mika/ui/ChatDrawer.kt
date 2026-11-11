@@ -309,7 +309,7 @@ fun ChatDrawer(
         if (canSearch && !selecting) DrawerSearchField(query, onQueryChange)
         // 搜索、多选时把几个入口收起来，把高度让给列表;退出后原样回来
         if (!searchActive && !selecting) Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
-            NavEntry(MikaIcons.Message, "个人助手", onClick = onPersonal)
+            NavEntry(MikaIcons.Message, stringResource(R.string.drawer_personal), onClick = onPersonal)
             NavEntry(MikaIcons.New, stringResource(R.string.chat_new), enabled = canSwitch, onClick = onNew)
             NavEntry(MikaIcons.Clock, stringResource(R.string.drawer_plans), onClick = onPlans)
             NavEntry(MikaIcons.Heart, stringResource(R.string.memory_and_skills), onClick = onMemory)
