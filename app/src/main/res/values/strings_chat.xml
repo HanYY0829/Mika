@@ -162,6 +162,7 @@
     </plurals>
     <string name="attach_add">Add attachment</string>
     <string name="attach_close">Close attachment panel</string>
+    <string name="attach_blocked_running">Can’t add attachments while a task is running — switch to queue mode to attach first</string>
     <string name="attach_camera">Camera</string>
     <string name="attach_album">Photos</string>
     <string name="attach_files">Files</string>

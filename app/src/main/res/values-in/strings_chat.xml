@@ -152,6 +152,7 @@
     </plurals>
     <string name="attach_add">Tambah lampiran</string>
     <string name="attach_close">Tutup panel lampiran</string>
+    <string name="attach_blocked_running">Tidak bisa menambah lampiran saat tugas berjalan — pindah ke mode antre dulu</string>
     <string name="attach_camera">Kamera</string>
     <string name="attach_album">Foto</string>
     <string name="attach_files">Berkas</string>

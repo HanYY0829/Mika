@@ -129,6 +129,7 @@
     </plurals>
     <string name="attach_add">افزودن پیوست</string>
     <string name="attach_close">بستن بخش پیوست‌ها</string>
+    <string name="attach_blocked_running">هنگام اجرای کار نمی‌توان پیوست اضافه کرد — ابتدا به حالت صف بروید</string>
     <string name="attach_camera">دوربین</string>
     <string name="attach_album">عکس‌ها</string>
     <string name="attach_files">فایل‌ها</string>

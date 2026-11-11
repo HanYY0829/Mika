@@ -152,6 +152,7 @@
     </plurals>
     <string name="attach_add">添加附件</string>
     <string name="attach_close">收起附件面板</string>
+    <string name="attach_blocked_running">任务运行中暂不支持添加附件，可切换到排队模式</string>
     <string name="attach_camera">相机</string>
     <string name="attach_album">相册</string>
     <string name="attach_files">文件</string>

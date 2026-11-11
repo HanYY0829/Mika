@@ -172,6 +172,7 @@
     </plurals>
     <string name="attach_add">Añadir adjunto</string>
     <string name="attach_close">Cerrar el panel de adjuntos</string>
+    <string name="attach_blocked_running">No puedes añadir adjuntos mientras se ejecuta una tarea; cambia al modo de cola para adjuntar</string>
     <string name="attach_camera">Cámara</string>
     <string name="attach_album">Fotos</string>
     <string name="attach_files">Archivos</string>

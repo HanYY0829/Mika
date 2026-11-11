@@ -29,7 +29,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.produceState
 import com.wangzan101.mika.confirm.ConfirmationNotifier
 import com.wangzan101.mika.memory.MemoryRuntime
 import androidx.compose.runtime.rememberCoroutineScope
@@ -37,6 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +48,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import androidx.compose.ui.platform.LocalContext
+import com.wangzan101.mika.settings.FeatureFlags
 import com.wangzan101.mika.cap.web.WebHandover
 import com.wangzan101.mika.cap.web.WebSites
 import com.wangzan101.mika.browser.UserBrowser
@@ -66,7 +67,6 @@ import com.wangzan101.mika.chat.SharedDraftStore
 import com.wangzan101.mika.record.RunStore
 import com.wangzan101.mika.replay.FileRouteStore
 import com.wangzan101.mika.task.TaskService
-import com.wangzan101.mika.core.knowledge.GuideCatalog
 import com.wangzan101.mika.settings.Prerequisites
 import com.wangzan101.mika.settings.ProviderStore
 import com.wangzan101.mika.settings.SystemStatusMonitor
@@ -74,6 +74,7 @@ import com.wangzan101.mika.cap.phone.PhoneServices
 import com.wangzan101.mika.cap.phone.setup.DeveloperSettings
 import com.wangzan101.mika.cap.phone.setup.PairingNotifier
 import com.wangzan101.mika.core.shell.BuiltinShellStatus
+import com.wangzan101.mika.core.knowledge.GuideCatalog
 import com.wangzan101.mika.ui.theme.MikaTheme
 import com.wangzan101.mika.ui.theme.animationsOff
 import com.wangzan101.mika.ui.theme.appearanceDark
@@ -82,7 +83,14 @@ import com.wangzan101.mika.ui.theme.systemBarsFor
 class MainActivity : ComponentActivity() {
     private lateinit var monitor: SystemStatusMonitor
     private var requestedConversation by mutableStateOf<String?>(null)
+    private var requestedCalls by mutableStateOf(false)
     private var openTeach by mutableStateOf(false)
+    private var requestedSelfScreen by mutableStateOf<com.wangzan101.mika.core.self.SelfScreen?>(null)
+    private var requestedSelfFile by mutableStateOf<com.wangzan101.mika.self.SelfFileRequest?>(null)
+    private var requestedSelfUrl by mutableStateOf<String?>(null)
+    private var requestedSelfNewTab by mutableStateOf(false)
+    private var requestedSelfShow by mutableStateOf(true)
+    private var requestedSelfLoginHost by mutableStateOf<String?>(null)
     private var requestedSharedDraft by mutableStateOf<SharedDraftRequest?>(null)
     private var shareJob: Job? = null
     private var shareSerial = 0L
@@ -107,7 +115,9 @@ class MainActivity : ComponentActivity() {
             (application as MikaApp).chat.cancelPendingSharedDraft()
         }
         requestedConversation = intent.getStringExtra(EXTRA_OPEN_CONVERSATION)
+        requestedCalls = intent.getBooleanExtra(EXTRA_OPEN_CALLS, false)
         takeTeach(intent)
+        readSelfIntent(intent)
         shareInCurrent = savedInstanceState?.getBoolean(STATE_SHARE_IN_CURRENT, false) ?: false
         shareHandled = savedInstanceState?.getBoolean(STATE_SHARE_HANDLED, false) ?: false
         // 已处理完的分享在旋转/重建时不重复触发;真正的冷启动分享或尚未完成的后台分享继续收下。
@@ -124,7 +134,14 @@ class MainActivity : ComponentActivity() {
                 // 在输入框外面点一下或拖动就收起键盘,全 App 统一
                 KeyboardDismissArea(Modifier.fillMaxSize()) {
                     MikaRoot(
-                        store, monitor, ::perform, requestedConversation, { requestedConversation = null }, requestedSharedDraft,
+                        store, monitor, ::perform, requestedConversation, { requestedConversation = null },
+                        requestedCalls, { requestedCalls = false },
+                        requestedSelfScreen, { requestedSelfScreen = null },
+                        requestedSelfFile, { requestedSelfFile = null },
+                        requestedSelfUrl, { requestedSelfUrl = null },
+                        requestedSelfNewTab, requestedSelfShow,
+                        requestedSelfLoginHost, { requestedSelfLoginHost = null },
+                        requestedSharedDraft,
                         onSharedDraftOpened = { accepted, draft ->
                             requestedSharedDraft = null
                             shareHandled = true
@@ -149,16 +166,34 @@ class MainActivity : ComponentActivity() {
         val app = application as MikaApp
         shareJob?.cancel()
         requestedConversation = intent.getStringExtra(EXTRA_OPEN_CONVERSATION)
+        requestedCalls = intent.getBooleanExtra(EXTRA_OPEN_CALLS, false)
         if (requestedConversation != null || intent.getBooleanExtra(EXTRA_OPEN_TEACH, false)) {
             app.chat.cancelPendingSharedDraft()
         }
         takeTeach(intent)
+        readSelfIntent(intent)
         requestedSharedDraft?.let { app.sharedDrafts.discard(it.draft.image) }
         requestedSharedDraft = null
         // 界面已在后台存活时收到分享:放入当前打开的会话,而不是新建会话。
         shareInCurrent = true
         shareHandled = false
         receiveShare(intent, inCurrentConversation = true)
+    }
+
+    private fun readSelfIntent(intent: Intent) {
+        requestedSelfScreen = intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_SCREEN)
+            ?.let(com.wangzan101.mika.core.self.SelfScreen::of)
+        requestedSelfFile = intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_FILE)?.let { path ->
+            com.wangzan101.mika.self.SelfFileRequest(
+                intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_FILE_CONVERSATION).orEmpty(),
+                path,
+                intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_FILE_NAME),
+            )
+        }
+        requestedSelfUrl = intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_URL)
+        requestedSelfNewTab = intent.getBooleanExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_NEW_TAB, false)
+        requestedSelfShow = intent.getBooleanExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_SHOW, true)
+        requestedSelfLoginHost = intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_LOGIN_HOST)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -322,6 +357,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_OPEN_CONVERSATION = "open_conversation"
+        const val EXTRA_OPEN_CALLS = "open_calls"
         const val EXTRA_OPEN_TEACH = "open_teach"
         const val EXTRA_TEACH_GOAL = "teach_goal"
         private const val STATE_SHARE_IN_CURRENT = "share_in_current"
@@ -355,12 +391,26 @@ private fun MikaRoot(
     activityFix: (Fix) -> Unit,
     requestedConversation: String?,
     onConversationOpened: () -> Unit,
+    requestedCalls: Boolean,
+    onCallsOpened: () -> Unit,
+    requestedSelfScreen: com.wangzan101.mika.core.self.SelfScreen?,
+    onSelfScreenOpened: () -> Unit,
+    requestedSelfFile: com.wangzan101.mika.self.SelfFileRequest?,
+    onSelfFileOpened: () -> Unit,
+    requestedSelfUrl: String?,
+    onSelfUrlOpened: () -> Unit,
+    requestedSelfNewTab: Boolean,
+    requestedSelfShow: Boolean,
+    requestedSelfLoginHost: String?,
+    onSelfLoginOpened: () -> Unit,
     sharedDraft: SharedDraftRequest?,
     onSharedDraftOpened: (Boolean, SharedDraft) -> Unit,
     openTeach: Boolean,
     onTeachOpened: () -> Unit,
 ) {
-    val nav = rememberNavStack()
+    val context = LocalContext.current
+    val personalStart = remember { FeatureFlags.get(context).personalStart() }
+    val nav = rememberNavStack(if (personalStart && requestedConversation == null) Route.Personal else Route.Chat)
     var filesFromDrawer by rememberSaveable { mutableStateOf(false) }
     var filesConversation by rememberSaveable { mutableStateOf<String?>(null) }
     // 从设置页「重新配对」进来时先回到配对一步
@@ -384,7 +434,6 @@ private fun MikaRoot(
     val roles by store.roles.collectAsState()
     val hasMain = roles.main != null
     val check = Prerequisites.check(status, hasMain)
-    val context = LocalContext.current
     val app = context.applicationContext as MikaApp
     // 查到的新版本:侧栏、设置首页、关于页的红点都看它
     val updateState by app.updates.state.collectAsState()
@@ -392,9 +441,18 @@ private fun MikaRoot(
     val readyUpdate by app.automaticUpdates.ready.collectAsState()
     LaunchedEffect(requestedConversation) {
         if (requestedConversation != null) {
-            app.chat.openConversation(requestedConversation)
-            nav.reset()
+            if (requestedConversation == "personal-main") nav.show(Route.Personal)
+            else {
+                app.chat.openConversation(requestedConversation)
+                nav.reset()
+            }
             onConversationOpened()
+        }
+    }
+    LaunchedEffect(requestedCalls) {
+        if (requestedCalls) {
+            nav.push(Route.Calls)
+            onCallsOpened()
         }
     }
     LaunchedEffect(sharedDraft) {
@@ -404,6 +462,54 @@ private fun MikaRoot(
             if (accepted) nav.reset()
             onSharedDraftOpened(accepted, draft)
         }
+    }
+    // 自身操作:任务在服务里发请求,这里在系统里开页/文件;后台来的通知经由 intent extra 走同一段
+    suspend fun openSelfFile(file: com.wangzan101.mika.self.SelfFileRequest) {
+        if (!AttachFiles.openSent(context, file.conversationId, file.path)) {
+            Toast.makeText(context, R.string.self_file_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+    fun openSelfUrl(url: String, newTab: Boolean = false, show: Boolean = true) {
+        nav.push(Route.Browser)
+        val browser = UserBrowser.of(context)
+        val error = if (newTab) browser.openInNewTab(url, select = show) else browser.open(url)
+        error?.let { Toast.makeText(context, R.string.self_browser_failed, Toast.LENGTH_SHORT).show() }
+    }
+    fun openSelfLogin(host: String) {
+        nav.push(Route.Browser)
+        UserBrowser.of(context).openFavorite(com.wangzan101.mika.browser.FavoriteSite(host, loggedIn = false))
+            ?.let { Toast.makeText(context, R.string.self_browser_failed, Toast.LENGTH_SHORT).show() }
+    }
+    val selfRequest by app.selfUi.request.collectAsState()
+    LaunchedEffect(selfRequest?.id) {
+        val r = selfRequest ?: return@LaunchedEffect
+        when {
+            r.url != null -> openSelfUrl(r.url, r.newTab, r.show)
+            r.loginHost != null -> openSelfLogin(r.loginHost)
+            r.file != null -> openSelfFile(r.file)
+            r.screen != null -> nav.push(r.screen.route())
+        }
+        app.selfUi.consumed(r.id)
+    }
+    LaunchedEffect(requestedSelfScreen) {
+        val s = requestedSelfScreen ?: return@LaunchedEffect
+        nav.push(s.route())
+        onSelfScreenOpened()
+    }
+    LaunchedEffect(requestedSelfFile) {
+        val f = requestedSelfFile ?: return@LaunchedEffect
+        openSelfFile(f)
+        onSelfFileOpened()
+    }
+    LaunchedEffect(requestedSelfUrl) {
+        val url = requestedSelfUrl ?: return@LaunchedEffect
+        openSelfUrl(url, requestedSelfNewTab, requestedSelfShow)
+        onSelfUrlOpened()
+    }
+    LaunchedEffect(requestedSelfLoginHost) {
+        val host = requestedSelfLoginHost ?: return@LaunchedEffect
+        openSelfLogin(host)
+        onSelfLoginOpened()
     }
     val release = remember { Build.VERSION.RELEASE }
     // 结果卡片上点了「看看」:打开技能分段
@@ -436,7 +542,9 @@ private fun MikaRoot(
         }
     }
     LaunchedEffect(Unit) {
-        if (onboarding == null) Onboarding.start(onboardingInputs())?.let(::goOnboarding)
+        if (onboarding == null && requestedConversation == null && nav.current != Route.Personal) {
+            Onboarding.start(onboardingInputs())?.let(::goOnboarding)
+        }
     }
     val phoneSetupNeeded by phoneSetup.needed.collectAsState()
     // 页面有自己的返回处理时(设置页里的子页、侧栏)由它们先接;这里只管退回上一页
@@ -463,7 +571,7 @@ private fun MikaRoot(
                 },
             )
         }
-        Route.Chat -> screenStates.SaveableStateProvider(Route.Chat.name) {
+        Route.Chat, Route.Personal -> screenStates.SaveableStateProvider(nav.current.name) {
             // 对话页重新看得见(回到前台、从别的页面回来):补上别处存进来的轮次,接上别处开始的任务
             LifecycleStartEffect(Unit) {
                 app.chat.refresh()
@@ -487,13 +595,23 @@ private fun MikaRoot(
                 updateAvailable = AboutCopy.drawerDot(updateState),
                 reopen = nav.reopenDrawer,
                 onReopened = nav::drawerReopened,
+                onPersonal = { nav.show(Route.Personal) },
+                onRegularChat = nav::reset,
                 resetKey = nav.resetSerial,
             ) { openDrawer ->
                 Box(Modifier.fillMaxSize()) {
                     val readyRelease = readyUpdate?.takeIf { autoUpdate && it.apkUrl == updateState.update?.apkUrl }
                     val updateBackdrop = if (readyRelease != null) rememberGlassBackdrop() else null
                     Box(Modifier.fillMaxSize().glassSource(updateBackdrop)) {
-                        ChatScreen(
+                        if (nav.current == Route.Personal) PersonalAgentScreen(
+                            runtime = app.personal,
+                            voice = app.voice,
+                            onOpenDrawer = openDrawer,
+                            onOpenTask = { id -> app.chat.openPersonalTask(id); nav.reset() },
+                            memoryRuntime = memoryRuntime,
+                            onModels = { nav.push(Route.Models) },
+                            onPickSpeech = { nav.push(Route.SpeechModel) },
+                        ) else ChatScreen(
                             vm = app.chat,
                             check = check,
                             frames = app.taskState.frames,
@@ -656,5 +774,19 @@ private fun MikaRoot(
             app.chat.openConversation(it)
             nav.reset()
         })
+        Route.Calls -> CallSettingsScreen(app.calls, onBack = back, standalone = true)
     }
+}
+
+/** 自身工具能打开的 Mika 顶层页;只给这几页,不给权限/root/开发者子页。 */
+private fun com.wangzan101.mika.core.self.SelfScreen.route(): Route = when (this) {
+    com.wangzan101.mika.core.self.SelfScreen.Chat -> Route.Chat
+    com.wangzan101.mika.core.self.SelfScreen.Settings -> Route.Settings
+    com.wangzan101.mika.core.self.SelfScreen.Memory -> Route.Memory
+    com.wangzan101.mika.core.self.SelfScreen.Plans -> Route.Plans
+    com.wangzan101.mika.core.self.SelfScreen.Browser -> Route.Browser
+    com.wangzan101.mika.core.self.SelfScreen.Models -> Route.Models
+    com.wangzan101.mika.core.self.SelfScreen.Usage -> Route.Usage
+    com.wangzan101.mika.core.self.SelfScreen.Screens -> Route.Screens
+    com.wangzan101.mika.core.self.SelfScreen.About -> Route.About
 }

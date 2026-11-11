@@ -182,6 +182,7 @@
     </plurals>
     <string name="attach_add">Добавить вложение</string>
     <string name="attach_close">Закрыть панель вложений</string>
+    <string name="attach_blocked_running">Пока выполняется задача, вложения добавить нельзя — сначала переключитесь в режим очереди</string>
     <string name="attach_camera">Камера</string>
     <string name="attach_album">Фото</string>
     <string name="attach_files">Файлы</string>

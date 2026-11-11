@@ -202,6 +202,7 @@
     </plurals>
     <string name="attach_add">إضافة مرفق</string>
     <string name="attach_close">إغلاق لوحة المرفقات</string>
+    <string name="attach_blocked_running">لا يمكن إضافة مرفقات أثناء تشغيل المهمة — بدّل إلى وضع الانتظار أولاً</string>
     <string name="attach_camera">الكاميرا</string>
     <string name="attach_album">الصور</string>
     <string name="attach_files">الملفات</string>

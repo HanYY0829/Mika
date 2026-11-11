@@ -152,6 +152,7 @@
     </plurals>
     <string name="attach_add">添付を追加</string>
     <string name="attach_close">添付パネルを閉じる</string>
+    <string name="attach_blocked_running">タスク実行中は添付を追加できません。先に待機モードに切り替えてください</string>
     <string name="attach_camera">カメラ</string>
     <string name="attach_album">写真</string>
     <string name="attach_files">ファイル</string>
