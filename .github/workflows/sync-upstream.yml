@@ -44,8 +44,10 @@ jobs:
       SYNC_MODE: ${{ inputs.mode || 'source' }}
       REVIEW_SHA: ${{ inputs.upstream_sha }}
       REVIEW_DIGEST: ${{ inputs.review_digest }}
-      DIAGNOSTICS: ${{ runner.temp }}/upstream-sync-diagnostics
     steps:
+      - name: 初始化诊断目录
+        run: echo "DIAGNOSTICS=$RUNNER_TEMP/upstream-sync-diagnostics" >> "$GITHUB_ENV"
+
       - name: 检查审核授权配置
         if: env.SYNC_MODE == 'review-workflows'
         env:
