@@ -177,6 +177,11 @@ class SyncTests(unittest.TestCase):
         self.assertEqual((self.repo / 'binary.bin').read_bytes(), bytes(range(256)))
         self.assertFalse((self.repo / 'app.txt').exists())
 
+    def test_upstream_markdown_line_breaks_preserve_exact_bytes(self):
+        self.upstream({'notes.md': 'Markdown hard break  \nnext line\n'})
+        self.run_sync()
+        self.assertEqual((self.repo / 'notes.md').read_bytes(), b'Markdown hard break  \nnext line\n')
+
     def test_real_push_and_competing_remote_ref_are_safe(self):
         remote = self.root / 'origin.git'
         subprocess.run(['git', 'init', '--bare', str(remote)], check=True, capture_output=True)

@@ -177,9 +177,11 @@ def run(args, result):
     # add -A 仅覆盖本脚本负责的报告，不能混入工作区其他文件。
     if Path(PENDING).exists() or git('ls-files', '--', PENDING).stdout:
         git('add', '-A', '--', PENDING)
-    git('diff', '--cached', '--check')
-    staged = text('diff', '--cached', '--name-only')
-    if args.mode == 'source' and any(matches(p, SENSITIVE) for p in staged.splitlines()):
+    if git('ls-files', '--unmerged', '-z').stdout:
+        raise SyncError('暂存区仍有未解决冲突，拒绝提交。')
+    # 同步不做格式重写；Markdown 的行尾双空格等上游合法内容不能被当成故障。
+    staged = [p.decode('utf-8') for p in git('diff', '--cached', '--name-only', '-z').stdout.split(b'\0') if p]
+    if args.mode == 'source' and any(matches(p, SENSITIVE) for p in staged):
         raise SyncError('日常同步意外包含工作流，拒绝提交。')
     has_changes = bool(staged)
     if has_changes and not args.dry_run:
