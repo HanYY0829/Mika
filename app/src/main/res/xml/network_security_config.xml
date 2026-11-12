@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   允许明文 http:用户自己在本机或局域网跑的模型服务(如 http://192.168.1.10:11434/v1)多半只有 http。
-  证书信任照系统默认(只信系统证书)。内置浏览器因此也能直接打开 http 网页(不再先被系统拒绝、再换 https 重试)。
+  内置浏览器因此也能直接打开 http 网页(不再先被系统拒绝、再换 https 重试)。
   添加服务商时,不加密又不在本机、局域网的地址会提示一句(见 LocalHosts)。
+  信任用户安装的 CA:企业内网自建的模型服务(GPUStack/vLLM 一类)常由公司内部 CA 签发证书,
+  显式只信系统证书会把它们全拒掉;装 CA 需要用户在系统设置里主动操作,与明文 http 是同一姿态(见 #361)。
 -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
+            <certificates src="user" />
         </trust-anchors>
     </base-config>
 </network-security-config>

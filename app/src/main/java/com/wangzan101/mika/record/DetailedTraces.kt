@@ -21,7 +21,7 @@ class DetailedTraces(context: Context) {
     }
 
     private var generation = 0L
-    val enabled: Boolean get() = supportedBuild && prefs.getBoolean("enabled", false)
+    val enabled: Boolean get() = supportedBuild && prefs.getBoolean("enabled", BuildConfig.ADB_LOGS)
 
     @Synchronized fun setEnabled(on: Boolean) {
         if (!supportedBuild || on == enabled) return

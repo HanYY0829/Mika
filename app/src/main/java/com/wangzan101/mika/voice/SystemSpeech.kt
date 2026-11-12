@@ -9,6 +9,8 @@ import android.os.Handler
 import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognitionService
+import android.speech.RecognitionSupport
+import android.speech.RecognitionSupportCallback
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import com.wangzan101.mika.i18n.AppLanguage
@@ -116,8 +118,9 @@ object SystemSpeech {
         language == AppLanguage.System -> languageRegion(system)
         // 中文按选的简繁定地区,不跟系统
         language.language == "zh" -> language.speechTag!!
-        // 系统也是这种语言时用系统的地区(英式英语、墨西哥西班牙语…),否则用这种语言最常见的地区
-        AppLanguage.modernCode(system.language) == language.language -> languageRegion(system)
+        // 系统也是这种语言时用系统的地区(英式英语、墨西哥西班牙语…),否则用这种语言最常见的地区。
+        // 在 App 里选了语言后进程的默认语言就是它、不带地区(en):这时没有地区可沿用,只送 en 识别服务不认
+        AppLanguage.modernCode(system.language) == language.language && system.country.isNotEmpty() -> languageRegion(system)
         else -> language.speechTag!!
     }
 
@@ -127,6 +130,24 @@ object SystemSpeech {
      */
     private fun languageRegion(locale: Locale): String =
         Locale.Builder().setLanguage(locale.language).setRegion(locale.country).build().toLanguageTag()
+
+    /**
+     * 本机识别装了的语言([installed],来自 checkRecognitionSupport)里,和 [tag] 同一种语言、同一地区的那个写法;没有就是 null。
+     * 各家登记的写法不一:Pixel 的本机识别把台湾中文登记成 zh-Hant-TW 和 cmn-Hant-TW,送 zh-TW 它按「没装」报错。
+     * 比的时候不看文字子标签,cmn(普通话)当作 zh;[tag] 不带地区时同一种语言的就算。[tag] 本身装了就用它。
+     */
+    fun installedTag(tag: String, installed: List<String>): String? {
+        if (tag in installed) return tag
+        val (language, region) = languageAndRegion(tag)
+        return installed.firstOrNull { languageAndRegion(it) == language to region }
+            ?: installed.firstOrNull { region.isEmpty() && languageAndRegion(it).first == language }
+    }
+
+    private fun languageAndRegion(tag: String): Pair<String, String> {
+        val locale = Locale.forLanguageTag(tag)
+        val language = AppLanguage.modernCode(locale.language)
+        return (if (language == "cmn") "zh" else language) to locale.country
+    }
 
     /** 转写接口要的 ISO-639-1 语言代码。 */
     fun isoCode(tag: String): String = Locale.forLanguageTag(tag).language
@@ -145,6 +166,8 @@ object SystemSpeech {
  * 每次 startListening 后 [NO_RESPONSE_MS] 内服务一个回调都没有:手还按着、[attempts] 里还有没试的服务,就换下一个去听;
  * 都试过了按 [SystemSpeech.afterSilence] 收尾。从没回过话时调 [onNoResponse],回过话时调一次 [onAnswered] 并带上回话的服务
  * (null 是系统默认的):设置据此数连着几次不响应,够了才记下,也记住点名试通的那个。
+ * 本机识别报这个语言用不了时,先问它装了哪些语言:有同一种语言、只是写法不同的(见 [SystemSpeech.installedTag])
+ * 就换那个写法接着用本机识别,没有才换联网识别。
  */
 class SystemSpeechSession(
     context: Context,
@@ -165,6 +188,12 @@ class SystemSpeechSession(
     // 下面这些只在主线程读写
     private var recognizer: SpeechRecognizer? = null
     private var usingOnDevice = false
+    /** 这次送给识别服务的语言;本机识别装的是另一种写法时换成那个,见 [retag]。 */
+    private var tag = languageTag
+    /** 这次会话已经问过本机识别装了哪些语言;只问一次。 */
+    private var retagged = false
+    /** 正在等本机识别回答装了哪些语言。 */
+    private var asking = false
     /** 正在试 [attempts] 里的第几个。 */
     private var attempt = 0
     private var holding = true
@@ -200,6 +229,12 @@ class SystemSpeechSession(
             else -> finish(SpeechEvent.Final(segments.full()))
         }
     }
+    // 问本机识别装了哪些语言,到点没回答:不再等,换联网识别
+    private val askTimeout = Runnable {
+        if (!asking || done()) return@Runnable
+        asking = false
+        toOnline()
+    }
     private val restart = Runnable {
         restartPending = false
         if (done()) return@Runnable
@@ -233,7 +268,8 @@ class SystemSpeechSession(
             return@onMain
         }
         try {
-            recognizer?.stopListening()
+            // 正在问本机识别装了哪些语言时没有在听的;问完重新听了再停,见 [afterSwitch]
+            if (!asking) recognizer?.stopListening()
         } finally {
             // stopListening 里同步回调可能已经结束会话,也可能拆掉了等待;没结束就一定再排上
             if (!done()) main.postDelayed(timeout, FINAL_WAIT_MS)
@@ -273,15 +309,18 @@ class SystemSpeechSession(
         listen()
     }
 
-    private fun listen() {
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+    private fun request(): Intent =
+        Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, languageTag)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, tag)
             putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
             // 联网识别时:手机有本机识别能力就请服务尽量离线识别
             if (!usingOnDevice && onDevice) putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
         }
+
+    private fun listen() {
+        val intent = request()
         main.removeCallbacks(silence)
         main.postDelayed(silence, NO_RESPONSE_MS)
         try {
@@ -289,6 +328,52 @@ class SystemSpeechSession(
         } catch (e: RuntimeException) {
             finish(SpeechEvent.Failed(SpeechFailure.MicUnavailable))
         }
+    }
+
+    /**
+     * 本机识别报这个语言用不了:问它装了哪些语言(安卓 13 起),有同一种语言、写法不同的就换那个写法再听。
+     * 返回 false 是问不了(系统太旧、这次会话问过了、调用失败),由调用方换联网识别。
+     */
+    private fun retag(): Boolean {
+        val rec = recognizer ?: return false
+        if (retagged || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+        retagged = true
+        val callback = object : RecognitionSupportCallback {
+            override fun onSupportResult(support: RecognitionSupport) = answer(support.installedOnDeviceLanguages)
+            override fun onError(error: Int) = answer(emptyList())
+
+            private fun answer(installed: List<String>) {
+                if (!asking || recognizer !== rec || done()) return
+                asking = false
+                main.removeCallbacks(askTimeout)
+                val other = SystemSpeech.installedTag(tag, installed)
+                if (other == null || other == tag) {
+                    toOnline()
+                    return
+                }
+                tag = other
+                listen()
+                afterSwitch()
+            }
+        }
+        asking = runCatching { rec.checkRecognitionSupport(request(), context.mainExecutor, callback) }.isSuccess
+        if (asking) main.postDelayed(askTimeout, NO_RESPONSE_MS)
+        return asking
+    }
+
+    /** 本机识别用不了这个语言:换联网识别,语言照原来的写法送。 */
+    private fun toOnline() {
+        tag = languageTag
+        open(preferOnDevice = false)
+        afterSwitch()
+    }
+
+    /** 换了识别器或语言写法重新听之后:已经松开了就只收尾,等待上限重新算。 */
+    private fun afterSwitch() {
+        if (holding || done()) return
+        recognizer?.stopListening()
+        main.removeCallbacks(timeout)
+        main.postDelayed(timeout, FINAL_WAIT_MS)
     }
 
     private fun finish(e: SpeechEvent) {
@@ -322,6 +407,8 @@ class SystemSpeechSession(
         main.removeCallbacks(timeout)
         main.removeCallbacks(silence)
         main.removeCallbacks(restart)
+        main.removeCallbacks(askTimeout)
+        asking = false
         restartPending = false
         val rec = recognizer
         recognizer = null
@@ -385,12 +472,8 @@ class SystemSpeechSession(
             heard()
             if (recognizer == null || done()) return
             if (usingOnDevice && SystemSpeech.languageMissing(error) && segments.full().isEmpty()) {
-                open(preferOnDevice = false)
-                if (!holding && !done()) {
-                    // 已经松开了:新识别器只收尾,等待上限重新算
-                    recognizer?.stopListening()
-                    main.postDelayed(timeout, FINAL_WAIT_MS)
-                }
+                // 可能只是语言的写法对不上:先问它装了哪些,问不了才换联网识别
+                if (!retag()) toOnline()
                 return
             }
             when (val o = SystemSpeech.afterError(error, holding, heard = segments.full().isNotEmpty())) {

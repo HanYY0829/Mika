@@ -17,6 +17,16 @@
     <string name="about_feedback_sheet_sub">هل وجدت مشكلة أو لديك فكرة؟ أخبر المطوّر بالطريقة التي تناسبك.</string>
     <string name="about_feedback_github">فتح مشكلة على GitHub</string>
     <string name="about_feedback_github_sub">أبلغ عن أخطاء أو اطلب ميزات وتابع التقدم</string>
+    <string name="about_group">التواصل مع المطوّر</string>
+    <string name="about_group_sub">WeChat</string>
+    <string name="about_group_sheet_title">التواصل مع المطوّر</string>
+    <string name="about_group_sheet_sub">ناقش طريقة الاستخدام أو شارك أفكارك. عند الإضافة عبر WeChat، اذكر Mika في طلبك</string>
+    <string name="about_group_hint">اضغط مطولاً للحفظ · أو امسح الرمز في WeChat</string>
+    <string name="about_save_qr">حفظ رمز QR</string>
+    <string name="about_qr_saved">تم حفظ رمز QR في الصور</string>
+    <string name="about_qr_save_failed">تعذّر الحفظ. يمكنك التقاط لقطة شاشة بدلاً من ذلك.</string>
+    <string name="about_follow">متابعة المطوّر</string>
+    <string name="about_follow_sub">X %1$s، كن أول من يعرف عن الميزات الجديدة</string>
     <string name="about_repo">الشيفرة المصدرية</string>
     <string name="about_repo_sub">%1$s · نرحب بنجوم GitHub</string>
     <string name="about_guide">الدليل والمساهمة</string>

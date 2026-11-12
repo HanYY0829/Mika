@@ -262,6 +262,12 @@ class ActionExecutor(
             Frames.None -> null
         }
         recorder.result(n, call.name, s.verb, content, exec.record, exec.changed, shotId, durationMs, policy.source, call.id, exec.waitMs)
+        if (recorder.savesScreens) exec.playback?.let { capture ->
+            val beforeId = capture.before?.let(recorder::saveFrame)
+            val afterId = capture.after?.let(recorder::saveFrame)
+            recorder.event(RunEvent.TaskPlayback(recorder.now(), n, call.name, call.id, beforeId, afterId,
+                capture.mark, exec.content["ok"] == JsonPrimitive(true), policy.source))
+        }
         ActivityRecord.of(tools, call.name, s.args, exec, n, policy.source, call.id, recorder.now(), s.outward)?.let(recorder::event)
         if (policy.frames == Frames.WhenChanged && shotId != null) recorder.event(RunEvent.Media(recorder.now(), shotId, n, RunEvent.placeLabel(exec.place)))
         val seen = if (policy.routeTargets) routeTarget(call, s.verb, s.origin, exec) else null

@@ -11,6 +11,8 @@ object MikaLinks {
     const val README = "$REPO#readme"
     const val RELEASES = "$REPO/releases"
     const val NEW_ISSUE = "$REPO/issues/new"
+    const val X = "https://x.com/wangzan101"
+    const val X_HANDLE = "@wangzan101"
     /** 检查更新只问 GitHub 发布页(不登录,每小时有次数限制)。 */
     const val LATEST_RELEASE_API = "https://api.github.com/repos/wangzan101/Mika/releases/latest"
 

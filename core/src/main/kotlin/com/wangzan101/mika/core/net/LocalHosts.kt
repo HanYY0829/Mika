@@ -15,16 +15,23 @@ object LocalHosts {
         val h = normalize(host)
         if (h.isEmpty()) return false
         if (h == "localhost" || h.endsWith(".localhost") || h.endsWith(".local")) return true
-        ipv4(h)?.let { (a, b) ->
-            return a == 127 || a == 10 || (a == 172 && b in 16..31) || (a == 192 && b == 168) || (a == 169 && b == 254)
-        }
+        ipv4(h)?.let { (a, b) -> return privateIpv4(a, b) }
         if (':' in h) {
-            if (h == "::1") return true
+            // ::1 的完整写法也是本机回环
+            if (h == "::1" || h == "0:0:0:0:0:0:0:1") return true
+            // ::ffff:a.b.c.d 是 IPv4-mapped IPv6,按里面那段 IPv4 判断;本机模型服务常这样写
+            if (h.startsWith("::ffff:")) {
+                val (a, b) = ipv4(h.removePrefix("::ffff:")) ?: return false
+                return privateIpv4(a, b)
+            }
             val first = h.substringBefore(':').toIntOrNull(16) ?: return false
             return first and 0xfe00 == 0xfc00 || first and 0xffc0 == 0xfe80
         }
         return false
     }
+
+    private fun privateIpv4(a: Int, b: Int) =
+        a == 127 || a == 10 || (a == 172 && b in 16..31) || (a == 192 && b == 168) || (a == 169 && b == 254)
 
     /** 走网络代理时这个主机照旧直连。 */
     fun bypassesProxy(host: String): Boolean {

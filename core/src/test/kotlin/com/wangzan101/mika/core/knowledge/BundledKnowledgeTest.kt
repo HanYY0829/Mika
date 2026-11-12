@@ -23,7 +23,7 @@ class BundledKnowledgeTest {
     @Test fun bundledTreesPassValidationAndIndexIsCurrent() {
         val r = KnowledgeIndex.build(resources)
         assertTrue(r.errors.joinToString("\n"), r.errors.isEmpty())
-        assertEquals(mapOf("app" to 24, "site" to 19, "skill" to 6), r.entries.groupingBy { it.kind }.eachCount())
+        assertEquals(mapOf("app" to 29, "site" to 19, "skill" to 6), r.entries.groupingBy { it.kind }.eachCount())
         // 类路径上的索引就是按当前文件生成的那份
         assertEquals(r.entries, catalog.rows)
     }
@@ -46,7 +46,7 @@ class BundledKnowledgeTest {
     }
 
     @Test fun everyEntryHasABody() {
-        assertEquals(43, bundled.size)
+        assertEquals(48, bundled.size)
         assertTrue(bundled.all { !it.body.isNullOrBlank() && it.body!!.length <= KnowledgeIndex.BODY_LIMIT })
         assertTrue(bundled.map { it.name }.containsAll(listOf("wechat", "xianyu", "android-settings", "github.com", "zhihu.com", "weixin.sogou.com")))
     }
@@ -120,4 +120,13 @@ class BundledKnowledgeTest {
         val hit = KnowledgeStore(bundled).matchTask("帮我发微信", 10)
         assertTrue(hit.all { e -> catalog.items.any { it.kind in setOf("app", "site") && it.name == e.name } })
     }
+
+
+    @Test fun singleAsciiLetterDoesNotMatchEveryName() {
+        assertTrue(catalog.find("a").isEmpty())
+        assertTrue(catalog.find("z").isEmpty())
+        assertTrue(catalog.find("微信", kind = "app").any { it.name == "wechat" })
+        assertTrue(catalog.find("微").any { it.name == "wechat" })
+    }
 }
+

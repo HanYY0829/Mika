@@ -9,6 +9,11 @@
   - `app/src/main/java/com/wangzan101/mika/calls/`
   - `app/src/main/java/com/wangzan101/mika/cap/phone/shell/ShellCallAudio.kt`
   - `core/src/main/kotlin/com/wangzan101/mika/core/calls/`
+  - `app/src/test/java/com/wangzan101/mika/calls/`
+  - `app/src/test/java/com/wangzan101/mika/cap/phone/shell/ShellCallAudioTest.kt`
+  - `app/src/test/java/com/wangzan101/mika/ui/CallDeviceReadinessTest.kt`
+  - `core/src/test/kotlin/com/wangzan101/mika/core/mcp/McpCallToolsTest.kt`
+- Modifications: 默认问候语等产品文案按 Mika 调整为「Mika AI 电话助手」,相关测试断言随之同步。
 - Service: 实时语音经火山引擎（Volcengine）的 WebSocket 接口,凭证由用户在通话设置页填写。
 
 ## scrcpy

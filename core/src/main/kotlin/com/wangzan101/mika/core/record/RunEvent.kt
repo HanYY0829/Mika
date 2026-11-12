@@ -16,6 +16,14 @@ import com.wangzan101.mika.core.observation.Trust
 sealed interface RunEvent {
     val atMs: Long
 
+    /** 一次已执行屏幕动作的前后帧。缺图保留 null，不拿邻近截图冒充；与路线重新执行无关。 */
+    @Serializable @SerialName("task_playback")
+    data class TaskPlayback(
+        override val atMs: Long, val step: Int, val tool: String, val callId: String,
+        val beforeId: Int?, val afterId: Int?, val mark: PlaybackMark? = null,
+        val succeeded: Boolean = true, val source: String = "model",
+    ) : RunEvent
+
     /** [origin] 是谁发起的这次运行(`RunOrigin` 的小写名);手机上发起的不写。两个预算不限制时都为 null。 */
     @Serializable @SerialName("task_started")
     data class TaskStarted(

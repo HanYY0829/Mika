@@ -155,4 +155,13 @@ class KnowledgeStoreTest {
         // 内置说明书和技能索引合并后,说明书里的链接不丢(没有链接的为空列表)
         bundled.forEach { e -> e.links.forEach { assertNull(com.wangzan101.mika.core.tool.LinkPolicy.check(null, it.uri, it.packageName)) } }
     }
+
+    @Test fun domainMatchesRespectWordBoundaries() {
+        val x = KnowledgeStore(listOf(entry("x", domains = listOf("x.com"))))
+        assertTrue(x.matchTask("打开 https://x.com/home").any { it.name == "x" })
+        assertTrue(x.matchTask("比较 xx.com 和 xxx.com").none { it.name == "x" })
+        val zhihu = KnowledgeStore(listOf(entry("zhihu", domains = listOf("zhihu.com"))))
+        assertTrue(zhihu.matchTask("看看 nzhihu.com").none { it.name == "zhihu" })
+        assertTrue(zhihu.matchTask("打开 https://www.zhihu.com/question/1").any { it.name == "zhihu" })
+    }
 }

@@ -1,0 +1,120 @@
+package com.wangzan101.mika.calls
+
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import org.junit.Assert.*
+import org.junit.Test
+
+class CallHistoryTest {
+    private class MemoryStorage(var records: List<CallRecord> = emptyList()) : CallHistory.Storage {
+        var failRead = false
+        var failWrite = false
+
+        override fun read(): List<CallRecord> {
+            check(!failRead)
+            return records
+        }
+
+        override fun write(records: List<CallRecord>): Boolean {
+            if (failWrite) return false
+            this.records = records.toList()
+            return true
+        }
+    }
+
+    private fun record(id: Int) = CallRecord(
+        id = id.toString(), number = null, direction = CallDirection.INCOMING,
+        startedAtMs = id.toLong(), endedAtMs = id + 1L, result = "通话已结束",
+        transcript = listOf(CallTranscriptLine("caller", "留言。\n请于明日联系。"), CallTranscriptLine("assistant", "我会转告。")),
+    )
+
+    @Test fun handledChangesAndRemovalPersistWithoutRewritingTranscript() = runBlocking {
+        val initial = record(1)
+        val other = record(2)
+        val storage = MemoryStorage(listOf(other, initial))
+        val history = CallHistory(storage)
+        assertEquals(CallHistory.Result.SAVED, history.setHandled(initial.id, true))
+        assertEquals(listOf(other, initial.copy(handled = true)), storage.records)
+        val reopened = CallHistory(storage)
+        reopened.load()
+        assertTrue(reopened.state.value.last().handled)
+        assertEquals(CallHistory.Result.SAVED, reopened.setHandled(initial.id, false))
+        assertEquals(initial, storage.records.last())
+        assertEquals(CallHistory.Result.SAVED, reopened.delete(other.id))
+        assertEquals(listOf(initial), reopened.state.value)
+        assertEquals(CallHistory.Result.NOT_FOUND, reopened.delete(other.id))
+        assertEquals(CallHistory.Result.SAVED, reopened.clear())
+        assertTrue(storage.records.isEmpty())
+        assertTrue(reopened.state.value.isEmpty())
+    }
+
+    @Test fun failedEditsKeepExistingRecordsAndNewCallsRemainVisible() = runBlocking {
+        val initial = record(1)
+        val newCall = record(2)
+        val storage = MemoryStorage(listOf(initial)).apply { failWrite = true }
+        val history = CallHistory(storage)
+        assertEquals(CallHistory.Result.WRITE_FAILED, history.setHandled(initial.id, true))
+        assertEquals(CallHistory.Result.WRITE_FAILED, history.delete(initial.id))
+        assertEquals(CallHistory.Result.WRITE_FAILED, history.clear())
+        assertEquals(listOf(initial), history.state.value)
+        assertEquals(CallHistory.Result.WRITE_FAILED, history.append(newCall))
+        assertEquals(listOf(newCall, initial), history.state.value)
+        assertEquals(listOf(initial), storage.records)
+        assertTrue(history.writeFailed.value)
+        storage.failWrite = false
+        assertEquals(CallHistory.Result.SAVED, history.setHandled(newCall.id, true))
+        assertEquals(listOf(newCall.copy(handled = true), initial), storage.records)
+        assertFalse(history.writeFailed.value)
+    }
+
+    @Test fun unreadableHistoryIsNotSilentlyReplacedByAppend() = runBlocking {
+        val old = record(1)
+        val recent = record(2)
+        val storage = MemoryStorage(listOf(old)).apply { failRead = true }
+        val history = CallHistory(storage)
+        assertEquals(CallHistory.Result.WRITE_FAILED, history.append(recent))
+        assertEquals(listOf(old), storage.records)
+        assertEquals(listOf(recent), history.state.value)
+        assertTrue(history.writeFailed.value)
+        assertEquals(CallHistory.Result.SAVED, history.clear())
+        assertTrue(storage.records.isEmpty())
+        assertFalse(history.writeFailed.value)
+    }
+
+    @Test fun keepsNewestFiftyCallsAndDecodesLegacyRecordsAsUnhandled() = runBlocking {
+        val storage = MemoryStorage()
+        val history = CallHistory(storage)
+        for (id in 1..51) assertEquals(CallHistory.Result.SAVED, history.append(record(id)))
+        assertEquals((51 downTo 2).map(Int::toString), storage.records.map(CallRecord::id))
+        val legacy = Json.decodeFromString<CallRecord>(
+            """{"id":"legacy","number":null,"direction":"INCOMING","startedAtMs":1,"endedAtMs":2,"result":"通话已结束","transcript":[]}""",
+        )
+        assertFalse(legacy.handled)
+        assertNull(legacy.task)
+        assertNull(legacy.audioReport)
+    }
+
+    @Test fun outgoingTaskRoundTripsWithoutClaimingCompletionOrReusingItOnTheNextCall() = runBlocking {
+        val task = CallTaskBrief("问清服务时间", listOf("周末开门吗？"), "门店", "不预约").validatedSnapshot()
+        val report = CallAudioReport(3, 3, CallAudioReport.Turn.TRANSCRIPT_RECEIVED, 2880, 1920, 1920,
+            inputFramesAfterLastReply = 50, inputSignalFramesAfterLastReply = 20, recognitionFailures = 1)
+        val attempted = record(1).copy(direction = CallDirection.OUTGOING, result = "通话已结束", task = task, audioReport = report)
+        val decoded = Json.decodeFromString<CallRecord>(Json.encodeToString(attempted))
+        assertEquals(task, decoded.task)
+        assertEquals(report, decoded.audioReport)
+        assertEquals("通话已结束", decoded.result)
+        assertFalse(decoded.handled)
+        assertFalse(decoded.toString().contains(task.goal))
+
+        val storage = MemoryStorage(listOf(decoded))
+        val next = record(2).copy(direction = CallDirection.OUTGOING)
+        val history = CallHistory(storage)
+        assertEquals(CallHistory.Result.SAVED, history.append(next))
+        val reopened = CallHistory(storage)
+        reopened.load()
+        assertNull(reopened.state.value.first().task)
+        assertNull(reopened.state.value.first().audioReport)
+        assertEquals(task, reopened.state.value.last().task)
+    }
+}

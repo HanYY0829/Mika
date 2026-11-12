@@ -4,7 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
 
-class CallHistoryTest {
+class CallHistoryClearTest {
     private val first = record("first")
     private val second = record("second")
 

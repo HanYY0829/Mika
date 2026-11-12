@@ -57,6 +57,30 @@ class SystemSpeechTest {
     }
 
     @Test
+    fun appLanguageWithoutRegionFallsBackToItsUsualRegion() {
+        // 在 App 里选了英语后进程默认语言是不带地区的 en:没有地区可沿用,不能只送 en
+        assertEquals("en-US", SystemSpeech.speechTag(com.wangzan101.mika.i18n.AppLanguage.English, java.util.Locale.forLanguageTag("en")))
+        assertEquals("ja-JP", SystemSpeech.speechTag(com.wangzan101.mika.i18n.AppLanguage.Japanese, java.util.Locale.forLanguageTag("ja")))
+        assertEquals("en-GB", SystemSpeech.speechTag(com.wangzan101.mika.i18n.AppLanguage.English, java.util.Locale.UK))
+    }
+
+    @Test
+    fun installedTagMatchesTheSameLanguageWrittenDifferently() {
+        // Pixel 10 Pro 的本机识别实际报的:装了台湾中文,但登记的写法带文字子标签
+        val pixel = listOf("en-US", "zh-Hant-TW", "cmn-Hant-TW")
+        assertEquals("zh-Hant-TW", SystemSpeech.installedTag("zh-TW", pixel))
+        assertEquals("en-US", SystemSpeech.installedTag("en-US", pixel))
+        assertEquals("en-US", SystemSpeech.installedTag("en", pixel))
+        assertEquals("cmn-Hans-CN", SystemSpeech.installedTag("zh-CN", listOf("en-US", "cmn-Hans-CN")))
+        assertEquals("id-ID", SystemSpeech.installedTag("in-ID", listOf("id-ID")))
+        // 地区不同、语言不同的不算
+        assertNull(SystemSpeech.installedTag("zh-CN", pixel))
+        assertNull(SystemSpeech.installedTag("en-GB", pixel))
+        assertNull(SystemSpeech.installedTag("ja-JP", pixel))
+        assertNull(SystemSpeech.installedTag("zh-TW", emptyList()))
+    }
+
+    @Test
     fun systemLanguageDropsScriptAndExtensions() {
         val system = com.wangzan101.mika.i18n.AppLanguage.System
         assertEquals("zh-CN", SystemSpeech.speechTag(system, java.util.Locale.forLanguageTag("zh-Hans-CN")))

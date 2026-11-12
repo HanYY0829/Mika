@@ -141,6 +141,7 @@ internal class Interfaces(
         val session: ScreenSession,
         val probe: ScreenSession.EffectProbe?,
         val aimed: Pair<UiElement?, List<Int>?>?,
+        val playback: com.wangzan101.mika.core.record.PlaybackCapture? = null,
     ) {
         /** 这次调用由界面一侧报实际效果(effect)。 */
         val reportsEffect: Boolean get() = probe != null
@@ -163,7 +164,15 @@ internal class Interfaces(
         // 改变界面的动作:动作前先看一眼(元素表 + 画面),动作后比出实际效果
         val probe = if (tool.reportsEffect) session.probe(o.argStr("snapshotId")) else null
         val aimed = probe?.let { effectTarget(session, tool.verb, o, it.before) }
-        return Prep(session, probe, aimed)
+        val playback = if (config.recordFrames && tool.writesScreen) {
+            val frame = session.playbackFrame()
+            val checked = gateView.gateArgs(session, tool.verb, o)
+            val snap = gateView.snapshotFor(session, o) ?: probe?.before
+            val element = aimed?.first ?: snap?.elements?.firstOrNull { it.ref == o.argStr("ref") }
+            com.wangzan101.mika.core.record.PlaybackCapture(frame, null,
+                com.wangzan101.mika.core.record.PlaybackMark.of(tool.verb, checked, element, snap))
+        } else null
+        return Prep(session, probe, aimed, playback)
     }
 
     /** 调用不是界面上的(或没走到 [prepare]):路线目标不留。 */
@@ -189,6 +198,11 @@ internal class Interfaces(
             result = session.withEffect(result, probe, tool.verb, readsAtAction, aimed.first, aimed.second, typed)
         }
         if (tool.writesScreen && result.content["error"] != JsonPrimitive("invalid_arguments")) session.clearLocated()
+        if (config.recordFrames && tool.writesScreen && result.content["error"] != JsonPrimitive("invalid_arguments")) {
+            // 重新核对当前页权限和防截屏状态；只采集这次动作所在的屏。
+            result = result.with(playback = com.wangzan101.mika.core.record.PlaybackCapture(
+                prep.playback?.before, result.frame ?: result.image ?: session.playbackFrame(), if (ok) prep.playback?.mark else null))
+        }
         return result
     }
 

@@ -1,0 +1,2 @@
+subject=CN = Mika Test Internal CA
+sha256 Fingerprint=C8:32:50:B0:2A:4F:15:22:5D:F1:F8:D6:69:15:58:72:22:4B:4E:C0:BF:9E:F8:54:AB:6D:A7:FE:1B:46:F7:A5

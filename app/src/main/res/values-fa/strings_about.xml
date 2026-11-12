@@ -17,6 +17,16 @@
     <string name="about_feedback_sheet_sub">مشکلی پیدا کرده‌اید یا ایده‌ای دارید؟ از هر روشی که مناسب می‌دانید به سازنده اطلاع دهید.</string>
     <string name="about_feedback_github">ثبت مسئله در GitHub</string>
     <string name="about_feedback_github_sub">گزارش خطا یا درخواست قابلیت و پیگیری پیشرفت</string>
+    <string name="about_group">تماس با سازنده</string>
+    <string name="about_group_sub">WeChat</string>
+    <string name="about_group_sheet_title">تماس با سازنده</string>
+    <string name="about_group_sheet_sub">دربارهٔ نحوهٔ استفاده گفتگو کنید یا ایده بدهید. هنگام افزودن در WeChat، در درخواست خود به Mika اشاره کنید</string>
+    <string name="about_group_hint">برای ذخیره طولانی فشار دهید · یا در WeChat اسکن کنید</string>
+    <string name="about_save_qr">ذخیرهٔ کد QR</string>
+    <string name="about_qr_saved">کد QR در گالری ذخیره شد</string>
+    <string name="about_qr_save_failed">ذخیره نشد. به‌جای آن اسکرین‌شات بگیرید.</string>
+    <string name="about_follow">دنبال کردن سازنده</string>
+    <string name="about_follow_sub">X %1$s، اولین نفری باشید که از قابلیت‌های جدید باخبر می‌شوید</string>
     <string name="about_repo">کد منبع</string>
     <string name="about_repo_sub">%1$s · از ستاره دادن استقبال می‌کنیم</string>
     <string name="about_guide">راهنما و روش مشارکت</string>

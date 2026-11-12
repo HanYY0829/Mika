@@ -189,7 +189,9 @@ class ToolDispatcherFrameTest {
         val action = d.execute(call("phone_back"))
         assertTrue(action.images.isEmpty())
         assertTrue("snapshotId" in action.content["screen"]!!.jsonObject)
-        assertEquals(2, s.shots)
+        assertEquals(3, s.shots) // 新增操作前回放帧；操作后复用已有记录帧，不重复截图
+        assertTrue(action.playback?.before != null)
+        assertTrue(action.playback?.after === action.frame)
         assertEquals(1, d.execute(call("phone_screenshot")).images.size) // 模型发现歧义时仍可主动补图
     }
 

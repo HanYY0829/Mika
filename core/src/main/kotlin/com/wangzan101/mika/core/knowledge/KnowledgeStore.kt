@@ -82,7 +82,8 @@ class KnowledgeStore(private val bundled: List<KnowledgeEntry>, notes: Map<Strin
         }
         for (d in e.domains) {
             val x = d.trim().lowercase()
-            if (x.length >= 3 && text.contains(x)) best = maxOf(best, x.length)
+            // 域名也是英文词,一样要边界:否则 x.com 会命中 xx.com、zhihu.com 会命中 nzhihu.com
+            if (x.length >= 3 && containsTerm(text, x)) best = maxOf(best, x.length)
         }
         return best.takeIf { it >= 0 }
     }

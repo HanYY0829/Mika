@@ -24,6 +24,7 @@ android {
         buildConfigField("String", "GIT_HASH", "\"$gitHash\"")
         // 关于页版本号后的 Beta 标记;出正式版时改成 false
         buildConfigField("boolean", "BETA", "true")
+        buildConfigField("boolean", "ADB_LOGS", "false")
     }
 
     // 沙箱程序只有 arm64 版本(jniLibs/arm64-v8a);APK 不限 ABI,别的设备照常安装、显示「此设备不支持沙箱」。
@@ -65,6 +66,17 @@ android {
             initWith(getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
             isProfileable = true
+            matchingFallbacks += "release"
+        }
+        // 本地日志检查包：并排安装，允许 adb run-as，首次启动即记录详细 Trace。
+        create("logs") {
+            initWith(getByName("perf"))
+            applicationIdSuffix = ".logs"
+            versionNameSuffix = "-logs"
+            isDebuggable = true
+            isProfileable = false
+            resValue("string", "app_name", "Mika Logs")
+            buildConfigField("boolean", "ADB_LOGS", "true")
             matchingFallbacks += "release"
         }
     }

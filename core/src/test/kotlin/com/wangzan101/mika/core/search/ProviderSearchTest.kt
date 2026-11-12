@@ -13,7 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** SearXNG、Jina、Exa 三家的请求形状、解析和出错时的说法。 */
+/** SearXNG、Jina、Exa、Keirolabs 四家的请求形状、解析和出错时的说法。 */
 class ProviderSearchTest {
     private fun ok(body: String) = MockResponse().setResponseCode(200).setHeader("Content-Type", "application/json").setBody(body)
 
@@ -121,6 +121,41 @@ class ProviderSearchTest {
         assertEquals(5L, (ExaSearch("k", client, server.url("/search")).search("q", 5) as WebSearchResult.Failure).retryAfterSeconds)
     }
 
+    // ---------- Keirolabs ----------
+
+    @Test fun keirolabsIsABearerPostWithMaxResults() = withServer(ok("""{"query":"mika","results":[
+        {"position":1,"title":"K1","url":"https://k.example/1","snippet":"first","publishedDate":"","score":0.5,"tags":["a"]},
+        {"position":2,"title":"K2","url":"https://k.example/2","snippet":"second"},
+        {"position":3,"title":"no url","url":"","snippet":"dropped"},
+        {"position":4,"title":"K4","url":"https://k.example/4","snippet":"fourth"},
+        {"position":5,"title":"K5","url":"https://k.example/5","snippet":"over count"}],"count":5}""")) { server ->
+        val result = KeirolabsSearch(" keiro-key ", client, server.url("/api/v2/keiro")).search("mika", 3)
+        val request = server.takeRequest()
+        assertEquals("POST", request.method)
+        assertEquals("/api/v2/keiro", request.path)
+        assertEquals("Bearer keiro-key", request.getHeader("Authorization"))
+        val sent = Json.parseToJsonElement(request.body.readUtf8()).jsonObject
+        assertEquals("mika", sent["query"]!!.jsonPrimitive.content)
+        assertEquals(3, sent["maxResults"]!!.jsonPrimitive.int)
+        assertEquals(
+            listOf(WebSearchHit("K1", "https://k.example/1", "first"), WebSearchHit("K2", "https://k.example/2", "second"), WebSearchHit("K4", "https://k.example/4", "fourth")),
+            (result as WebSearchResult.Success).hits,
+        )
+    }
+
+    @Test fun keirolabsAsksForAtMostTheSharedMaximum() = withServer(ok("""{"results":[]}""")) { server ->
+        KeirolabsSearch("k", client, server.url("/")).search("q", 50)
+        assertEquals(WebSearch.MAX_COUNT, Json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject["maxResults"]!!.jsonPrimitive.int)
+    }
+
+    @Test fun keirolabsRejectedKeyIsAuthenticationFailure() = withServer(MockResponse().setResponseCode(401).setBody("""{"error":"Invalid API key","code":"INVALID_API_KEY"}""")) { server ->
+        assertEquals("authentication_failed", (KeirolabsSearch("bad", client, server.url("/")).search("q", 5) as WebSearchResult.Failure).code)
+    }
+
+    @Test fun keirolabsWithoutResultsArrayIsInvalidResponse() = withServer(ok("""{"error":"x"}""")) { server ->
+        assertEquals("invalid_response", (KeirolabsSearch("k", client, server.url("/")).search("q", 5) as WebSearchResult.Failure).code)
+    }
+
     // ---------- 共用 ----------
 
     @Test fun providersNeedTheRightFields() {
@@ -128,6 +163,8 @@ class ProviderSearchTest {
         assertEquals(WebSearchProvider.Problem.Key, WebSearchProvider.Jina.problem("", " "))
         assertEquals(WebSearchProvider.Problem.Key, WebSearchProvider.Exa.problem("", ""))
         assertEquals(null, WebSearchProvider.Exa.problem("", "k"))
+        assertEquals(WebSearchProvider.Problem.Key, WebSearchProvider.Keirolabs.problem("", ""))
+        assertEquals(null, WebSearchProvider.Keirolabs.problem("", "k"))
         assertEquals(WebSearchProvider.Problem.Endpoint, WebSearchProvider.SearXNG.problem("not a url", ""))
         assertEquals(null, WebSearchProvider.SearXNG.problem("https://searx.example.org", ""))
     }

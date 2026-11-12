@@ -30,6 +30,18 @@ object AboutCopy {
     val FEEDBACK_GITHUB: String get() = tr(R.string.about_feedback_github)
     val FEEDBACK_GITHUB_SUB: String get() = tr(R.string.about_feedback_github_sub)
 
+    val GROUP: String get() = tr(R.string.about_group)
+    val GROUP_SUB: String get() = tr(R.string.about_group_sub)
+    val GROUP_SHEET_TITLE: String get() = tr(R.string.about_group_sheet_title)
+    val GROUP_SHEET_SUB: String get() = tr(R.string.about_group_sheet_sub)
+    val GROUP_HINT: String get() = tr(R.string.about_group_hint)
+    val SAVE_QR: String get() = tr(R.string.about_save_qr)
+    val QR_SAVED: String get() = tr(R.string.about_qr_saved)
+    val QR_SAVE_FAILED: String get() = tr(R.string.about_qr_save_failed)
+
+    val FOLLOW: String get() = tr(R.string.about_follow)
+    val FOLLOW_SUB: String get() = tr(R.string.about_follow_sub, MikaLinks.X_HANDLE)
+
     val DIAGNOSTICS: String get() = tr(R.string.diagnostics_copy)
     val DIAGNOSTICS_SUB: String get() = tr(R.string.diagnostics_copy_sub)
     val DIAGNOSTICS_TITLE: String get() = tr(R.string.diagnostics_title)

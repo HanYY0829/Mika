@@ -213,6 +213,16 @@ internal class ScreenSession(
      * 主模型能看图时此刻屏幕的一帧(原图)和它的 screenshotId,登记进回看。和读屏同样的规则:
      * 受保护页面不截；屏上还没有 App、截不到时为 null。
      */
+    /** 本地回放帧：不依赖看图模型，不登记模型截图编号，也不更新读屏状态。 */
+    suspend fun playbackFrame(): ByteArray? = kotlinx.coroutines.withTimeoutOrNull(1_000L) {
+        if (!recordFrames || textOnlyDepth != 0) return@withTimeoutOrNull null
+        screenAttempt {
+            screen.checkAppAccess()
+            val s = screen.peek()
+            if (s.protected || !s.hasWindow || screen.isProtected()) null else screen.screenshotPng()
+        }
+    }
+
     suspend fun currentFrame(): Pair<ByteArray, Int>? {
         if (!visionEnabled) return null
         val s = screenAttempt { screen.peek() } ?: return null

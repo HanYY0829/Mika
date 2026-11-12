@@ -31,6 +31,7 @@ import tarfile
 import tempfile
 import urllib.request
 import zlib
+import zipfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 HERE = os.path.join(ROOT, "tools", "sandbox", "runtime")
@@ -437,6 +438,8 @@ def installed_entry(index_lines, members):
     return "\n".join(out) + "\n\n"
 
 
+PIP_LOCK = os.path.join(HERE, "pip-requires.lock")
+
 def index_header(p, info, payload_size):
     """The installed-db header for a package, rebuilt from its signed .PKGINFO (same fields apk writes)."""
     g = lambda k: info.get(k, [""])[0]
@@ -496,6 +499,11 @@ def build(out_asset):
     # Remove PEP668 EXTERNALLY-MANAGED marker so pip can install into system
     # site-packages directly (required for on-demand package installs).
     tree.entries.pop("usr/lib/python3.12/EXTERNALLY-MANAGED", None)
+
+    # Bake the pinned pip wheels into site-packages (SHA-256-verified, reproducible).
+    pip_wheels = bake_pip_wheels(tree, epoch)
+    if pip_wheels:
+        print(f"build-runtime: baked {len(pip_wheels)} pinned wheels: {', '.join(pip_wheels)}")
 
     def gen(path, data, mode=0o644):
         ti = tarfile.TarInfo(path)
@@ -580,6 +588,50 @@ def open_world(base_raw):
 
 def version_id(r):
     return f"{r['alpine']}-{r['sha256'][:12]}"
+
+
+def read_pip_lock():
+    """Wheels to bake into site-packages. Every field is verified at build time (SHA-256), so the
+    build is reproducible offline: re-download only these exact files."""
+    path = PIP_LOCK
+    if not os.path.isfile(path):
+        return []
+    data = json.load(open(path, encoding="utf-8"))
+    if data.get("spec") != "mika.pip-requires/v1":
+        die(f"{path}: unknown spec {data.get('spec')}")
+    for w in data.get("wheels", []):
+        for field in ("pkg", "version", "filename", "sha256", "url"):
+            if not w.get(field):
+                die(f"{path}: wheel entry missing {field}")
+    return data["wheels"]
+
+
+def site_packages():
+    # python3 in this runtime (from WANT) is 3.12; PEP668 marker removal above confirms the path.
+    return "usr/lib/python3.12/site-packages"
+
+
+def bake_pip_wheels(tree, epoch):
+    """Unpack each pinned wheel into site-packages. A wheel is a zip of the installed layout
+    (package dir + .dist-info), so unzip == install for both pure and native wheels; no pip runs.
+    Every wheel is SHA-256-verified against the lock, and each non-regular member is rejected."""
+    wheels = read_pip_lock()
+    sp = site_packages()
+    for w in wheels:
+        name = w["filename"]
+        data = cached(w["url"], f"pip-{name}", w["sha256"])
+        zf = zipfile.ZipFile(io.BytesIO(data))
+        for zi in zf.infolist():
+            if zi.is_dir():
+                continue
+            dest = f"{sp}/{zi.filename}"
+            mode = 0o755 if (zi.external_attr >> 16) & 0o755 else 0o644
+            ti = tarfile.TarInfo(dest)
+            ti.size = zi.file_size
+            ti.mode = mode
+            ti.mtime = epoch
+            tree.put(norm(ti, epoch), zf.read(zi))
+    return [(f"{w['pkg']}=={w['version']}") for w in wheels]
 
 
 def kotlin(r):
