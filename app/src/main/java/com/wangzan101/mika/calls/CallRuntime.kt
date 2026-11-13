@@ -46,6 +46,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import com.wangzan101.mika.core.model.ModelRole
 import java.util.UUID
 
 data class CallActionResult(val ok: Boolean, val message: String)
@@ -179,7 +180,13 @@ class CallRuntime(private val app: MikaApp) {
                 previous = current
             }
         }
-        scope.launch { records.load() }
+        scope.launch {
+            records.load()
+            if (!records.writeFailed.value) {
+                records.state.value.filter { it.summaryStatus == SummaryStatus.PENDING }
+                    .forEach { summarizeCall(it.id, it.transcript) }
+            }
+        }
         scope.launch { records.writeFailed.collect { publish() } }
         scope.launch(Dispatchers.IO) { instructions.load() }
         scope.launch {
@@ -979,10 +986,18 @@ class CallRuntime(private val app: MikaApp) {
                 if (BuildConfig.DEBUG) w.mediaCounters.playbackDiagnostic()?.let { Log.d("MikaCallMedia", "playback $it") }
                 w.track?.let {
                     if (w.telecomActionIssued) {
+                        val answeredByAi = w.aiActive && w.direction == CallDirection.INCOMING
+                        val summaryRequested = settings.state.value.summaryEnabled && w.transcript.isNotEmpty()
                         val record = CallRecord(w.id, it.number, w.direction, w.activeAt ?: it.createdAt,
                             System.currentTimeMillis(), reason, w.transcript.toList(), task = w.task,
-                            audioReport = w.mediaCounters.recordReport())
-                        scope.launch { records.append(record) }
+                            audioReport = w.mediaCounters.recordReport(),
+                            summaryStatus = if (summaryRequested) SummaryStatus.PENDING else SummaryStatus.NOT_REQUESTED)
+                        scope.launch {
+                            records.append(record)
+                            if (answeredByAi) notifications.completed(w.id, record.number,
+                                summaryPending = summaryRequested)
+                            if (summaryRequested) summarizeCall(w.id, record.transcript)
+                        }
                     }
                 }
                 if (work === w) {
@@ -1000,6 +1015,36 @@ class CallRuntime(private val app: MikaApp) {
                 w.result.complete(fail(detail ?: reason))
                 w.cleaned.complete(restored)
             }
+        }
+    }
+
+    suspend fun retrySummary(id: String): CallActionResult {
+        val record = records.state.value.firstOrNull { it.id == id }
+            ?: return CallActionResult(false, "找不到这条通话记录")
+        if (record.transcript.isEmpty()) return CallActionResult(false, "没有可用于总结的转写")
+        records.setSummary(id, null, SummaryStatus.PENDING)
+        return if (summarizeCall(id, record.transcript)) CallActionResult(true, "摘要已更新")
+        else CallActionResult(false, app.getString(R.string.calls_summary_failed))
+    }
+
+    private suspend fun summarizeCall(id: String, transcript: List<CallTranscriptLine>): Boolean {
+        val summary = try {
+            app.providers.modelFor(ModelRole.Main)?.let { CallSummaryGenerator.generate(it, transcript) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
+        return if (summary == null) {
+            records.setSummary(id, null, SummaryStatus.FAILED)
+            records.state.value.firstOrNull { it.id == id }?.let { notifications.updateCompletedSummary(id, it.number, null, failed = true) }
+            false
+        } else {
+            val saved = records.setSummary(id, summary, SummaryStatus.READY) == CallHistory.Result.SAVED
+            if (saved) records.state.value.firstOrNull { it.id == id }?.let {
+                notifications.updateCompletedSummary(id, it.number, summary, failed = false)
+            }
+            saved
         }
     }
 

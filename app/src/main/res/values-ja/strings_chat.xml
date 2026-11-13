@@ -122,6 +122,22 @@
     <string name="drawer_rename_title">チャットの名前を変更</string>
     <string name="drawer_pinned">ピン留め</string>
     <string name="drawer_pinned_mark">ピン留め</string>
+    <string name="drawer_archive">アーカイブ</string>
+    <string name="drawer_unarchive">アーカイブを解除</string>
+    <string name="drawer_archived">アーカイブ済み</string>
+    <string name="drawer_archived_count">%1$d 件をアーカイブ済み</string>
+    <string name="drawer_archive_empty">アーカイブしたチャットはありません</string>
+    <string name="drawer_archive_done">「%1$s」をアーカイブしました</string>
+    <string name="drawer_archive_this_week">今週</string>
+    <string name="drawer_archive_this_month">今月</string>
+    <string name="drawer_archive_earlier">それ以前</string>
+    <string name="drawer_archived_today">今日アーカイブ</string>
+    <plurals name="drawer_archived_days_ago">
+        <item quantity="other">%1$d 日前にアーカイブ</item>
+    </plurals>
+    <string name="drawer_search_filter_all">すべて</string>
+    <string name="drawer_search_filter_active">未アーカイブ</string>
+    <string name="drawer_search_filter_archived">アーカイブ</string>
     <string name="drawer_search_hint">チャットを検索</string>
     <string name="drawer_search_results">検索結果</string>
     <string name="drawer_search_empty">「%1$s」に一致するチャットはありません</string>
@@ -205,6 +221,10 @@
     <string name="chat_branch_retry">ここから聞き直す</string>
     <string name="chat_branch_attachments_readd">添付ファイルは追加し直してください</string>
     <string name="chat_attach_unavailable">追加できませんでした: %1$s。ファイルが存在し、サイズ制限内であることを確認してください。</string>
+    <string name="chat_attach_too_large">%1$s: 200 MiB の上限を超えています</string>
+    <string name="chat_attach_low_device_space">%1$s: 端末の空き容量が不足しています。空き容量を増やしてから再試行してください</string>
+    <string name="chat_attach_workspace_limit">%1$s: ワークスペースのストレージが上限に達しました。ワークスペースのファイルを削除してから再試行してください</string>
+    <string name="chat_attach_io_error">%1$s: 読み取りまたはコピーできません。ファイルが利用可能か確認してから再試行してください</string>
     <string name="chat_retry_missing">%1$s: ファイルが見つかりません</string>
     <string name="chat_retry_limit">%1$s: コピーの上限を超えました</string>
     <string name="chat_retry_failed">%1$s: コピーできませんでした</string>
@@ -216,6 +236,7 @@
     <string name="chat_withdraw_message">メッセージを取り消す</string>
     <string name="pip_close">このタスクの小さな表示を閉じる</string>
     <string name="pip_unmute">音を戻す</string>
+    <string name="pip_back">仮想画面で戻る</string>
     <string name="pip_reopen">画面を表示</string>
     <string name="pip_closed_needs_you">あなたの対応が必要</string>
     <string name="pip_closed_hint">このタスクでは閉じました。右下の「画面を表示」をタップするか、サイドメニューの「バックグラウンドの画面」を開いてください。</string>
@@ -236,4 +257,10 @@
     <string name="chat_placeholder_queue">次のタスクを入力…</string>
     <string name="voice_placeholder_queue">次のタスクを話す…</string>
     <string name="steer_received_paused">了解です — タスクの再開後に反映されます</string>
+    <plurals name="drawer_archive_many_done">
+        <item quantity="other">%1$d 件のチャットをアーカイブしました</item>
+    </plurals>
+    <plurals name="drawer_archive_many_skipped">
+        <item quantity="other">%1$d 件は未アーカイブ</item>
+    </plurals>
 </resources>

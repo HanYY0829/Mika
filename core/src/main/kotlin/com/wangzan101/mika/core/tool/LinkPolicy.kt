@@ -17,7 +17,7 @@ object LinkPolicy {
         "android.settings.INTERNAL_STORAGE_SETTINGS", "android.settings.ACCESSIBILITY_SETTINGS",
     )
 
-    private val BLOCKED_SCHEMES = setOf("intent", "file", "content", "javascript")
+    private val BLOCKED_SCHEMES = setOf("intent", "file", "content", "javascript", "data", "about", "blob")
     private val SCHEME = Regex("^([A-Za-z][A-Za-z0-9+.-]*):")
     /** 安卓包名的形状;分发器检查 package / app 参数也用它。 */
     val PACKAGE = Regex("^[A-Za-z0-9_]+(?:\\.[A-Za-z0-9_]+)+$")

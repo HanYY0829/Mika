@@ -146,6 +146,25 @@
     <string name="drawer_rename_title">Переименовать чат</string>
     <string name="drawer_pinned">Закреплённые</string>
     <string name="drawer_pinned_mark">Закреплён</string>
+    <string name="drawer_archive">В архив</string>
+    <string name="drawer_unarchive">Убрать из архива</string>
+    <string name="drawer_archived">В архиве</string>
+    <string name="drawer_archived_count">%1$d в архиве</string>
+    <string name="drawer_archive_empty">Нет архивированных чатов</string>
+    <string name="drawer_archive_done">Чат «%1$s» добавлен в архив</string>
+    <string name="drawer_archive_this_week">На этой неделе</string>
+    <string name="drawer_archive_this_month">В этом месяце</string>
+    <string name="drawer_archive_earlier">Раньше</string>
+    <string name="drawer_archived_today">Архивировано сегодня</string>
+    <plurals name="drawer_archived_days_ago">
+        <item quantity="one">Архивировано %1$d день назад</item>
+        <item quantity="few">Архивировано %1$d дня назад</item>
+        <item quantity="many">Архивировано %1$d дней назад</item>
+        <item quantity="other">Архивировано %1$d дня назад</item>
+    </plurals>
+    <string name="drawer_search_filter_all">Все</string>
+    <string name="drawer_search_filter_active">Без архива</string>
+    <string name="drawer_search_filter_archived">В архиве</string>
     <string name="drawer_search_hint">Поиск чатов</string>
     <string name="drawer_search_results">Результаты поиска</string>
     <string name="drawer_search_empty">Нет чатов, совпадающих с «%1$s»</string>
@@ -238,6 +257,10 @@
     <string name="chat_branch_retry">Спросить заново отсюда</string>
     <string name="chat_branch_attachments_readd">Добавьте нужные вложения заново</string>
     <string name="chat_attach_unavailable">Не удалось добавить: %1$s. Убедитесь, что файлы доступны и не превышают ограничение размера.</string>
+    <string name="chat_attach_too_large">%1$s: размер превышает ограничение в 200 MiB</string>
+    <string name="chat_attach_low_device_space">%1$s: недостаточно места на телефоне; освободите место и повторите попытку</string>
+    <string name="chat_attach_workspace_limit">%1$s: достигнут предел хранилища рабочего пространства; удалите файлы из рабочего пространства и повторите попытку</string>
+    <string name="chat_attach_io_error">%1$s: не удалось прочитать или скопировать файл; убедитесь, что он доступен, и повторите попытку</string>
     <string name="chat_retry_missing">%1$s: файл не найден</string>
     <string name="chat_retry_limit">%1$s: превышен лимит копирования</string>
     <string name="chat_retry_failed">%1$s: не удалось скопировать</string>
@@ -249,6 +272,7 @@
     <string name="chat_withdraw_message">Отозвать сообщение</string>
     <string name="pip_close">Закрыть маленькое окно для этой задачи</string>
     <string name="pip_unmute">Вернуть звук</string>
+    <string name="pip_back">Назад на виртуальном экране</string>
     <string name="pip_reopen">Показать экран</string>
     <string name="pip_closed_needs_you">Нужны вы</string>
     <string name="pip_closed_hint">Закрыто для этой задачи. Нажмите «Показать экран» справа внизу или откройте «Фоновые экраны» в боковом меню.</string>
@@ -269,4 +293,16 @@
     <string name="chat_placeholder_queue">Напишите следующую задачу…</string>
     <string name="voice_placeholder_queue">Продиктуйте следующую задачу…</string>
     <string name="steer_received_paused">Принято — будет учтено после продолжения задачи</string>
+    <plurals name="drawer_archive_many_done">
+        <item quantity="one">%1$d чат архивирован</item>
+        <item quantity="few">%1$d чата архивированы</item>
+        <item quantity="many">%1$d чатов архивировано</item>
+        <item quantity="other">%1$d чата архивированы</item>
+    </plurals>
+    <plurals name="drawer_archive_many_skipped">
+        <item quantity="one">%1$d не архивирован</item>
+        <item quantity="few">%1$d не архивированы</item>
+        <item quantity="many">%1$d не архивировано</item>
+        <item quantity="other">%1$d не архивированы</item>
+    </plurals>
 </resources>

@@ -92,6 +92,12 @@
     <string name="capsule_mode_always_detail">Значок Mika остаётся на экране, даже когда задач нет</string>
     <string name="capsule_idle_opacity">Непрозрачность в покое</string>
     <string name="capsule_idle_opacity_detail">Через несколько секунд без касания; всё, что требует внимания, остаётся полностью видимым</string>
+    <string name="capsule_card_size">Размер карточки</string>
+    <string name="capsule_card_size_detail">Развёрнутая карточка и текст масштабируются вместе; свёрнутая капсула не меняется</string>
+    <string name="capsule_card_size_small">Маленький</string>
+    <string name="capsule_card_size_normal">Обычный</string>
+    <string name="capsule_card_size_large">Большой</string>
+    <string name="capsule_card_size_xlarge">Очень большой</string>
     <string name="routes_saved">Сохранённые маршруты</string>
     <string name="loading">Загрузка</string>
     <plurals name="routes_count">
@@ -136,8 +142,29 @@
     <string name="appearance_system_detail">Светлое или тёмное, как на телефоне</string>
     <string name="appearance_light">Всегда светлое</string>
     <string name="appearance_dark">Всегда тёмное</string>
+    <string name="accent_group">Цвет акцента</string>
+    <string name="accent_default">По умолчанию</string>
+    <string name="accent_blue">Синий</string>
+    <string name="accent_indigo">Индиго</string>
+    <string name="accent_purple">Фиолетовый</string>
+    <string name="accent_pink">Розовый</string>
+    <string name="accent_teal">Бирюзовый</string>
+    <string name="accent_graphite">Графит</string>
+    <string name="skin_group">Фоновое изображение</string>
+    <string name="skin_pick">Выбрать из фото</string>
+    <string name="skin_clear">Вернуть однотонный фон</string>
+    <string name="skin_failed">Не удалось прочитать изображение</string>
+    <string name="skin_change">Выбрать другое изображение</string>
+    <string name="skin_scrim">Затемнение изображения</string>
+    <string name="skin_position">Положение изображения</string>
+    <string name="skin_blur">Размытие</string>
+    <string name="skin_blur_off">Нет</string>
+    <string name="skin_blur_light">Слабое</string>
+    <string name="skin_blur_strong">Сильное</string>
+    <string name="skin_accent_follow">Цвет акцента из изображения</string>
+    <string name="skin_accent_follow_sub">Берёт основной цвет изображения вместо цвета акцента выше, если он есть</string>
     <string name="settings_self_config">Разрешить Mika менять свои настройки</string>
-    <string name="settings_self_config_sub">Когда включено, у задач появляется один инструмент для чтения и изменения этих настроек (темп, звук, капсула, оформление, экран не гаснет). Модели, ключи API, сеть контейнера и всё, что удаляет данные, никогда не включаются</string>
+    <string name="settings_self_config_sub">Когда включено, у задач появляется один инструмент для чтения и изменения этих настроек (темп, звук, капсула, оформление, цвет акцента, экран не гаснет). Модели, ключи API, сеть контейнера и всё, что удаляет данные, никогда не включаются</string>
     <string name="settings_step_limit">Лимит шагов на задачу</string>
     <string name="settings_step_limit_sub">Выключено — без ограничения. При достижении лимита задача остановится и укажет, где остановилась.</string>
     <string name="settings_step_limit_off">Без ограничения</string>
@@ -187,4 +214,13 @@
     <string name="settings_token_budget_custom">Свой бюджет токенов</string>
     <string name="settings_token_budget_apply">Использовать</string>
     <string name="settings_token_budget_invalid">Введите целое число от %1$s до %2$s.</string>
+    <string name="settings_auto_archive">Автоархивация чатов</string>
+    <string name="settings_auto_archive_sub">Чаты без новых сообщений какое-то время перемещаются в архив</string>
+    <string name="settings_auto_archive_hint">Чаты, в которых не было новых сообщений выбранное время, перемещаются в архив. Закреплённые чаты и чаты с выполняющейся задачей остаются на месте. Их можно в любой момент восстановить из архива в списке чатов.</string>
+    <plurals name="settings_auto_archive_days">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дня</item>
+        <item quantity="many">%1$d дней</item>
+        <item quantity="other">%1$d дня</item>
+    </plurals>
 </resources>

@@ -130,4 +130,14 @@
     <string name="terminal_task_running">يعمل Mika أيضاً في مساحة العمل هذه؛ قد تتعارض التغييرات من الجانبين.</string>
     <string name="terminal_copy_all">نسخ الكل</string>
     <string name="terminal_copied">تم النسخ</string>
+    <string name="personal_replay_title">شاشة الهاتف</string>
+    <string name="personal_replay_close">إغلاق</string>
+    <string name="personal_replay_live_screen">شاشة الهاتف مباشرةً</string>
+    <string name="personal_replay_recorded_screen">تسجيل شاشة المهمة</string>
+    <string name="personal_replay_loading">جارٍ تحميل الشاشة…</string>
+    <string name="personal_replay_empty">لا يوجد تسجيل متاح للتشغيل بعد.</string>
+    <string name="personal_replay_live">مباشر</string>
+    <string name="personal_replay_pause">إيقاف مؤقت</string>
+    <string name="personal_replay_play">تشغيل</string>
+    <string name="personal_replay_return_live">العودة إلى البث المباشر</string>
 </resources>

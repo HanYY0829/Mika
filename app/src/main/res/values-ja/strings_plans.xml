@@ -65,6 +65,9 @@
     <string name="plans_condition">次の場合のみ実行: %1$s · %2$s</string>
     <string name="plans_last">前回 %1$s · %2$s</string>
     <string name="plans_never_run">まだ実行されていません</string>
+    <string name="plans_source_user">手動</string>
+    <string name="plans_source_model">モデル</string>
+    <string name="plans_source_external">スクリプト</string>
     <string name="plans_delivered">通知済み</string>
     <string name="plans_unchanged">条件は変わっていません</string>
     <string name="plans_not_met">条件を満たしていません</string>

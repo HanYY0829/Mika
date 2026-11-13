@@ -15,7 +15,13 @@ import java.io.File
  * 「记忆与技能」的三个开关:[useMemory] 总开关(关 = 不检索、不注入、不提取、不提供记忆工具);
  * [autoRemember]「自动记住我说过的事」;[learnSkills]「从办成的任务里学技能」(默认开,学到的要用户收下才用)。
  */
-data class MemorySwitches(val useMemory: Boolean = true, val autoRemember: Boolean = true, val learnSkills: Boolean = true)
+data class MemorySwitches(
+    val useMemory: Boolean = true,
+    val autoRemember: Boolean = true,
+    val learnSkills: Boolean = true,
+    /** 任务结束时自动记一条跨会话摘要,供下次同类任务检索;关掉就既不记、也不提供检索工具。 */
+    val rememberTasks: Boolean = true,
+)
 
 /**
  * 开关存成一个小 JSON 文件;读不懂按默认值。
@@ -30,6 +36,7 @@ class MemorySettings(private val file: File) {
         file.parentFile?.mkdirs()
         file.writeText(buildJsonObject {
             put("useMemory", next.useMemory); put("autoRemember", next.autoRemember); put("learnSkills", next.learnSkills)
+            put("rememberTasks", next.rememberTasks)
             put(LEARN_DEFAULT_APPLIED, true)
         }.toString())
         _switches.value = next
@@ -41,7 +48,8 @@ class MemorySettings(private val file: File) {
         val def = MemorySwitches()
         val upgraded = b(LEARN_DEFAULT_APPLIED, false)
         return MemorySwitches(b("useMemory", def.useMemory), b("autoRemember", def.autoRemember),
-            if (upgraded) b("learnSkills", def.learnSkills) else def.learnSkills)
+            if (upgraded) b("learnSkills", def.learnSkills) else def.learnSkills,
+            b("rememberTasks", def.rememberTasks))
     }
 
     private companion object {

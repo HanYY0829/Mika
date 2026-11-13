@@ -109,7 +109,7 @@ fun AdvancedSettings() {
     var network by remember { mutableStateOf(state.networkAllowed) }
     val app = context.applicationContext as MikaApp
     val usageReader = remember {
-        SandboxUsageReader(SandboxDirs(context), { app.conversations.list() }, { app.taskState.activeConversations.value })
+        SandboxUsageReader(SandboxDirs(context), { app.conversations.list(includeArchived = true) }, { app.taskState.activeConversations.value })
     }
     var usage by remember { mutableStateOf<SandboxUsage?>(null) }
     var reload by remember { mutableIntStateOf(0) }

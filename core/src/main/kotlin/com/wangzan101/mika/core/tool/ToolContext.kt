@@ -52,6 +52,8 @@ internal class ToolConfig(
     val selfOperate: com.wangzan101.mika.core.self.SelfPort? = null,
     /** Save a captured PNG in this task's workspace; screen tools do not depend on the sandbox capability. */
     val saveScreenshot: (suspend (String, ByteArray) -> String)? = null,
+    /** 跨会话任务摘要;给了才提供 task_memory_search / task_memory_timeline / task_memory_step。 */
+    val taskMemory: com.wangzan101.mika.core.memory.TaskMemoryStore? = null,
 )
 
 /**

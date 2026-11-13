@@ -39,4 +39,6 @@
     <string name="file_library_file_count">%1$d 個のファイル</string>
     <string name="file_library_select_title">ファイルを選択</string>
     <string name="file_library_preview">プレビュー</string>
+    <string name="file_library_open_in_chat">会話で表示</string>
+    <string name="file_library_open_failed">この会話を開けませんでした</string>
 </resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_completed_notification_channel">Уведомления об окончании звонка ИИ</string>
+    <string name="calls_completed_notification_title">ИИ ответил на звонок</string>
+    <string name="calls_completed_notification_text">Нажмите, чтобы посмотреть подробности звонка</string>
+    <string name="calls_summary_enable">Создавать сводки звонков и задачи с помощью ИИ</string>
+    <string name="calls_summary_cloud_consent">После включения расшифровка отправляется выбранному сервису модели ИИ для составления сводки. Исходная расшифровка хранится на устройстве в зашифрованном виде. Когда функция выключена, расшифровка не отправляется.</string>
+    <string name="calls_summary_failed">Не удалось создать сводку. Повторите попытку в подробностях этого звонка.</string>
+    <string name="calls_summary_generating">Создание сводки…</string>
+    <string name="calls_summary_retry">Повторить создание сводки</string>
+    <string name="calls_summary_purpose">Цель звонка</string>
+    <string name="calls_summary_highlights">Основные моменты</string>
+    <string name="calls_summary_conclusion">Итог</string>
+    <string name="calls_summary_uncertainties">Неуточнённые детали</string>
+    <string name="calls_summary_actions">Задачи и статус</string>
+    <string name="calls_summary_pending">Ожидает</string>
+    <string name="calls_summary_done">Готово</string>
+    <string name="calls_summary_unknown">Неизвестно</string>
+</resources>

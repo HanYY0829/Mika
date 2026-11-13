@@ -162,6 +162,27 @@
     <string name="drawer_rename_title">إعادة تسمية المحادثة</string>
     <string name="drawer_pinned">مثبّتة</string>
     <string name="drawer_pinned_mark">مثبّتة</string>
+    <string name="drawer_archive">أرشفة</string>
+    <string name="drawer_unarchive">إلغاء الأرشفة</string>
+    <string name="drawer_archived">مؤرشفة</string>
+    <string name="drawer_archived_count">%1$d مؤرشفة</string>
+    <string name="drawer_archive_empty">لا توجد محادثات مؤرشفة</string>
+    <string name="drawer_archive_done">تمت أرشفة «%1$s»</string>
+    <string name="drawer_archive_this_week">هذا الأسبوع</string>
+    <string name="drawer_archive_this_month">هذا الشهر</string>
+    <string name="drawer_archive_earlier">أقدم</string>
+    <string name="drawer_archived_today">تمت الأرشفة اليوم</string>
+    <plurals name="drawer_archived_days_ago">
+        <item quantity="zero">تمت الأرشفة قبل %1$d يوم</item>
+        <item quantity="one">تمت الأرشفة قبل يوم واحد</item>
+        <item quantity="two">تمت الأرشفة قبل يومين</item>
+        <item quantity="few">تمت الأرشفة قبل %1$d أيام</item>
+        <item quantity="many">تمت الأرشفة قبل %1$d يومًا</item>
+        <item quantity="other">تمت الأرشفة قبل %1$d يوم</item>
+    </plurals>
+    <string name="drawer_search_filter_all">الكل</string>
+    <string name="drawer_search_filter_active">غير مؤرشفة</string>
+    <string name="drawer_search_filter_archived">مؤرشفة</string>
     <string name="drawer_search_hint">البحث في المحادثات</string>
     <string name="drawer_search_results">نتائج البحث</string>
     <string name="drawer_search_empty">لا توجد محادثات تطابق «%1$s»</string>
@@ -260,6 +281,10 @@
     <string name="chat_branch_retry">اسأل مجددًا من هنا</string>
     <string name="chat_branch_attachments_readd">أعد إضافة المرفقات التي تريد تضمينها</string>
     <string name="chat_attach_unavailable">تعذّرت إضافة: %1$s. تأكد من توفر الملفات وأن حجمها ضمن الحد المسموح.</string>
+    <string name="chat_attach_too_large">%1$s: يتجاوز حد 200 MiB</string>
+    <string name="chat_attach_low_device_space">%1$s: مساحة تخزين الهاتف غير كافية؛ أفرغ بعض المساحة وحاول مجددًا</string>
+    <string name="chat_attach_workspace_limit">%1$s: بلغت مساحة تخزين مساحة العمل الحد الأقصى؛ احذف ملفات من مساحة العمل وحاول مجددًا</string>
+    <string name="chat_attach_io_error">%1$s: تعذّرت قراءة الملف أو نسخه؛ تأكد من توفره وحاول مجددًا</string>
     <string name="chat_retry_missing">%1$s: الملف غير موجود</string>
     <string name="chat_retry_limit">%1$s: تم بلوغ حد النسخ</string>
     <string name="chat_retry_failed">%1$s: تعذّر النسخ</string>
@@ -273,6 +298,7 @@
     <string name="chat_withdraw_message">سحب الرسالة</string>
     <string name="pip_close">إغلاق العرض المصغّر لهذه المهمة</string>
     <string name="pip_unmute">إرجاع الصوت</string>
+    <string name="pip_back">الرجوع على الشاشة الافتراضية</string>
     <string name="pip_reopen">عرض الشاشة</string>
     <string name="pip_closed_needs_you">تتطلب تدخّلك</string>
     <string name="pip_closed_hint">أُغلقت لهذه المهمة. انقر على «عرض الشاشة» أسفل اليمين، أو افتح «الشاشات في الخلفية» من القائمة الجانبية.</string>
@@ -291,4 +317,20 @@
     <string name="chat_placeholder_queue">اكتب المهمة التالية…</string>
     <string name="voice_placeholder_queue">تحدّث عن المهمة التالية…</string>
     <string name="steer_received_paused">تم الاستلام — سيُستخدم عند متابعة المهمة</string>
+    <plurals name="drawer_archive_many_done">
+        <item quantity="zero">%1$d محادثة مؤرشفة</item>
+        <item quantity="one">محادثة واحدة مؤرشفة</item>
+        <item quantity="two">محادثتان مؤرشفتان</item>
+        <item quantity="few">%1$d محادثات مؤرشفة</item>
+        <item quantity="many">%1$d محادثة مؤرشفة</item>
+        <item quantity="other">%1$d محادثة مؤرشفة</item>
+    </plurals>
+    <plurals name="drawer_archive_many_skipped">
+        <item quantity="zero">%1$d غير مؤرشفة</item>
+        <item quantity="one">%1$d غير مؤرشفة</item>
+        <item quantity="two">%1$d غير مؤرشفتين</item>
+        <item quantity="few">%1$d غير مؤرشفة</item>
+        <item quantity="many">%1$d غير مؤرشفة</item>
+        <item quantity="other">%1$d غير مؤرشفة</item>
+    </plurals>
 </resources>

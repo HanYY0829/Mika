@@ -1,5 +1,7 @@
 package com.wangzan101.mika.ui
 
+import com.wangzan101.mika.ui.theme.LocalSkinBackdrop
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -47,6 +49,7 @@ import java.util.Date
 @Composable
 fun CallSettingsScreen(runtime: CallRuntime, onInstructions: (() -> Unit)? = null, onBack: () -> Unit,
     standalone: Boolean = false, onHelperSetup: () -> Unit = {}, onAbout: () -> Unit = {},
+    initialHistoryCallId: String? = null,
     updateAvailable: Boolean = false, focusRequest: Int = 0) {
     var instructionsOpen by rememberSaveable { mutableStateOf(false) }
     var handledFocusRequest by rememberSaveable { mutableIntStateOf(0) }
@@ -62,7 +65,7 @@ fun CallSettingsScreen(runtime: CallRuntime, onInstructions: (() -> Unit)? = nul
         instructionsOpen -> CallInstructionsScreen(runtime) { instructionsOpen = false }
         else -> workspaceState.SaveableStateProvider("call-workspace") {
             CallSettingsWorkspace(runtime, taskDraft, onBack, onInstructions ?: { instructionsOpen = true },
-                standalone, onHelperSetup, onAbout, updateAvailable, focusRequest)
+                standalone, onHelperSetup, onAbout, updateAvailable, focusRequest, initialHistoryCallId)
         }
     }
 }
@@ -73,6 +76,7 @@ private fun CallSettingsWorkspace(
     onBack: () -> Unit, onInstructions: () -> Unit,
     standalone: Boolean, onHelperSetup: () -> Unit, onAbout: () -> Unit, updateAvailable: Boolean,
     focusRequest: Int,
+    initialHistoryCallId: String?,
 ) {
     val config by runtime.settings.state.collectAsState()
     val state by runtime.state.collectAsState()
@@ -84,7 +88,10 @@ private fun CallSettingsWorkspace(
     var lastAction by remember { mutableIntStateOf(0) }
     var lastActionWasLockedDial by remember { mutableStateOf(false) }
     var feedback by remember { mutableStateOf<CallActionResult?>(null) }
-    var tab by rememberSaveable { mutableStateOf(CallWorkspaceTab.Receive) }
+    var tab by rememberSaveable { mutableStateOf(if (initialHistoryCallId != null) CallWorkspaceTab.History else CallWorkspaceTab.Receive) }
+    LaunchedEffect(initialHistoryCallId) {
+        if (initialHistoryCallId != null) tab = CallWorkspaceTab.History
+    }
     val tabStates = rememberSaveableStateHolder()
     var liveNavigation by remember { mutableIntStateOf(0) }
     var handledLiveNavigation by remember { mutableIntStateOf(0) }
@@ -277,6 +284,8 @@ private fun CallSettingsWorkspace(
                         )
                         CallWorkspaceTab.History -> CallHistorySection(
                             history, state.historyWriteFailed, onMark = runtime::setHistoryHandled, onDelete = runtime::deleteHistory,
+                            onRetrySummary = runtime::retrySummary,
+                            focusRecordId = initialHistoryCallId,
                             onClear = runtime::clearHistory,
                             onReuseTask = if (pendingLockedDial != null || busy || controlBusy) null else { number, brief ->
                                 if (taskDraft.hasContent) pendingReuse = number to brief else reuse(number, brief)
@@ -293,6 +302,7 @@ private fun CallSettingsWorkspace(
                                 scope.launch { save { it.copy(audioVerified = verified, autoAnswer = verified && it.autoAnswer) } }
                             },
                             onDefaultSim = { id -> scope.launch { save { it.copy(defaultOutgoingSimId = id) } } },
+                            onSummaryEnabled = { enabled -> scope.launch { save { it.copy(summaryEnabled = enabled) } } },
                         )
                     }
                 }
@@ -345,7 +355,9 @@ private enum class CallWorkspaceTab(val label: Int) {
 
 @Composable
 private fun CallWorkspaceTabs(selected: CallWorkspaceTab, onSelect: (CallWorkspaceTab) -> Unit) {
-    TabRow(selectedTabIndex = selected.ordinal, containerColor = MikaTheme.colors.bg, contentColor = MikaTheme.colors.accent) {
+    // 页面底有背景图片时标签栏透出它,不留一条纯色
+    val tabBg = if (LocalSkinBackdrop.current != null) Color.Transparent else MikaTheme.colors.bg
+    TabRow(selectedTabIndex = selected.ordinal, containerColor = tabBg, contentColor = MikaTheme.colors.accent) {
         CallWorkspaceTab.entries.forEach { tab ->
             Tab(
                 selected = tab == selected, onClick = { onSelect(tab) },
@@ -576,6 +588,7 @@ private fun CallPreferencesPage(
     canConfigure: Boolean, stopBusy: Boolean, device: CallDeviceControls, canStartStandby: Boolean,
     onPrepare: () -> Unit, onStop: () -> Unit, onCredentials: () -> Unit, onProfile: () -> Unit,
     onVerifyAudio: (Boolean) -> Unit, onDefaultSim: (String?) -> Unit,
+    onSummaryEnabled: (Boolean) -> Unit,
     onHelperSetup: () -> Unit, onStartStandby: () -> Unit,
 ) {
     var deviceOpen by rememberSaveable { mutableStateOf(!ready || !config.audioVerified) }
@@ -630,6 +643,22 @@ private fun CallPreferencesPage(
                     Text(stringResource(R.string.calls_notification_settings))
                 }
             }
+        }
+    }
+
+    GroupCard {
+        Row(
+            Modifier.fillMaxWidth().toggleable(config.summaryEnabled, enabled = canConfigure, role = Role.Switch,
+                onValueChange = onSummaryEnabled).padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.calls_summary_enable), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.calls_summary_cloud_consent), style = MaterialTheme.typography.bodySmall,
+                    color = MikaTheme.colors.ink3)
+            }
+            Switch(config.summaryEnabled, onCheckedChange = null, enabled = canConfigure,
+                modifier = Modifier.testTag("call-summary-enabled"))
         }
     }
 
@@ -935,9 +964,12 @@ private fun CallProfileDialog(config: CallConfig, onDismiss: () -> Unit, onSave:
         text = {
             Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.calls_greeting), style = MaterialTheme.typography.titleSmall)
                 OutlinedTextField(greeting, { greeting = it }, modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.calls_greeting)) }, maxLines = 3, enabled = !busy,
                     supportingText = { Text(stringResource(R.string.calls_greeting_hint)) })
+                HorizontalDivider()
+                Text(stringResource(R.string.calls_profile), style = MaterialTheme.typography.titleSmall)
                 OutlinedTextField(prompt, { prompt = it }, modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.calls_instructions)) }, maxLines = 5, enabled = !busy)
                 OutlinedTextField(seconds, { seconds = it.filter(Char::isDigit).take(3) }, modifier = Modifier.fillMaxWidth(),

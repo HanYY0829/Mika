@@ -44,6 +44,16 @@ class ProviderSearchTest {
         assertEquals("/search?q=q&format=json", server.takeRequest().path)
     }
 
+    @Test fun searxngAcceptsASearchAddressWithATrailingSlash() = withServer(ok("""{"results":[]}""")) { server ->
+        SearxngSearch(server.url("/search/"), client).search("q", 5)
+        assertEquals("/search/?q=q&format=json", server.takeRequest().path)
+    }
+
+    @Test fun searxngAcceptsANestedSearchAddressWithATrailingSlash() = withServer(ok("""{"results":[]}""")) { server ->
+        SearxngSearch(server.url("/foo/search/"), client).search("q", 5)
+        assertEquals("/foo/search/?q=q&format=json", server.takeRequest().path)
+    }
+
     @Test fun searxng403MeansJsonIsOffNotABadKey() = withServer(MockResponse().setResponseCode(403).setBody("Forbidden")) { server ->
         val failure = SearxngSearch(server.url("/"), client).search("q", 5) as WebSearchResult.Failure
         assertEquals("json_disabled", failure.code)

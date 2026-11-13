@@ -11,8 +11,10 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import com.wangzan101.mika.chat.AndroidBranchWorkspace
+import com.wangzan101.mika.chat.AutoArchive
 import com.wangzan101.mika.chat.ConversationDeleter
 import com.wangzan101.mika.chat.ConversationStore
+import com.wangzan101.mika.chat.CurrentChat
 import com.wangzan101.mika.chat.SharedDraftStore
 import com.wangzan101.mika.core.cap.sandbox.SandboxStatus
 import com.wangzan101.mika.cap.sandbox.AndroidSandbox
@@ -428,6 +430,8 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
         wechat.ensureRunning()
         // 先对一下设备时区;退出期间不排闹钟,重新打开时再补排
         if (!quit) scope.launch(Dispatchers.IO) { runCatching { TriggerRuntime.syncTimeZone(this@MikaApp); TriggerRuntime.rearm(this@MikaApp) } }
+        // 自动归档:太久没新消息的对话收进归档(设置里开着才跑);退出期间等下次打开再补
+        if (!quit) autoArchiveNow()
         // 给电脑跑的「经 USB 连接」脚本;顺带清掉上次开机留下的 USB 连接信息
         scope.launch(Dispatchers.IO) { runCatching { mcp.writeUsbScript() }.onFailure { Log.w("MikaMcp", "cannot write USB script", it) } }
         // 上次导出写到一半被杀留下的空壳条目
@@ -446,10 +450,30 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
         }
     }
 
+    /**
+     * 按设置把太久没有新消息的对话收进归档:启动时跑一次,设置里改了天数也跑一次。
+     * 正在跑任务的对话和用户此刻在看的对话不动;之后再有新的一轮写进来会自动取消归档。
+     */
+    fun autoArchiveNow() {
+        val days = FeatureFlags.get(this).autoArchiveDays()
+        if (days <= 0) return
+        scope.launch(Dispatchers.IO) {
+            runCatching {
+                AutoArchive.run(
+                    conversations, days,
+                    running = taskState.activeConversations.value,
+                    currentId = (conversations.currentChat() as? CurrentChat.Open)?.id,
+                    isRunning = { it in taskState.activeConversations.value },
+                )
+            }.onFailure { Log.w("MikaChat", "could not auto archive conversations", it) }
+        }
+    }
+
     /** 用户重新打开 Mika:补上退出时略过的启动工作(见 [com.wangzan101.mika.quit.MikaQuit])。 */
     fun resumeAfterQuit() {
         runRecovery.recover()
         RuntimePreparer.ensure(this)
+        autoArchiveNow()
         mcp.ensureRunning()
         wechat.ensureRunning()
         scope.launch(Dispatchers.IO) {

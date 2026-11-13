@@ -27,6 +27,9 @@
     <string name="memory_auto_sub">Dirangkum dari kata-kata Anda sendiri setelah tiap tugas</string>
     <string name="memory_learn">Belajar dari tugas sebelumnya (keterampilan dan catatan aplikasi)</string>
     <string name="memory_learn_sub">Hal yang dipelajari Mika baru dipakai setelah Anda menerimanya</string>
+    <string name="memory_tasks">Ingat tugas sebelumnya</string>
+    <string name="memory_tasks_sub">Simpan ringkasan singkat setiap tugas selesai untuk diingat lain kali</string>
+    <string name="memory_tasks_title">Tugas sebelumnya</string>
     <string name="memory_clear_sub">Hapus semua memori dan keterampilan yang dipelajari</string>
     <string name="edit_it">Ubah</string>
     <string name="unpin">Lepas sematan</string>

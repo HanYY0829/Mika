@@ -36,15 +36,27 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wangzan101.mika.R
 import com.wangzan101.mika.core.personal.PersonalTask
+import com.wangzan101.mika.core.personal.PersonalSystemException
+import com.wangzan101.mika.personal.displayText
+import com.wangzan101.mika.personal.displayDetail
+import com.wangzan101.mika.personal.displayResult
+import com.wangzan101.mika.personal.personalSystemText
+import com.wangzan101.mika.personal.personalStopErrorText
 import com.wangzan101.mika.memory.MemoryRuntime
 import com.wangzan101.mika.personal.PersonalPhonePreview
 import com.wangzan101.mika.personal.PersonalRuntime
@@ -67,17 +79,25 @@ import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
-internal fun personalStatus(task: PersonalTask): String = when (task.status) {
-    "running" -> "进行中"
-    "queued" -> "排队中"
-    "needs_you" -> "需要你"
-    "paused" -> "等待继续"
-    "finishing" -> "正在收尾"
-    "completed" -> "已完成"
-    "cancelled" -> "已停止"
-    "partial" -> "部分完成"
-    else -> "未完成"
+@Composable
+internal fun personalStatus(task: PersonalTask): String = stringResource(when (task.status) {
+    "running" -> R.string.personal_status_running
+    "queued" -> R.string.personal_status_queued
+    "needs_you" -> R.string.personal_status_needs_you
+    "paused" -> R.string.personal_status_paused
+    "finishing" -> R.string.personal_status_finishing
+    "completed" -> R.string.personal_status_completed
+    "cancelled" -> R.string.personal_status_cancelled
+    "partial" -> R.string.personal_status_partial
+    else -> R.string.personal_status_incomplete
+})
+
+@Composable
+internal fun personalDayFormat(): DateTimeFormatter {
+    val locale = LocalConfiguration.current.locales[0]
+    return remember(locale) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,7 +141,9 @@ fun PersonalAgentScreen(
     val activeIds = active.map { it.conversationId }
     val phonePreview = remember(runtime, activeIds) { runtime.phonePreview(activeIds) }
     val zone = remember { ZoneId.systemDefault() }
-    val dayFormat = remember { DateTimeFormatter.ofPattern("M 月 d 日") }
+    val dayFormat = personalDayFormat()
+    val context = LocalContext.current
+    val sendFailed = stringResource(R.string.personal_send_failed)
     fun send() {
         val text = draft.trim()
         if (text.isEmpty()) return
@@ -130,7 +152,10 @@ fun PersonalAgentScreen(
         followLatest = true
         scope.launch {
             runCatching { runtime.send(text) }
-                .onFailure { draft = text; sendError = it.message ?: "发送失败，请再试一次。" }
+                .onFailure {
+                    draft = text
+                    sendError = personalSystemText(context, (it as? PersonalSystemException)?.systemType, it.message ?: sendFailed)
+                }
         }
     }
     LaunchedEffect(list) {
@@ -163,10 +188,10 @@ fun PersonalAgentScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (messages.isEmpty()) item("welcome") {
                     Column(Modifier.fillMaxWidth().padding(top = 60.dp, bottom = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("从这里，一直聊下去。", style = MikaType.LargeTitle, color = c.ink, textAlign = TextAlign.Center)
-                        Text("想法、日常，和你交给我的事。\n随时回来，都能接着讲。",
+                        Text(stringResource(R.string.personal_welcome_title), style = MikaType.LargeTitle, color = c.ink, textAlign = TextAlign.Center)
+                        Text(stringResource(R.string.personal_welcome_body),
                             Modifier.padding(top = 12.dp), color = c.ink2, style = MikaType.Body, textAlign = TextAlign.Center)
-                        TextButton(onClick = onModels, Modifier.padding(top = 16.dp)) { Text("查看当前模型") }
+                        TextButton(onClick = onModels, Modifier.padding(top = 16.dp)) { Text(stringResource(R.string.personal_view_model)) }
                     }
                 }
                 itemsIndexed(messages, key = { _, message -> message.id }) { index, message ->
@@ -191,17 +216,17 @@ fun PersonalAgentScreen(
                         if (user) {
                             Text(message.text, bubble, style = MikaType.Body, color = c.onAccent)
                         } else {
-                            MarkdownText(message.text, MikaType.Body.copy(color = if (message.error) c.bad else c.ink), bubble)
+                            MarkdownText(message.displayText(context), MikaType.Body.copy(color = if (message.error) c.bad else c.ink), bubble)
                         }
-                        if (!message.handled) Text("已收到", Modifier.padding(top = 4.dp, end = 5.dp), fontSize = 10.sp, color = c.ink3)
-                        if (task != null) TextButton(onClick = { selectedTask = task.id }) { Text("查看任务", fontSize = 12.sp) }
+                        if (!message.handled) Text(stringResource(R.string.personal_received), Modifier.padding(top = 4.dp, end = 5.dp), fontSize = 10.sp, color = c.ink3)
+                        if (task != null) TextButton(onClick = { selectedTask = task.id }) { Text(stringResource(R.string.personal_view_task), fontSize = 12.sp) }
                     }
                 }
                 item("bottom") { Spacer(Modifier.height(4.dp)) }
             }
             if (!followLatest && messages.isNotEmpty()) TextButton(
                 onClick = { followLatest = true; scope.launch { list.scrollToItem(messages.size) } },
-                modifier = Modifier.align(Alignment.BottomCenter).background(c.surface, CircleShape)) { Text("回到最新消息") }
+                modifier = Modifier.align(Alignment.BottomCenter).background(c.surface, CircleShape)) { Text(stringResource(R.string.personal_latest)) }
         }
         Composer(
             modifier = Modifier.onSizeChanged { composerHeight = it.height }.testTag("personal-composer"),
@@ -248,18 +273,19 @@ fun PersonalAgentScreen(
             }
         }
     }
-    (sendError ?: actionError)?.let { error -> AlertDialog(onDismissRequest = { sendError = null; runtime.clearError() }, text = { Text(error) },
-        confirmButton = { TextButton(onClick = { sendError = null; runtime.clearError() }) { Text("知道了") } }) }
+    val actionErrorText = actionError?.let { personalStopErrorText(context, it) }
+    (sendError ?: actionErrorText)?.let { error -> AlertDialog(onDismissRequest = { sendError = null; runtime.clearError() }, text = { Text(error) },
+        confirmButton = { TextButton(onClick = { sendError = null; runtime.clearError() }) { Text(stringResource(R.string.personal_ok)) } }) }
 }
 
-private enum class PersonalProfileTab(val label: String, val icon: ImageVector) {
-    Tasks("任务", MikaIcons.Lines),
-    Memory("记忆", MikaIcons.Book),
-    Skills("技能", MikaIcons.Spark),
+internal enum class PersonalProfileTab(val label: Int, val icon: ImageVector) {
+    Tasks(R.string.personal_tab_tasks, MikaIcons.Lines),
+    Memory(R.string.personal_tab_memory, MikaIcons.Book),
+    Skills(R.string.personal_tab_skills, MikaIcons.Spark),
 }
 
 @Composable
-private fun PersonalProfileDialog(
+internal fun PersonalProfileDialog(
     tasks: List<PersonalTask>,
     memoryRuntime: MemoryRuntime,
     onDismiss: () -> Unit,
@@ -299,6 +325,7 @@ private fun PersonalProfileDialog(
                 Modifier.widthIn(max = 460.dp).fillMaxWidth()
                     .onGloballyPositioned { panelBounds = it.boundsInRoot() }
                     .cardSurface(c, shape).clip(shape).testTag("personal-profile-dialog")
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = MikaSpace.S12, vertical = if (compact) MikaSpace.S12 else MikaSpace.S16),
                 verticalArrangement = Arrangement.spacedBy(if (compact) MikaSpace.S8 else MikaSpace.S12),
             ) {
@@ -320,14 +347,14 @@ private fun PersonalProfileDialog(
                         }
                     }
                     Box(Modifier.align(Alignment.TopEnd)) {
-                        BarIconButton(MikaIcons.Close, "关闭", onDismiss)
+                        BarIconButton(MikaIcons.Close, stringResource(R.string.personal_close), onDismiss)
                     }
                 }
                 PersonalProfileTabs(tab, showIcons = showTabIcons, onSelect = { tab = it })
                 Box(Modifier.fillMaxWidth().heightIn(min = 136.dp, max = maxContentHeight)) {
                     if (tab == PersonalProfileTab.Tasks) {
                         if (tasks.isEmpty()) {
-                            Text("还没有任务。", Modifier.align(Alignment.Center), style = MikaType.Body, color = c.ink2)
+                            Text(stringResource(R.string.personal_no_tasks), Modifier.align(Alignment.Center), style = MikaType.Body, color = c.ink2)
                         } else {
                             LazyColumn(
                                 Modifier.fillMaxWidth(),
@@ -365,17 +392,23 @@ private fun PersonalProfileDialog(
 }
 
 @Composable
-private fun PersonalProfileTabs(selected: PersonalProfileTab, showIcons: Boolean, onSelect: (PersonalProfileTab) -> Unit) {
+internal fun PersonalProfileTabs(selected: PersonalProfileTab, showIcons: Boolean, onSelect: (PersonalProfileTab) -> Unit) {
     val c = MikaTheme.colors
-    Row(
-        Modifier.fillMaxWidth().selectableGroup().clip(CircleShape).background(c.fill).padding(3.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        PersonalProfileTab.entries.forEach { tab ->
+    val labels = PersonalProfileTab.entries.map { stringResource(it.label) }
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        // Long translations at large font scales don't fit three equal slots; stack them instead of clipping or shrinking text.
+        val widest = with(density) {
+            labels.maxOf { measurer.measure(it, MikaType.Label, maxLines = 1).size.width }.toDp()
+        }
+        val slot = (maxWidth - 6.dp - 4.dp) / 3
+        val stacked = widest + MikaSpace.S4 * 2 + (if (showIcons) 20.dp else 0.dp) > slot
+        val item: @Composable (PersonalProfileTab, String, Modifier) -> Unit = { tab, label, modifier ->
             val active = tab == selected
             val ink = if (active) c.ink else c.ink2
             Row(
-                Modifier.weight(1f).heightIn(min = 42.dp)
+                modifier.heightIn(min = 42.dp)
                     .then(if (active) Modifier.cardSurface(c, CircleShape) else Modifier)
                     .clip(CircleShape).selectable(selected = active, role = Role.Tab) { onSelect(tab) }
                     .padding(horizontal = MikaSpace.S4),
@@ -383,7 +416,22 @@ private fun PersonalProfileTabs(selected: PersonalProfileTab, showIcons: Boolean
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (showIcons) Icon(tab.icon, null, Modifier.size(16.dp), tint = ink)
-                Text(tab.label, style = MikaType.Label, color = ink, maxLines = 1)
+                Text(label, style = MikaType.Label, color = ink, maxLines = 1)
+            }
+        }
+        if (stacked) {
+            Column(
+                Modifier.fillMaxWidth().selectableGroup().clip(RoundedCornerShape(24.dp)).background(c.fill).padding(3.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                PersonalProfileTab.entries.forEachIndexed { i, tab -> item(tab, labels[i], Modifier.fillMaxWidth()) }
+            }
+        } else {
+            Row(
+                Modifier.fillMaxWidth().selectableGroup().clip(CircleShape).background(c.fill).padding(3.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                PersonalProfileTab.entries.forEachIndexed { i, tab -> item(tab, labels[i], Modifier.weight(1f)) }
             }
         }
     }
@@ -400,13 +448,14 @@ internal fun PersonalHeader(
 ) {
     val c = MikaTheme.colors
     val latestPreview by phonePreview.collectAsState(initial = null)
+    val context = LocalContext.current
     val preview = latestPreview
     val previewTask = active.firstOrNull { it.conversationId == preview?.conversationId }
     val frame = preview?.frame?.takeUnless { previewTask == null || it.isRecycled }
     val previewWidth = frame?.let { minOf(76.dp, 104.dp * (it.width.toFloat() / it.height)) } ?: 0.dp
     Box(Modifier.fillMaxWidth().padding(horizontal = MikaSpace.Page, vertical = 6.dp)) {
         Box(Modifier.align(Alignment.TopStart).padding(top = 4.dp)) {
-            BarIconButton(MikaIcons.Menu, "打开侧栏", onOpenDrawer)
+            BarIconButton(MikaIcons.Menu, stringResource(R.string.personal_open_sidebar), onOpenDrawer)
         }
         Column(Modifier.align(Alignment.TopCenter).widthIn(max = 250.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
@@ -419,7 +468,7 @@ internal fun PersonalHeader(
                     Box(
                         Modifier.size(58.dp).floatShadow(c, CircleShape).background(c.surface, CircleShape)
                             .border(0.5.dp, c.edge, CircleShape).clip(CircleShape).testTag("personal-profile")
-                            .clickable(onClickLabel = "查看活动", role = Role.Button, onClick = onActivity),
+                            .clickable(onClickLabel = stringResource(R.string.personal_view_activity), role = Role.Button, onClick = onActivity),
                         contentAlignment = Alignment.Center,
                     ) {
                         MikaLogo(52.dp, corner = 26.dp)
@@ -429,7 +478,7 @@ internal fun PersonalHeader(
                 if (frame != null) {
                     Image(
                         remember(frame) { frame.asImageBitmap() },
-                        contentDescription = "放大手机操作画面",
+                        contentDescription = stringResource(R.string.personal_expand_phone),
                         modifier = Modifier.size(previewWidth, previewWidth * (frame.height.toFloat() / frame.width))
                             .border(1.dp, c.ink.copy(alpha = 0.18f), MikaShapes.Tile)
                             .clip(MikaShapes.Tile).testTag("personal-phone-preview")
@@ -452,7 +501,7 @@ internal fun PersonalHeader(
                 ) {
                     Icon(tone.icon, null, Modifier.size(14.dp), tint = tone.ink)
                     Text(
-                        if (showAll) "${active.size} 件任务进行中" else task.detail.ifBlank { task.title },
+                        if (showAll) pluralStringResource(R.plurals.task_active, active.size, active.size) else task.displayDetail(context).ifBlank { task.title },
                         Modifier.weight(1f, fill = false), style = MikaType.Hint, color = tone.ink,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
@@ -491,11 +540,12 @@ private fun PersonalTaskIcon(tone: PersonalTaskTone, label: String?) {
 private fun PersonalTaskCard(task: PersonalTask, onClick: () -> Unit) {
     val c = MikaTheme.colors
     val tone = personalTaskTone(task)
-    val summary = task.result?.takeIf { it.isNotBlank() } ?: task.detail.ifBlank { task.goal }
+    val context = LocalContext.current
+    val summary = task.displayResult(context)?.takeIf { it.isNotBlank() } ?: task.displayDetail(context).ifBlank { task.goal }
     val description = remember(summary) { MarkdownModel.toPlainText(summary).lineSequence().firstOrNull().orEmpty() }
     Row(
         Modifier.fillMaxWidth().testTag("personal-task-" + task.id).cardSurface(c).clip(MikaShapes.Card)
-            .clickable(onClickLabel = "查看任务详情", role = Role.Button, onClick = onClick)
+            .clickable(onClickLabel = stringResource(R.string.personal_task_details), role = Role.Button, onClick = onClick)
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -523,6 +573,7 @@ private fun PersonalTaskSheet(
 ) {
     val c = MikaTheme.colors
     val tone = personalTaskTone(task)
+    val context = LocalContext.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -541,23 +592,23 @@ private fun PersonalTaskSheet(
                     if (!task.iconOnlyStatus) Text(personalStatus(task), style = MikaType.Label, color = tone.ink)
                 }
                 Text(task.title, style = MikaType.LargeTitle, color = c.ink)
-                if (task.goal.isNotBlank() && task.goal != task.title) PersonalTaskSection("任务目标", task.goal)
+                if (task.goal.isNotBlank() && task.goal != task.title) PersonalTaskSection(stringResource(R.string.personal_goal), task.goal)
                 if (task.detail.isNotBlank() && task.detail != task.goal && task.detail != task.result) {
-                    PersonalTaskSection("进展", task.detail)
+                    PersonalTaskSection(stringResource(R.string.personal_progress), task.displayDetail(context))
                 }
-                task.result?.takeIf { it.isNotBlank() }?.let { PersonalTaskSection("任务结果", it) }
+                task.displayResult(context)?.takeIf { it.isNotBlank() }?.let { PersonalTaskSection(stringResource(R.string.personal_result), it) }
             }
             HorizontalDivider(color = c.hair)
             MikaButton(
-                if (task.status == "needs_you") "打开任务处理" else "查看执行过程",
+                if (task.status == "needs_you") stringResource(R.string.personal_handle_task) else stringResource(R.string.personal_view_execution),
                 onOpen, Modifier.fillMaxWidth().padding(top = MikaSpace.S12, bottom = MikaSpace.S12),
             )
             onReplay?.let {
-                TextButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text("查看回放") }
+                TextButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.personal_view_replay)) }
             }
             if (!task.terminal) {
                 TextButton(onClick = onStop, Modifier.fillMaxWidth().padding(bottom = MikaSpace.S8)) {
-                    Text("停止这项任务", color = c.bad)
+                    Text(stringResource(R.string.personal_stop_task), color = c.bad)
                 }
             }
         }

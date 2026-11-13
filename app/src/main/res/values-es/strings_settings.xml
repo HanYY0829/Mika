@@ -89,6 +89,12 @@
     <string name="capsule_mode_always_detail">Mantiene un icono de Mika en pantalla incluso sin tareas</string>
     <string name="capsule_idle_opacity">Opacidad en reposo</string>
     <string name="capsule_idle_opacity_detail">Tras unos segundos sin tocarla; lo que necesite tu atención permanece totalmente visible</string>
+    <string name="capsule_card_size">Tamaño de la tarjeta</string>
+    <string name="capsule_card_size_detail">La tarjeta desplegada y su texto escalan juntas; la cápsula plegada no cambia</string>
+    <string name="capsule_card_size_small">Pequeño</string>
+    <string name="capsule_card_size_normal">Normal</string>
+    <string name="capsule_card_size_large">Grande</string>
+    <string name="capsule_card_size_xlarge">Muy grande</string>
     <string name="routes_saved">Rutas guardadas</string>
     <string name="loading">Cargando</string>
     <plurals name="routes_count">
@@ -132,8 +138,29 @@
     <string name="appearance_system_detail">Claro u oscuro, según esté el teléfono</string>
     <string name="appearance_light">Siempre claro</string>
     <string name="appearance_dark">Siempre oscuro</string>
+    <string name="accent_group">Color de énfasis</string>
+    <string name="accent_default">Predeterminado</string>
+    <string name="accent_blue">Azul</string>
+    <string name="accent_indigo">Índigo</string>
+    <string name="accent_purple">Morado</string>
+    <string name="accent_pink">Rosa</string>
+    <string name="accent_teal">Verde azulado</string>
+    <string name="accent_graphite">Grafito</string>
+    <string name="skin_group">Imagen de fondo</string>
+    <string name="skin_pick">Elegir de las fotos</string>
+    <string name="skin_clear">Usar el fondo liso</string>
+    <string name="skin_failed">No se pudo leer esa imagen</string>
+    <string name="skin_change">Elegir otra imagen</string>
+    <string name="skin_scrim">Oscurecer la imagen</string>
+    <string name="skin_position">Posición de la imagen</string>
+    <string name="skin_blur">Desenfoque</string>
+    <string name="skin_blur_off">Ninguno</string>
+    <string name="skin_blur_light">Ligero</string>
+    <string name="skin_blur_strong">Fuerte</string>
+    <string name="skin_accent_follow">Color de énfasis de la imagen</string>
+    <string name="skin_accent_follow_sub">Usa el color principal de la imagen en lugar del color de énfasis de arriba, si lo tiene</string>
     <string name="settings_self_config">Dejar que Mika cambie sus propios ajustes</string>
-    <string name="settings_self_config_sub">Si está activado, las tareas tienen una herramienta para leer y cambiar estas preferencias (ritmo, silencio, cápsula, apariencia, pantalla encendida). Nunca se incluyen los modelos, las claves de API, la red del contenedor ni nada que elimine datos</string>
+    <string name="settings_self_config_sub">Si está activado, las tareas tienen una herramienta para leer y cambiar estas preferencias (ritmo, silencio, cápsula, apariencia, color de énfasis, pantalla encendida). Nunca se incluyen los modelos, las claves de API, la red del contenedor ni nada que elimine datos</string>
     <string name="settings_step_limit">Límite de pasos por tarea</string>
     <string name="settings_step_limit_sub">Desactivado significa sin límite. Al alcanzarlo, la tarea se detiene e indica dónde se detuvo.</string>
     <string name="settings_step_limit_off">Sin límite</string>
@@ -183,4 +210,12 @@
     <string name="settings_token_budget_custom">Presupuesto de tokens personalizado</string>
     <string name="settings_token_budget_apply">Usar</string>
     <string name="settings_token_budget_invalid">Introduce un número entero entre %1$s y %2$s.</string>
+    <string name="settings_auto_archive">Archivar chats automáticamente</string>
+    <string name="settings_auto_archive_sub">Los chats sin mensajes nuevos durante un tiempo pasan al archivo</string>
+    <string name="settings_auto_archive_hint">Los chats sin mensajes nuevos durante el tiempo elegido pasan al archivo. Los chats fijados y los que tienen una tarea en curso no se tocan. Puedes restaurarlos desde el archivo en la lista de chats cuando quieras.</string>
+    <plurals name="settings_auto_archive_days">
+        <item quantity="one">%1$d día</item>
+        <item quantity="many">%1$d días</item>
+        <item quantity="other">%1$d días</item>
+    </plurals>
 </resources>

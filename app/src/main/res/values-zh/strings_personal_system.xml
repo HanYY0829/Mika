@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_system_interrupted">上次的回复中断了。聊天记录已保留，你可以接着说；已有任务可在活动里查看。</string>
+    <string name="personal_system_timeout">这次回复超时了。已有任务不会因此重做，你可以继续发消息。</string>
+    <string name="personal_system_reply_failed">回复失败，请稍后再试。</string>
+    <string name="personal_system_task_start_failed">任务启动失败</string>
+    <string name="personal_system_task_cancelled">任务已取消</string>
+    <string name="personal_system_task_completed">任务已完成</string>
+    <string name="personal_system_task_failed">任务失败</string>
+    <string name="personal_system_task_running">任务进行中</string>
+    <string name="personal_system_task_queued">任务排队中</string>
+    <string name="personal_system_no_model">请先在设置里选择主模型，再回来接着聊。</string>
+    <string name="personal_system_context_long">这条消息超出了当前模型的上下文，请分成几段发送。</string>
+    <string name="personal_system_empty_reply">模型没有返回可显示的回复，请再试一次。</string>
+    <string name="personal_system_too_many_actions">这一轮操作次数较多，已停下继续处理。已创建的任务仍在活动里。</string>
+    <string name="personal_system_message_long">这条消息太长，请分成几段发送。</string>
+    <string name="personal_system_task_done_detail">任务已结束，打开任务查看结果。</string>
+    <string name="personal_system_task_stopped_detail">任务已停止，当前进展保留在任务记录里。</string>
+    <string name="personal_system_task_failed_detail">任务没能完成，打开任务查看原因。</string>
+    <string name="personal_system_history_unreadable">历史记录暂时无法读取，原文件已保留备份。可以继续聊；请保留备份以便恢复。</string>
+    <string name="personal_system_task_interrupted">上次运行中断了。已保留聊天与任务记录，你可以重新交代这件事。</string>
+    <string name="personal_system_wait_confirmation">需要你确认，点开任务处理</string>
+    <string name="personal_system_saving">正在保存结果</string>
+    <string name="personal_system_waiting">等待开始</string>
+    <string name="personal_system_stop_not_ready">任务还未就绪或已经结束，请查看任务详情。</string>
+    <string name="personal_system_stop_failed">停止任务失败，请打开任务重试。</string>
+    <string name="personal_system_task_amendment">补充：%1$s</string>
+</resources>

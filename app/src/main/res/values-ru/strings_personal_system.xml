@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_system_interrupted">Предыдущий ответ был прерван. История чата сохранена, и вы можете продолжить разговор. Существующие задачи можно посмотреть в разделе «Активность».</string>
+    <string name="personal_system_timeout">Время ожидания ответа истекло. Из-за этого существующие задачи не будут выполняться заново, и вы можете продолжать отправлять сообщения.</string>
+    <string name="personal_system_reply_failed">Не удалось ответить. Повторите попытку позже.</string>
+    <string name="personal_system_task_start_failed">Не удалось запустить задачу</string>
+    <string name="personal_system_task_cancelled">Задача отменена</string>
+    <string name="personal_system_task_completed">Задача выполнена</string>
+    <string name="personal_system_task_failed">Ошибка выполнения задачи</string>
+    <string name="personal_system_task_running">Задача выполняется</string>
+    <string name="personal_system_task_queued">Задача в очереди</string>
+    <string name="personal_system_no_model">Сначала выберите основную модель в настройках, затем вернитесь к беседе.</string>
+    <string name="personal_system_context_long">Это сообщение превышает размер контекста текущей модели. Отправьте его по частям.</string>
+    <string name="personal_system_empty_reply">Модель не вернула ответ, который можно показать. Попробуйте ещё раз.</string>
+    <string name="personal_system_too_many_actions">В этом ходе было слишком много действий, поэтому обработка остановлена. Созданные задачи по-прежнему доступны в разделе «Активность».</string>
+    <string name="personal_system_message_long">Сообщение слишком длинное. Отправьте его по частям.</string>
+    <string name="personal_system_task_done_detail">Задача завершена. Откройте её, чтобы посмотреть результат.</string>
+    <string name="personal_system_task_stopped_detail">Задача остановлена. Текущий прогресс сохранён в записи задачи.</string>
+    <string name="personal_system_task_failed_detail">Не удалось выполнить задачу. Откройте её, чтобы узнать причину.</string>
+    <string name="personal_system_history_unreadable">Сейчас не удаётся прочитать историю. Резервная копия исходного файла сохранена. Вы можете продолжить беседу; сохраните копию для восстановления.</string>
+    <string name="personal_system_task_interrupted">Предыдущее выполнение прервано. История беседы и записи задач сохранены; вы можете заново объяснить запрос.</string>
+    <string name="personal_system_wait_confirmation">Требуется ваше подтверждение. Откройте задачу, чтобы ответить.</string>
+    <string name="personal_system_saving">Сохранение результата</string>
+    <string name="personal_system_waiting">Ожидание запуска</string>
+    <string name="personal_system_stop_not_ready">Задача ещё не готова или уже завершена. Откройте задачу, чтобы узнать подробности.</string>
+    <string name="personal_system_stop_failed">Не удалось остановить задачу. Откройте её и повторите попытку.</string>
+    <string name="personal_system_task_amendment">Дополнительное указание: %1$s</string>
+</resources>

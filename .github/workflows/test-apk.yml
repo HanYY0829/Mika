@@ -1,0 +1,67 @@
+name: Mika Dev APK
+
+# Build the owner's feature branch without requiring a PR or a main-branch push.
+on:
+  push:
+    branches: [feat/capsule-controls]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: Build and upload Mika Dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools platforms;android-36 build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+      - name: Unit tests and independent test APK
+        run: ./gradlew :app:testDebugUnitTest :app:assembleDebug -PdevInstall --stacktrace
+      - name: Prepare download
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/test-apk
+          task_apk_name="Mika-Dev-${GITHUB_SHA::7}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/test-apk/${task_apk_name}"
+          (cd dist/test-apk && sha256sum *.apk > SHA256SUMS.txt)
+          {
+            printf '%s\n' '## Mika Dev test APK'
+            printf '%s\n' 'Download the Mika-Dev artifact below, unzip it, and install the APK.'
+            printf '%s\n' 'Package: com.wangzan101.mika.dev. It installs alongside Mika; configure its model and phone permissions separately.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload test APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: Mika-Dev-${{ github.sha }}
+          path: dist/test-apk/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Mika-Dev-test-results-${{ github.sha }}
+          path: |
+            app/build/test-results/testDebugUnitTest/
+            app/build/reports/tests/testDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 7

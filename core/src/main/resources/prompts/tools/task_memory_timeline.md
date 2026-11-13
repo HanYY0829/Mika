@@ -1,0 +1,1 @@
+Read the timeline of one past task summary (an exact id from task_memory_search): its goal, one-line conclusion, apps/sites, and each step as a short label with its number and time — but not the raw text of the steps. To see what a step actually read on screen, call task_memory_step for that step number.

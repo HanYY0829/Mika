@@ -614,11 +614,13 @@ private class SandboxShellHandle(
     }
 
     override fun close() {
-        runCatching { process.outputStream.close() }
-        runCatching { process.destroy() }
+        // Android's destroy() signals the process before closing its pipes, but it can
+        // still wait on a writer during stream cleanup. Arm the watchdog before calling it.
         thread(isDaemon = true, name = "mika-terminal-reaper") {
             if (!process.waitFor(DESTROY_GRACE_MS, TimeUnit.MILLISECONDS)) process.destroyForcibly()
         }
+        runCatching { process.destroy() }
+        runCatching { process.outputStream.close() }
         runCatching { process.inputStream.close() }
     }
 }

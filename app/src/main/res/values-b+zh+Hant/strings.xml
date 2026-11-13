@@ -130,4 +130,14 @@
     <string name="terminal_task_running">Mika 也在這個工作區裡工作，兩邊同時改可能互相影響。</string>
     <string name="terminal_copy_all">複製全部</string>
     <string name="terminal_copied">已複製</string>
+    <string name="personal_replay_title">手機畫面</string>
+    <string name="personal_replay_close">關閉</string>
+    <string name="personal_replay_live_screen">即時手機畫面</string>
+    <string name="personal_replay_recorded_screen">錄製的任務畫面</string>
+    <string name="personal_replay_loading">正在載入畫面…</string>
+    <string name="personal_replay_empty">還沒有可播放的畫面。</string>
+    <string name="personal_replay_live">即時</string>
+    <string name="personal_replay_pause">暫停</string>
+    <string name="personal_replay_play">播放</string>
+    <string name="personal_replay_return_live">回到即時</string>
 </resources>

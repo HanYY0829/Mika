@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capsule_edge_reveal">إظهار الكبسولة</string>
+    <string name="capsule_hide_at_edge">إخفاء تلقائي عند حافة الشاشة</string>
+    <string name="capsule_hide_fullscreen">إخفاء الكبسولة في وضع ملء الشاشة</string>
+    <string name="capsule_tile_label">كبسولة Mika</string>
+    <string name="capsule_tile_enabled">متاح في الإعدادات السريعة</string>
+    <string name="capsule_tile_setup">افتح Mika وأعدّ التحكم بالهاتف لاستخدام الكبسولة العائمة.</string>
+    <string name="pip_size_smaller">تصغير المعاينة</string>
+    <string name="pip_size_larger">تكبير المعاينة</string>
+    <string name="pip_size_reset">إعادة ضبط حجم المعاينة</string>
+</resources>

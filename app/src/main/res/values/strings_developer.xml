@@ -25,4 +25,6 @@
     <string name="dev_speed">Speed</string>
     <string name="dev_experiments">Experiments</string>
     <string name="dev_run_log">Run records</string>
+    <string name="dev_screen_tables">Compact new screen elements</string>
+    <string name="dev_screen_tables_sub">Send repeated fields as table columns the first time a screen is read. Element refs and the full tree are kept.</string>
 </resources>

@@ -66,6 +66,9 @@
     <string name="plans_condition">فقط با تحقق شرط اجرا می‌شود: %1$s · %2$s</string>
     <string name="plans_last">آخرین مورد %1$s · %2$s</string>
     <string name="plans_never_run">هنوز اجرا نشده</string>
+    <string name="plans_source_user">دستی</string>
+    <string name="plans_source_model">مدل</string>
+    <string name="plans_source_external">اسکریپت</string>
     <string name="plans_delivered">تحویل داده شد</string>
     <string name="plans_unchanged">شرط تغییر نکرده است</string>
     <string name="plans_not_met">شرط برقرار نیست</string>

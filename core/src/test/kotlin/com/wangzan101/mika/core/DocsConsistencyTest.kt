@@ -72,6 +72,8 @@ class DocsConsistencyTest {
     private val remoteApiNames = setOf(
         "mika_run_task", "mika_task_status", "mika_wait_task", "mika_answer", "mika_steer_task",
         "mika_cancel_task", "mika_list_tasks", "mika_device_state", "mika_wake_device", "mika_unlock_device",
+        // 电脑侧控制 API 的名字(不是发给模型的工具);`task_` 因 task_memory_* 成了工具前缀后也要逐个列出。
+        "task_steer", "task_id", "task_recovery", "task_files", "task_interrupted", "task_result_v2",
     )
 
     private fun isPath(s: String): Boolean =

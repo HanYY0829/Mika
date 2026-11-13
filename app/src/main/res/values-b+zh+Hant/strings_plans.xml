@@ -65,6 +65,9 @@
     <string name="plans_condition">滿足條件才執行：%1$s · %2$s</string>
     <string name="plans_last">上次 %1$s · %2$s</string>
     <string name="plans_never_run">還沒執行過</string>
+    <string name="plans_source_user">手動</string>
+    <string name="plans_source_model">模型</string>
+    <string name="plans_source_external">指令碼</string>
     <string name="plans_delivered">已送達</string>
     <string name="plans_unchanged">條件未變化</string>
     <string name="plans_not_met">條件未滿足</string>

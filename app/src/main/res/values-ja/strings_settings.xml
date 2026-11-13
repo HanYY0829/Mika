@@ -83,6 +83,12 @@
     <string name="capsule_mode_always_detail">タスクがないときも、Mika のアイコンを画面に表示し続けます</string>
     <string name="capsule_idle_opacity">待機時の不透明度</string>
     <string name="capsule_idle_opacity_detail">数秒間操作しないときの表示の濃さ。対応が必要な状態は常に完全不透明で表示します</string>
+    <string name="capsule_card_size">カードサイズ</string>
+    <string name="capsule_card_size_detail">展開したカードと文字をまとめて拡大・縮小します。しまったカプセルは変わりません</string>
+    <string name="capsule_card_size_small">小</string>
+    <string name="capsule_card_size_normal">標準</string>
+    <string name="capsule_card_size_large">大</string>
+    <string name="capsule_card_size_xlarge">特大</string>
     <string name="routes_saved">保存した手順</string>
     <string name="loading">読み込み中</string>
     <plurals name="routes_count">
@@ -124,8 +130,29 @@
     <string name="appearance_system_detail">スマホの設定に合わせて、ライトまたはダーク</string>
     <string name="appearance_light">常にライト</string>
     <string name="appearance_dark">常にダーク</string>
+    <string name="accent_group">アクセントカラー</string>
+    <string name="accent_default">デフォルト</string>
+    <string name="accent_blue">ブルー</string>
+    <string name="accent_indigo">インディゴ</string>
+    <string name="accent_purple">パープル</string>
+    <string name="accent_pink">ピンク</string>
+    <string name="accent_teal">ティール</string>
+    <string name="accent_graphite">グラファイト</string>
+    <string name="skin_group">背景画像</string>
+    <string name="skin_pick">写真から選ぶ</string>
+    <string name="skin_clear">無地の背景に戻す</string>
+    <string name="skin_failed">この画像を読み込めませんでした</string>
+    <string name="skin_change">別の画像を選ぶ</string>
+    <string name="skin_scrim">画像の暗さ</string>
+    <string name="skin_position">画像の位置</string>
+    <string name="skin_blur">ぼかし</string>
+    <string name="skin_blur_off">なし</string>
+    <string name="skin_blur_light">弱</string>
+    <string name="skin_blur_strong">強</string>
+    <string name="skin_accent_follow">アクセントカラーを画像から取る</string>
+    <string name="skin_accent_follow_sub">画像の主な色を上で選んだアクセントカラーの代わりに使います（はっきりした色がない画像では従来どおり）</string>
     <string name="settings_self_config">Mika に自分の設定を変更させる</string>
-    <string name="settings_self_config_sub">オンにすると、タスクがこれらの設定(ペース、ミュート、カプセル、外観、画面オン)を読み取り・変更するツールを 1 つ使えるようになります。モデル、API キー、コンテナのネットワーク、データを削除するものは含まれません</string>
+    <string name="settings_self_config_sub">オンにすると、タスクがこれらの設定(ペース、ミュート、カプセル、外観、アクセントカラー、画面オン)を読み取り・変更するツールを 1 つ使えるようになります。モデル、API キー、コンテナのネットワーク、データを削除するものは含まれません</string>
     <string name="settings_step_limit">タスクごとのステップ上限</string>
     <string name="settings_step_limit_sub">オフは無制限です。上限に達するとタスクは止まり、どこで止まったかを表示します。</string>
     <string name="settings_step_limit_off">上限なし</string>
@@ -175,4 +202,10 @@
     <string name="settings_token_budget_custom">カスタム Token 予算</string>
     <string name="settings_token_budget_apply">使用</string>
     <string name="settings_token_budget_invalid">%1$s〜%2$s の整数を入力してください。</string>
+    <string name="settings_auto_archive">チャットを自動アーカイブ</string>
+    <string name="settings_auto_archive_sub">しばらく新しいメッセージがないチャットをアーカイブに移します</string>
+    <string name="settings_auto_archive_hint">選んだ期間、新しいメッセージがないチャットをアーカイブに移します。ピン留めしたチャットとタスク実行中のチャットは対象外です。チャット一覧のアーカイブからいつでも戻せます。</string>
+    <plurals name="settings_auto_archive_days">
+        <item quantity="other">%1$d 日</item>
+    </plurals>
 </resources>

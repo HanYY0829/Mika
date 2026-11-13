@@ -89,6 +89,12 @@
     <string name="capsule_mode_always_detail">Mantém um ícone do Mika na tela mesmo sem tarefas</string>
     <string name="capsule_idle_opacity">Opacidade em repouso</string>
     <string name="capsule_idle_opacity_detail">Após alguns segundos sem toque; o que precisar da sua atenção continua totalmente visível</string>
+    <string name="capsule_card_size">Tamanho do cartão</string>
+    <string name="capsule_card_size_detail">O cartão expandido e o texto escalam juntos; a cápsula recolhida não muda</string>
+    <string name="capsule_card_size_small">Pequeno</string>
+    <string name="capsule_card_size_normal">Normal</string>
+    <string name="capsule_card_size_large">Grande</string>
+    <string name="capsule_card_size_xlarge">Extra grande</string>
     <string name="routes_saved">Roteiros salvos</string>
     <string name="loading">Carregando</string>
     <plurals name="routes_count">
@@ -132,8 +138,29 @@
     <string name="appearance_system_detail">Claro ou escuro, conforme o celular estiver</string>
     <string name="appearance_light">Sempre claro</string>
     <string name="appearance_dark">Sempre escuro</string>
+    <string name="accent_group">Cor de destaque</string>
+    <string name="accent_default">Padrão</string>
+    <string name="accent_blue">Azul</string>
+    <string name="accent_indigo">Índigo</string>
+    <string name="accent_purple">Roxo</string>
+    <string name="accent_pink">Rosa</string>
+    <string name="accent_teal">Verde-azulado</string>
+    <string name="accent_graphite">Grafite</string>
+    <string name="skin_group">Imagem de fundo</string>
+    <string name="skin_pick">Escolher nas fotos</string>
+    <string name="skin_clear">Usar o fundo liso</string>
+    <string name="skin_failed">Não foi possível ler essa imagem</string>
+    <string name="skin_change">Escolher outra imagem</string>
+    <string name="skin_scrim">Escurecer a imagem</string>
+    <string name="skin_position">Posição da imagem</string>
+    <string name="skin_blur">Desfoque</string>
+    <string name="skin_blur_off">Nenhum</string>
+    <string name="skin_blur_light">Leve</string>
+    <string name="skin_blur_strong">Forte</string>
+    <string name="skin_accent_follow">Cor de destaque da imagem</string>
+    <string name="skin_accent_follow_sub">Usa a cor principal da imagem em vez da cor de destaque acima, quando houver</string>
     <string name="settings_self_config">Deixar o Mika alterar as próprias configurações</string>
-    <string name="settings_self_config_sub">Ativado, as tarefas ganham uma ferramenta para ler e alterar estas preferências (ritmo, silenciar, cápsula, aparência, tela ligada). Modelos, chaves de API, rede do contêiner e qualquer coisa que apague dados nunca são incluídos</string>
+    <string name="settings_self_config_sub">Ativado, as tarefas ganham uma ferramenta para ler e alterar estas preferências (ritmo, silenciar, cápsula, aparência, cor de destaque, tela ligada). Modelos, chaves de API, rede do contêiner e qualquer coisa que apague dados nunca são incluídos</string>
     <string name="settings_step_limit">Limite de passos por tarefa</string>
     <string name="settings_step_limit_sub">Desligado significa sem limite. Ao atingir o limite, a tarefa para e indica onde parou.</string>
     <string name="settings_step_limit_off">Sem limite</string>
@@ -183,4 +210,12 @@
     <string name="settings_token_budget_custom">Orçamento de tokens personalizado</string>
     <string name="settings_token_budget_apply">Usar</string>
     <string name="settings_token_budget_invalid">Digite um número inteiro de %1$s a %2$s.</string>
+    <string name="settings_auto_archive">Arquivar conversas automaticamente</string>
+    <string name="settings_auto_archive_sub">Conversas sem mensagens novas por um tempo vão para o arquivo</string>
+    <string name="settings_auto_archive_hint">As conversas sem mensagens novas pelo tempo escolhido vão para o arquivo. Conversas fixadas e conversas com uma tarefa em andamento ficam como estão. Você pode restaurá-las no arquivo da lista de conversas quando quiser.</string>
+    <plurals name="settings_auto_archive_days">
+        <item quantity="one">%1$d dia</item>
+        <item quantity="many">%1$d dias</item>
+        <item quantity="other">%1$d dias</item>
+    </plurals>
 </resources>

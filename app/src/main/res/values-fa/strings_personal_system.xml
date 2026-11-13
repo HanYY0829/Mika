@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_system_interrupted">پاسخ قبلی قطع شد. تاریخچه گفتگو حفظ شده است و می‌توانید به صحبت ادامه دهید. کارهای موجود را می‌توانید در بخش فعالیت ببینید.</string>
+    <string name="personal_system_timeout">زمان انتظار برای این پاسخ به پایان رسید. کارهای موجود به این دلیل دوباره اجرا نمی‌شوند و می‌توانید به ارسال پیام ادامه دهید.</string>
+    <string name="personal_system_reply_failed">ارسال پاسخ ناموفق بود. لطفاً بعداً دوباره تلاش کنید.</string>
+    <string name="personal_system_task_start_failed">شروع کار ناموفق بود</string>
+    <string name="personal_system_task_cancelled">کار لغو شد</string>
+    <string name="personal_system_task_completed">کار تکمیل شد</string>
+    <string name="personal_system_task_failed">کار ناموفق بود</string>
+    <string name="personal_system_task_running">کار در حال انجام است</string>
+    <string name="personal_system_task_queued">کار در صف انتظار است</string>
+    <string name="personal_system_no_model">ابتدا مدل اصلی را در تنظیمات انتخاب کنید، سپس برای ادامه گفتگو برگردید.</string>
+    <string name="personal_system_context_long">این پیام از محدودیت زمینه مدل فعلی فراتر است. لطفاً آن را در چند بخش ارسال کنید.</string>
+    <string name="personal_system_empty_reply">مدل پاسخی قابل نمایش برنگرداند. لطفاً دوباره تلاش کنید.</string>
+    <string name="personal_system_too_many_actions">تعداد عملیات در این نوبت زیاد بود و پردازش متوقف شد. وظایف ایجادشده همچنان در بخش فعالیت موجودند.</string>
+    <string name="personal_system_message_long">این پیام بیش از حد طولانی است. لطفاً آن را در چند بخش ارسال کنید.</string>
+    <string name="personal_system_task_done_detail">وظیفه پایان یافت. برای دیدن نتیجه آن را باز کنید.</string>
+    <string name="personal_system_task_stopped_detail">وظیفه متوقف شد. پیشرفت فعلی در سابقه وظیفه حفظ شده است.</string>
+    <string name="personal_system_task_failed_detail">وظیفه تکمیل نشد. برای دیدن علت آن را باز کنید.</string>
+    <string name="personal_system_history_unreadable">خواندن تاریخچه فعلاً ممکن نیست. یک نسخه پشتیبان از فایل اصلی نگه داشته شده است. می‌توانید به گفتگو ادامه دهید؛ نسخه پشتیبان را برای بازیابی نگه دارید.</string>
+    <string name="personal_system_task_interrupted">اجرای قبلی قطع شد. سوابق گفتگو و وظایف حفظ شده‌اند و می‌توانید درخواست خود را دوباره توضیح دهید.</string>
+    <string name="personal_system_wait_confirmation">تأیید شما لازم است؛ وظیفه را برای رسیدگی باز کنید.</string>
+    <string name="personal_system_saving">در حال ذخیره نتیجه</string>
+    <string name="personal_system_waiting">در انتظار شروع</string>
+    <string name="personal_system_stop_not_ready">کار هنوز آماده نیست یا قبلاً پایان یافته است. برای مشاهده جزئیات، کار را باز کنید.</string>
+    <string name="personal_system_stop_failed">توقف کار ممکن نشد. کار را باز کنید و دوباره تلاش کنید.</string>
+    <string name="personal_system_task_amendment">دستور اضافی: %1$s</string>
+</resources>

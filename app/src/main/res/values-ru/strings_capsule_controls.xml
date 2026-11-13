@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capsule_edge_reveal">Показать капсулу</string>
+    <string name="capsule_hide_at_edge">Автоматически скрывать у края</string>
+    <string name="capsule_hide_fullscreen">Скрывать капсулу в полноэкранном режиме</string>
+    <string name="capsule_tile_label">Капсула Mika</string>
+    <string name="capsule_tile_enabled">Доступно в быстрых настройках</string>
+    <string name="capsule_tile_setup">Откройте Mika и настройте управление телефоном для использования плавающей капсулы.</string>
+    <string name="pip_size_smaller">Уменьшить предпросмотр</string>
+    <string name="pip_size_larger">Увеличить предпросмотр</string>
+    <string name="pip_size_reset">Сбросить размер</string>
+</resources>

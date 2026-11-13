@@ -51,6 +51,29 @@ class PhoneHistoryTest {
         assertTrue(turns.none { "run_id" in it.jsonObject })
     }
 
+    @Test fun archivedConversationsRemainInPagedHistoryAndCanBeRead() {
+        val store = conversations()
+        store.append("archived", Turn("old question", "old answer", "succeeded"))
+        store.append("active", Turn("new question", "new answer", "succeeded"))
+        assertTrue(tmp.root.resolve("conversations/archived.json").setLastModified(1_000L))
+        assertTrue(tmp.root.resolve("conversations/active.json").setLastModified(2_000L))
+        assertTrue(store.setArchived("archived", true, 3_000L))
+        val reader = PhoneHistory(store, runs(), traces(), { true })
+        val first = reader.conversations(0, 1)
+        val active = first.getValue("conversations").jsonArray.single().jsonObject
+        assertEquals("active", active.getValue("id").jsonPrimitive.content)
+        assertEquals(1, first.getValue("next_offset").jsonPrimitive.int)
+        assertFalse(active.getValue("archived").jsonPrimitive.boolean)
+        val second = reader.conversations(1, 1)
+        val archived = second.getValue("conversations").jsonArray.single().jsonObject
+        assertEquals("archived", archived.getValue("id").jsonPrimitive.content)
+        assertTrue(archived.getValue("archived").jsonPrimitive.boolean)
+        assertEquals(JsonNull, second.getValue("next_offset"))
+        assertEquals("old answer", reader.turns("archived", 0, 20)!!.getValue("turns").jsonArray.single().jsonObject.getValue("answer").jsonPrimitive.content)
+        assertTrue(store.setArchived("archived", false))
+        assertFalse(reader.conversations(1, 1).getValue("conversations").jsonArray.single().jsonObject.getValue("archived").jsonPrimitive.boolean)
+    }
+
     @Test fun historyListReadsOnlyThePageAndReusesUnchangedConversationBodies() {
         val dir = tmp.newFolder("old-chats")
         val writer = ConversationStore(dir)

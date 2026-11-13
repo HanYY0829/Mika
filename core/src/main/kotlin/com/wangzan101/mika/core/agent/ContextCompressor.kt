@@ -7,7 +7,6 @@ import com.wangzan101.mika.core.model.Part
 import com.wangzan101.mika.core.model.Role
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
@@ -215,10 +214,10 @@ class ContextCompressor(
         val verbs = round.flatMap { it.parts }.filterIsInstance<Part.ToolCall>().associate { it.id to tools.verb(it.name) }
         var kind = ScreenKind.NONE
         for (r in round.flatMap { it.parts }.filterIsInstance<Part.ToolResult>()) {
-            val obj = (if ("\"elements\":[" in r.content || "\"screen\":{" in r.content) parse(r.content) else null) ?: continue
+            val obj = (if ("\"elements\":[" in r.content || "\"${ScreenElementTable.KEY}\":[" in r.content || "\"screen\":{" in r.content) parse(r.content) else null) ?: continue
             val screen = obj["screen"] as? JsonObject
             when {
-                verbs[r.callId] in OBSERVATIONS && obj["elements"] is JsonArray -> return ScreenKind.FULL
+                verbs[r.callId] in OBSERVATIONS && ScreenElementTable.hasRows(obj) -> return ScreenKind.FULL
                 screen != null && screen["full"] == JsonPrimitive(true) -> return ScreenKind.FULL
                 screen != null -> kind = ScreenKind.DIFF
             }
@@ -235,7 +234,7 @@ class ContextCompressor(
         val bases = HashSet<String>()
         for (r in kept.flatMap { it.parts }.filterIsInstance<Part.ToolResult>()) {
             val obj = (if ("\"snapshotId\"" in r.content) parse(r.content) else null) ?: continue
-            val screens = listOfNotNull(obj.takeIf { it["elements"] is JsonArray }, obj["screen"] as? JsonObject)
+            val screens = listOfNotNull(obj.takeIf(ScreenElementTable::hasRows), obj["screen"] as? JsonObject)
             for (s in screens) {
                 (s["snapshotId"] as? JsonPrimitive)?.contentOrNull?.let(ids::add)
                 (s["base"] as? JsonPrimitive)?.contentOrNull?.let(bases::add)

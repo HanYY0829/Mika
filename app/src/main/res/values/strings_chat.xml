@@ -130,6 +130,23 @@
     <string name="drawer_rename_title">Rename chat</string>
     <string name="drawer_pinned">Pinned</string>
     <string name="drawer_pinned_mark">Pinned</string>
+    <string name="drawer_archive">Archive</string>
+    <string name="drawer_unarchive">Unarchive</string>
+    <string name="drawer_archived">Archived</string>
+    <string name="drawer_archived_count">%1$d archived</string>
+    <string name="drawer_archive_empty">No archived chats</string>
+    <string name="drawer_archive_done">Archived “%1$s”</string>
+    <string name="drawer_archive_this_week">This week</string>
+    <string name="drawer_archive_this_month">This month</string>
+    <string name="drawer_archive_earlier">Earlier</string>
+    <string name="drawer_archived_today">Archived today</string>
+    <plurals name="drawer_archived_days_ago">
+        <item quantity="one">Archived %1$d day ago</item>
+        <item quantity="other">Archived %1$d days ago</item>
+    </plurals>
+    <string name="drawer_search_filter_all">All</string>
+    <string name="drawer_search_filter_active">Unarchived</string>
+    <string name="drawer_search_filter_archived">Archived</string>
     <string name="drawer_search_hint">Search chats</string>
     <string name="drawer_search_results">Search results</string>
     <string name="drawer_search_empty">No chats match “%1$s”</string>
@@ -216,6 +233,10 @@
     <string name="chat_branch_retry">Ask again from here</string>
     <string name="chat_branch_attachments_readd">Re-add the attachments you want to include</string>
     <string name="chat_attach_unavailable">Couldn’t add: %1$s. Check that the files are available and within the size limit.</string>
+    <string name="chat_attach_too_large">%1$s: exceeds the 200 MiB limit</string>
+    <string name="chat_attach_low_device_space">%1$s: not enough device storage; free up space and try again</string>
+    <string name="chat_attach_workspace_limit">%1$s: workspace storage limit reached; remove workspace files and try again</string>
+    <string name="chat_attach_io_error">%1$s: couldn’t read or copy the file; check that it is available and try again</string>
     <string name="chat_retry_missing">%1$s: file missing</string>
     <string name="chat_retry_limit">%1$s: copy limit reached</string>
     <string name="chat_retry_failed">%1$s: could not copy</string>
@@ -227,6 +248,7 @@
     <string name="chat_withdraw_message">Withdraw message</string>
     <string name="pip_close">Close the small view for this task</string>
     <string name="pip_unmute">Turn sound back on</string>
+    <string name="pip_back">Back on the virtual screen</string>
     <string name="pip_reopen">Show screen</string>
     <string name="pip_closed_needs_you">Needs you</string>
     <string name="pip_closed_hint">Closed for this task. Tap “Show screen” at the bottom right, or open “Background screens” in the side menu.</string>
@@ -247,4 +269,12 @@
     <string name="chat_placeholder_queue">Write the next task…</string>
     <string name="voice_placeholder_queue">Say the next task…</string>
     <string name="steer_received_paused">Got it — it will be used when the task continues</string>
+    <plurals name="drawer_archive_many_done">
+        <item quantity="one">%1$d chat archived</item>
+        <item quantity="other">%1$d chats archived</item>
+    </plurals>
+    <plurals name="drawer_archive_many_skipped">
+        <item quantity="one">%1$d not archived</item>
+        <item quantity="other">%1$d not archived</item>
+    </plurals>
 </resources>

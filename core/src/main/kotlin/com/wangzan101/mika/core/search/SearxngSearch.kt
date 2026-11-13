@@ -19,7 +19,8 @@ class SearxngSearch(
     override suspend fun search(query: String, count: Int): WebSearchResult {
         val n = count.coerceIn(1, WebSearch.MAX_COUNT)
         // 填的是实例地址;已经写到 /search 的也认
-        val path = if (base.pathSegments.lastOrNull() == "search") base.newBuilder() else base.newBuilder().addPathSegment("search")
+        // 写成 /search/ 时 pathSegments 末位是空串,取最后一个非空段才不会再拼出 /search/search
+        val path = if (base.pathSegments.lastOrNull { it.isNotEmpty() } == "search") base.newBuilder() else base.newBuilder().addPathSegment("search")
         val url = path.addQueryParameter("q", query).addQueryParameter("format", "json").build()
         return SearchHttp.call(client, Request.Builder().url(url).get().build(), special = { response ->
             if (response.code == 403) WebSearchResult.Failure(

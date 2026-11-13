@@ -9,6 +9,8 @@ import com.wangzan101.mika.core.memory.MemoryRejected
 import com.wangzan101.mika.core.memory.MemorySource
 import com.wangzan101.mika.core.memory.MemoryStatus
 import com.wangzan101.mika.core.memory.MemoryStore
+import com.wangzan101.mika.core.memory.TaskMemory
+import com.wangzan101.mika.core.memory.TaskMemoryStore
 import com.wangzan101.mika.core.knowledge.FrontMatter
 import com.wangzan101.mika.core.skills.SkillDrafter
 import com.wangzan101.mika.core.skills.SkillImport
@@ -88,9 +90,14 @@ class MemoryViewModel(
     private val builtinSkillNames: Set<String> = emptySet(),
     /** 示范草稿收下、拒绝或删除后清掉本机轨迹。 */
     private val onSkillRetired: (PersonalSkill) -> Unit = {},
+    /** 跨会话任务摘要;开关关着或没给时为 null。 */
+    private val taskMemory: TaskMemoryStore? = null,
 ) {
     private val local = MutableStateFlow(MemoryUi())
     private val skillsVersion = MutableStateFlow(0)
+
+    /** 跨会话任务摘要(新的在前);开关关着时恒为空。 */
+    val tasks: StateFlow<List<TaskMemory>> = taskMemory?.items ?: MutableStateFlow(emptyList())
 
     val ui: StateFlow<MemoryUi> = combine(local, store.items, settings.switches, brokenNotice, skillsVersion) { l, items, sw, broken, _ ->
         val all = filtered(items, l.query)
@@ -129,6 +136,9 @@ class MemoryViewModel(
     }
 
     fun setSwitches(transform: (MemorySwitches) -> MemorySwitches) = settings.update(transform)
+
+    /** 删掉一条任务摘要(跨会话检索用的经验缓存)。 */
+    fun deleteTask(id: String) { taskMemory?.forget(id) }
 
     private fun report(e: Throwable?) {
         val msg = when ((e as? MemoryRejected)?.code) {

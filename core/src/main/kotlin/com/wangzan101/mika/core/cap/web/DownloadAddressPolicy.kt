@@ -66,7 +66,9 @@ object DownloadAddressPolicy {
 
     class BlockedAddress(host: String) : UnknownHostException("$host resolves to a local or private network address")
 
-    private val IPV4 = Regex("^\\d{1,3}(\\.\\d{1,3}){3}$")
+    // getByName 还认 127.1 / 2130706433 / 0300.0250.0.1 这类短写、整数、八进制 IPv4;
+    // 只由数字和点组成的主机都当字面 IP 交给它解析,再按解析结果判内网,别让短写绕过这道检查。
+    private val IPV4 = Regex("^[0-9]+(?:\\.[0-9]+)*$")
     private val LOCAL_SUFFIXES = listOf(".localhost", ".local", ".lan", ".home.arpa", ".internal", ".intranet")
     private val NAT64 = byteArrayOf(0, 0x64, 0xff.toByte(), 0x9b.toByte(), 0, 0, 0, 0, 0, 0, 0, 0)
 }

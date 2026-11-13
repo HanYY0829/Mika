@@ -341,6 +341,12 @@ class ContextCompressorTest {
         assertEquals(listOf(38, 37), listOf(folded, foldedWithBase))
     }
 
+    @Test fun keepsTableObservationAsBaseForLaterDiff() {
+        val (_, kept) = compressWithLatest("""{"snapshotId":"s9","base":"s1","full":false,"added":[]}""",
+            rows = """"elementTables":[{"columns":["ref"],"rows":[["@e1"]]}]""")
+        assertTrue(kept.any { "elementTables" in it && "\"s1\"" in it })
+    }
+
     // 手机和网页各有各的差异链:留下的往返里先有网页的全量,手机的差异仍接在边界前手机那份全量后面,它不能折
     @Test fun keepsPhoneBaseWhenKeptRoundsStartWithAWebFullScreen() {
         val web = round("web_interact", "{}", """{"ok":true,"screen":{"snapshotId":"w1","full":true,"elements":[{"ref":"@w1"}]},"pad":"$pad"}""")
@@ -350,8 +356,8 @@ class ContextCompressorTest {
     }
 
     /** 边界前:30 次点按、全量 s1、两次差异、5 次点按;留下的 12 次:[before]、带 [screen] 的一次返回、其余点按。返回折了几步和留下的工具结果。 */
-    private fun compressWithLatest(screen: String, before: List<Message> = emptyList()): Pair<Int, List<String>> {
-        val full = round("phone_observe", "{}", """{"ok":true,"snapshotId":"s1","elements":[{"ref":"@e1"}],"pad":"$pad"}""")
+    private fun compressWithLatest(screen: String, before: List<Message> = emptyList(), rows: String = """"elements":[{"ref":"@e1"}]"""): Pair<Int, List<String>> {
+        val full = round("phone_observe", "{}", """{"ok":true,"snapshotId":"s1",$rows,"pad":"$pad"}""")
         val diffs = (2..3).flatMap { round("phone_back", "{}", """{"ok":true,"screen":{"snapshotId":"s$it","base":"s${it - 1}","full":false,"added":[]},"pad":"$pad"}""") }
         val latest = round("phone_back", "{}", """{"ok":true,"screen":$screen,"pad":"$pad"}""")
         val h = head + taps(30) + full + diffs + taps(5) + before + latest + taps(11 - before.size / 2)

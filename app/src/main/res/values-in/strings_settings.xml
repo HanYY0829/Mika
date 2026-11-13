@@ -83,6 +83,12 @@
     <string name="capsule_mode_always_detail">Menampilkan ikon Mika di layar walau tidak ada tugas</string>
     <string name="capsule_idle_opacity">Opasitas saat diam</string>
     <string name="capsule_idle_opacity_detail">Setelah beberapa detik tidak disentuh; hal yang memerlukan perhatian Anda tetap terlihat penuh</string>
+    <string name="capsule_card_size">Ukuran kartu</string>
+    <string name="capsule_card_size_detail">Kartu yang terbuka dan teksnya diskalakan bersama; kapsul yang tertutup tidak berubah</string>
+    <string name="capsule_card_size_small">Kecil</string>
+    <string name="capsule_card_size_normal">Standar</string>
+    <string name="capsule_card_size_large">Besar</string>
+    <string name="capsule_card_size_xlarge">Sangat besar</string>
     <string name="routes_saved">Rute tersimpan</string>
     <string name="loading">Memuat</string>
     <plurals name="routes_count">
@@ -124,8 +130,29 @@
     <string name="appearance_system_detail">Terang atau gelap, mengikuti mode ponsel</string>
     <string name="appearance_light">Selalu terang</string>
     <string name="appearance_dark">Selalu gelap</string>
+    <string name="accent_group">Warna aksen</string>
+    <string name="accent_default">Bawaan</string>
+    <string name="accent_blue">Biru</string>
+    <string name="accent_indigo">Nila</string>
+    <string name="accent_purple">Ungu</string>
+    <string name="accent_pink">Merah muda</string>
+    <string name="accent_teal">Hijau kebiruan</string>
+    <string name="accent_graphite">Grafit</string>
+    <string name="skin_group">Gambar latar</string>
+    <string name="skin_pick">Pilih dari foto</string>
+    <string name="skin_clear">Pakai latar polos</string>
+    <string name="skin_failed">Gambar itu tidak bisa dibaca</string>
+    <string name="skin_change">Pilih gambar lain</string>
+    <string name="skin_scrim">Redupkan gambar</string>
+    <string name="skin_position">Posisi gambar</string>
+    <string name="skin_blur">Buram</string>
+    <string name="skin_blur_off">Tidak ada</string>
+    <string name="skin_blur_light">Ringan</string>
+    <string name="skin_blur_strong">Kuat</string>
+    <string name="skin_accent_follow">Warna aksen dari gambar</string>
+    <string name="skin_accent_follow_sub">Memakai warna utama gambar sebagai ganti warna aksen di atas, jika ada</string>
     <string name="settings_self_config">Biarkan Mika mengubah pengaturannya sendiri</string>
-    <string name="settings_self_config_sub">Jika aktif, tugas mendapat satu alat untuk membaca dan mengubah preferensi ini (kecepatan, bisu, kapsul, tampilan, layar menyala). Model, kunci API, jaringan kontainer, dan apa pun yang menghapus data tidak pernah disertakan</string>
+    <string name="settings_self_config_sub">Jika aktif, tugas mendapat satu alat untuk membaca dan mengubah preferensi ini (kecepatan, bisu, kapsul, tampilan, warna aksen, layar menyala). Model, kunci API, jaringan kontainer, dan apa pun yang menghapus data tidak pernah disertakan</string>
     <string name="settings_step_limit">Batas langkah per tugas</string>
     <string name="settings_step_limit_sub">Mati berarti tanpa batas. Saat batas tercapai, tugas berhenti dan menyebutkan di mana berhentinya.</string>
     <string name="settings_step_limit_off">Tanpa batas</string>
@@ -175,4 +202,10 @@
     <string name="settings_token_budget_custom">Anggaran token kustom</string>
     <string name="settings_token_budget_apply">Pakai</string>
     <string name="settings_token_budget_invalid">Masukkan bilangan bulat dari %1$s sampai %2$s.</string>
+    <string name="settings_auto_archive">Arsipkan chat otomatis</string>
+    <string name="settings_auto_archive_sub">Chat tanpa pesan baru untuk sementara waktu dipindahkan ke arsip</string>
+    <string name="settings_auto_archive_hint">Chat tanpa pesan baru selama waktu yang dipilih dipindahkan ke arsip. Chat yang disematkan dan chat dengan tugas yang sedang berjalan tidak diubah. Anda dapat memulihkannya dari arsip di daftar chat kapan saja.</string>
+    <plurals name="settings_auto_archive_days">
+        <item quantity="other">%1$d hari</item>
+    </plurals>
 </resources>

@@ -39,4 +39,6 @@
     <string name="file_library_file_count">%1$d archivos</string>
     <string name="file_library_select_title">Seleccionar archivos</string>
     <string name="file_library_preview">Vista previa</string>
+    <string name="file_library_open_in_chat">Ver en la conversación</string>
+    <string name="file_library_open_failed">No se pudo abrir esta conversación</string>
 </resources>

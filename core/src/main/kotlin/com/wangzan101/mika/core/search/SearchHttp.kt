@@ -75,5 +75,10 @@ internal object SearchHttp {
 
     /** 没有网址的结果不要;摘要截短。 */
     fun hit(title: String, url: String, snippet: String): WebSearchHit? =
-        if (url.isBlank()) null else WebSearchHit(title, url, snippet.trim().let { if (it.length > MAX_SNIPPET_CHARS) it.take(MAX_SNIPPET_CHARS) + "…" else it })
+        if (url.isBlank()) null else WebSearchHit(title, url, snippet.trim().let(::clip))
+
+    /** 按码点截短:摘要来自不可信端点,emoji 等代理对不能被切成半个字符。 */
+    private fun clip(s: String): String =
+        if (s.codePointCount(0, s.length) <= MAX_SNIPPET_CHARS) s
+        else s.substring(0, s.offsetByCodePoints(0, MAX_SNIPPET_CHARS)) + "…"
 }

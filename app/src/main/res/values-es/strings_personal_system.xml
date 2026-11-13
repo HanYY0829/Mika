@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_system_interrupted">La respuesta anterior se interrumpió. Se ha guardado el historial de chat y puedes continuar la conversación. Puedes consultar las tareas existentes en Actividad.</string>
+    <string name="personal_system_timeout">Esta respuesta ha agotado el tiempo de espera. Las tareas existentes no se repetirán por ello y puedes seguir enviando mensajes.</string>
+    <string name="personal_system_reply_failed">No se pudo responder. Inténtalo de nuevo más tarde.</string>
+    <string name="personal_system_task_start_failed">No se pudo iniciar la tarea</string>
+    <string name="personal_system_task_cancelled">Tarea cancelada</string>
+    <string name="personal_system_task_completed">Tarea completada</string>
+    <string name="personal_system_task_failed">La tarea falló</string>
+    <string name="personal_system_task_running">Tarea en curso</string>
+    <string name="personal_system_task_queued">Tarea en cola</string>
+    <string name="personal_system_no_model">Selecciona primero un modelo principal en Ajustes y vuelve para continuar la conversación.</string>
+    <string name="personal_system_context_long">Este mensaje supera el límite de contexto del modelo actual. Envíalo en varias partes.</string>
+    <string name="personal_system_empty_reply">El modelo no devolvió una respuesta que se pueda mostrar. Inténtalo de nuevo.</string>
+    <string name="personal_system_too_many_actions">Se realizaron muchas acciones en este turno, por lo que se detuvo el procesamiento. Las tareas creadas siguen disponibles en Actividad.</string>
+    <string name="personal_system_message_long">Este mensaje es demasiado largo. Envíalo en varias partes.</string>
+    <string name="personal_system_task_done_detail">La tarea ha finalizado. Ábrela para ver el resultado.</string>
+    <string name="personal_system_task_stopped_detail">La tarea se ha detenido. El progreso actual se conserva en el registro de la tarea.</string>
+    <string name="personal_system_task_failed_detail">No se pudo completar la tarea. Ábrela para ver el motivo.</string>
+    <string name="personal_system_history_unreadable">No se puede leer el historial por ahora. Se ha conservado una copia de seguridad del archivo original. Puedes seguir conversando; conserva la copia para recuperarlo.</string>
+    <string name="personal_system_task_interrupted">La ejecución anterior se interrumpió. Se conservaron los registros de conversación y tareas; puedes explicar de nuevo lo que necesitas.</string>
+    <string name="personal_system_wait_confirmation">Se necesita tu confirmación. Abre la tarea para responder.</string>
+    <string name="personal_system_saving">Guardando el resultado</string>
+    <string name="personal_system_waiting">Esperando para empezar</string>
+    <string name="personal_system_stop_not_ready">La tarea aún no está lista o ya ha terminado. Abre la tarea para ver los detalles.</string>
+    <string name="personal_system_stop_failed">No se pudo detener la tarea. Ábrela e inténtalo de nuevo.</string>
+    <string name="personal_system_task_amendment">Indicación adicional: %1$s</string>
+</resources>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_status_running">En curso</string>
+    <string name="personal_status_queued">En cola</string>
+    <string name="personal_status_needs_you">Te necesita</string>
+    <string name="personal_status_paused">Esperando para continuar</string>
+    <string name="personal_status_finishing">Finalizando</string>
+    <string name="personal_status_completed">Completada</string>
+    <string name="personal_status_cancelled">Detenida</string>
+    <string name="personal_status_partial">Parcialmente completada</string>
+    <string name="personal_status_incomplete">Incompleta</string>
+    <string name="personal_send_failed">No se pudo enviar. Inténtalo de nuevo.</string>
+    <string name="personal_welcome_title">Sigamos conversando aquí.</string>
+    <string name="personal_welcome_body">Ideas, el día a día y lo que me encargas.\nVuelve cuando quieras y continuamos.</string>
+    <string name="personal_view_model">Ver modelo actual</string>
+    <string name="personal_received">Recibido</string>
+    <string name="personal_view_task">Ver tarea</string>
+    <string name="personal_latest">Volver a lo más reciente</string>
+    <string name="personal_ok">Entendido</string>
+    <string name="personal_close">Cerrar</string>
+    <string name="personal_no_tasks">Aún no hay tareas.</string>
+    <string name="personal_open_sidebar">Abrir barra lateral</string>
+    <string name="personal_view_activity">Ver actividad</string>
+    <string name="personal_expand_phone">Ampliar pantalla del teléfono</string>
+    <string name="personal_task_details">Ver detalles de la tarea</string>
+    <string name="personal_goal">Objetivo de la tarea</string>
+    <string name="personal_progress">Progreso</string>
+    <string name="personal_result">Resultado de la tarea</string>
+    <string name="personal_handle_task">Abrir tarea para actuar</string>
+    <string name="personal_view_execution">Ver ejecución</string>
+    <string name="personal_view_replay">Ver repetición</string>
+    <string name="personal_stop_task">Detener esta tarea</string>
+    <string name="personal_tab_tasks">Tareas</string>
+    <string name="personal_tab_memory">Memoria</string>
+    <string name="personal_tab_skills">Habilidades</string>
+</resources>

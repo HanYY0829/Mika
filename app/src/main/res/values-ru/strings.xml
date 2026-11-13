@@ -130,4 +130,14 @@
     <string name="terminal_task_running">Mika тоже работает в этой рабочей области; изменения с обеих сторон могут мешать друг другу.</string>
     <string name="terminal_copy_all">Копировать всё</string>
     <string name="terminal_copied">Скопировано</string>
+    <string name="personal_replay_title">Экран телефона</string>
+    <string name="personal_replay_close">Закрыть</string>
+    <string name="personal_replay_live_screen">Экран телефона в реальном времени</string>
+    <string name="personal_replay_recorded_screen">Запись экрана задачи</string>
+    <string name="personal_replay_loading">Загрузка изображения…</string>
+    <string name="personal_replay_empty">Пока нет записи для воспроизведения.</string>
+    <string name="personal_replay_live">В реальном времени</string>
+    <string name="personal_replay_pause">Пауза</string>
+    <string name="personal_replay_play">Воспроизвести</string>
+    <string name="personal_replay_return_live">Вернуться к прямому эфиру</string>
 </resources>

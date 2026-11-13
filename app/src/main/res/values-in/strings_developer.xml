@@ -25,4 +25,6 @@
     <string name="dev_speed">Kecepatan</string>
     <string name="dev_experiments">Eksperimen</string>
     <string name="dev_run_log">Catatan eksekusi</string>
+    <string name="dev_screen_tables">Ringkas elemen layar baru</string>
+    <string name="dev_screen_tables_sub">Saat layar pertama kali dibaca, kirim kolom untuk bidang berulang. Referensi elemen dan pohon lengkap tetap tersedia.</string>
 </resources>

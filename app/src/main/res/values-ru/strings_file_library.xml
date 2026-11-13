@@ -39,4 +39,6 @@
     <string name="file_library_file_count">Файлов: %1$d</string>
     <string name="file_library_select_title">Выбрать файлы</string>
     <string name="file_library_preview">Просмотр</string>
+    <string name="file_library_open_in_chat">Показать в беседе</string>
+    <string name="file_library_open_failed">Не удалось открыть эту беседу</string>
 </resources>

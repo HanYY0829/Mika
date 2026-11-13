@@ -28,6 +28,12 @@ internal class CallNotifications(private val context: Context) {
                 setShowBadge(false)
             },
         )
+        notificationManager.createNotificationChannel(
+            NotificationChannel(COMPLETED_CHANNEL, context.getString(R.string.calls_completed_notification_channel), NotificationManager.IMPORTANCE_DEFAULT).apply {
+                setShowBadge(true)
+                lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+            },
+        )
         notificationManager.areNotificationsEnabled() &&
             notificationManager.getNotificationChannel(CHANNEL)?.importance != NotificationManager.IMPORTANCE_NONE
     }.getOrDefault(false)
@@ -63,12 +69,72 @@ internal class CallNotifications(private val context: Context) {
 
     fun clear() { runCatching { manager?.cancel(ID) } }
 
+    /** Separate, user-dismissable call-complete notice; never reuses the live-call notification ID. */
+    fun completed(callId: String, number: String?, summary: CallSummary? = null, summaryPending: Boolean = false, summaryFailed: Boolean = false) {
+        postCompleted(callId, number, summary, summaryPending, summaryFailed, onlyIfActive = false)
+    }
+
+    fun updateCompletedSummary(callId: String, number: String?, summary: CallSummary?, failed: Boolean) {
+        postCompleted(callId, number, summary, summaryPending = false, summaryFailed = failed, onlyIfActive = true)
+    }
+
+    private fun postCompleted(callId: String, number: String?, summary: CallSummary?, summaryPending: Boolean,
+                              summaryFailed: Boolean, onlyIfActive: Boolean) {
+        runCatching {
+        val notificationManager = manager ?: return@runCatching
+        ready() // Ensure channel creation, but a disabled live-call channel must not suppress this one.
+        if (!notificationManager.areNotificationsEnabled() ||
+            notificationManager.getNotificationChannel(COMPLETED_CHANNEL)?.importance == NotificationManager.IMPORTANCE_NONE) return@runCatching
+        val notificationId = completedId(callId)
+        if (onlyIfActive && notificationManager.activeNotifications.none { it.id == notificationId }) return@runCatching
+        val openDetail = Intent(context, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            .putExtra(MainActivity.EXTRA_OPEN_CALLS, true)
+            .putExtra(MainActivity.EXTRA_CALL_HISTORY_ID, callId)
+        val pending = PendingIntent.getActivity(context, callId.hashCode(), openDetail,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val caller = number?.takeIf { it.isNotBlank() } ?: context.getString(R.string.calls_completed_notification_text)
+        val title = "${context.getString(R.string.calls_completed_notification_title)} · $caller"
+        val summaryText = summary?.let { value ->
+            buildList {
+                value.purpose?.takeIf(String::isNotBlank)?.let { add("${context.getString(R.string.calls_summary_purpose)}: $it") }
+                value.highlights.take(3).forEach { add("• $it") }
+                value.actions.filter { it.status == CallFollowUp.Status.PENDING }.take(2)
+                    .forEach { add("• ${it.text}") }
+            }.joinToString("\n").take(700).ifBlank { null }
+        }
+        val body = summaryText ?: when {
+            summaryPending -> context.getString(R.string.calls_summary_generating)
+            summaryFailed -> context.getString(R.string.calls_summary_failed)
+            else -> context.getString(R.string.calls_completed_notification_text)
+        }
+        val publicNotification = Notification.Builder(context, COMPLETED_CHANNEL)
+            .setContentTitle(context.getString(R.string.calls_completed_notification_title))
+            .setContentText(context.getString(R.string.calls_completed_notification_text))
+            .setSmallIcon(android.R.drawable.sym_action_call).build()
+        notificationManager.notify(notificationId, Notification.Builder(context, COMPLETED_CHANNEL)
+            .setContentTitle(title)
+            .setContentText(body.lineSequence().firstOrNull().orEmpty())
+            .setStyle(Notification.BigTextStyle().bigText(body))
+            .setSmallIcon(android.R.drawable.sym_action_call)
+            .setOnlyAlertOnce(true)
+            .setAutoCancel(false)
+            .setOngoing(false)
+            .setVisibility(Notification.VISIBILITY_PRIVATE)
+            .setPublicVersion(publicNotification)
+            .setContentIntent(pending)
+            .build())
+        }
+    }
+
     companion object {
         const val ACTION = "com.wangzan101.mika.calls.TAKEOVER"
         const val ACTION_CANCEL_LOCKED_DIAL = "com.wangzan101.mika.calls.CANCEL_LOCKED_DIAL"
         const val LOCKED_DIAL_SCHEME = "mika-locked-dial"
         const val CHANNEL = "mika_ai_calls"
+        const val COMPLETED_CHANNEL = "mika_ai_call_completed"
         private const val ID = 90_117
+        private fun completedId(callId: String) = 91_000 + (callId.hashCode() and 0x7fffffff) % 8_000
     }
 }
 

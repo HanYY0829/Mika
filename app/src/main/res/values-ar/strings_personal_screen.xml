@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_status_running">قيد التنفيذ</string>
+    <string name="personal_status_queued">في قائمة الانتظار</string>
+    <string name="personal_status_needs_you">يحتاج إليك</string>
+    <string name="personal_status_paused">بانتظار المتابعة</string>
+    <string name="personal_status_finishing">جارٍ الإنهاء</string>
+    <string name="personal_status_completed">مكتملة</string>
+    <string name="personal_status_cancelled">متوقفة</string>
+    <string name="personal_status_partial">مكتملة جزئياً</string>
+    <string name="personal_status_incomplete">غير مكتملة</string>
+    <string name="personal_send_failed">تعذر الإرسال. يرجى المحاولة مجدداً.</string>
+    <string name="personal_welcome_title">لنواصل الحديث هنا.</string>
+    <string name="personal_welcome_body">الأفكار والحياة اليومية والمهام التي تكلفني بها.\nعُد في أي وقت لمتابعة الحديث.</string>
+    <string name="personal_view_model">عرض النموذج الحالي</string>
+    <string name="personal_received">تم الاستلام</string>
+    <string name="personal_view_task">عرض المهمة</string>
+    <string name="personal_latest">العودة إلى أحدث الرسائل</string>
+    <string name="personal_ok">فهمت</string>
+    <string name="personal_close">إغلاق</string>
+    <string name="personal_no_tasks">لا توجد مهام بعد.</string>
+    <string name="personal_open_sidebar">فتح الشريط الجانبي</string>
+    <string name="personal_view_activity">عرض النشاط</string>
+    <string name="personal_expand_phone">تكبير شاشة تشغيل الهاتف</string>
+    <string name="personal_task_details">عرض تفاصيل المهمة</string>
+    <string name="personal_goal">هدف المهمة</string>
+    <string name="personal_progress">التقدم</string>
+    <string name="personal_result">نتيجة المهمة</string>
+    <string name="personal_handle_task">فتح المهمة للتعامل معها</string>
+    <string name="personal_view_execution">عرض عملية التنفيذ</string>
+    <string name="personal_view_replay">عرض الإعادة</string>
+    <string name="personal_stop_task">إيقاف هذه المهمة</string>
+    <string name="personal_tab_tasks">المهام</string>
+    <string name="personal_tab_memory">الذاكرة</string>
+    <string name="personal_tab_skills">المهارات</string>
+</resources>

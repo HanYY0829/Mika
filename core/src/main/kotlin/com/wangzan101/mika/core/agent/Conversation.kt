@@ -39,6 +39,8 @@ data class Turn(
     val verified: Boolean? = null,
     /** 电脑派发时的任务编号，在运行记录创建前也可用。 */
     val remoteTaskId: String? = null,
+    /** Source of runtime-owned outcome text; absent for summaries and legacy turns. */
+    val outcomeSystemType: String? = null,
 )
 
 object Conversation {

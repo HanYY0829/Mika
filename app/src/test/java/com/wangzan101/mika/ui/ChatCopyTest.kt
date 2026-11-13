@@ -126,6 +126,104 @@ class ChatCopyTest {
         assertTrue(fresh.running.single().enabled)
     }
 
+    /** 归档的对话不进置顶和最近;当前正在看的那个留着(带归档标记),还在跑任务的仍列在进行中。 */
+    @Test fun drawerHidesArchivedExceptCurrentAndRunning() {
+        val all = listOf(
+            ConversationSummary("a", "一", 30L),
+            ConversationSummary("b", "二", 20L, archivedAt = 5L),
+            ConversationSummary("c", "三", 10L, archivedAt = 6L),
+            ConversationSummary("d", "四", 5L, archivedAt = 7L),
+        )
+        val s = drawerSections(all, CurrentConversation("a", false, "一", ""), others = listOf("d"), { null }, canSwitch = true, now = 0L, zone = zone)
+        assertEquals(listOf("d"), s.running.map { it.id })
+        assertTrue(s.running.single().archived)
+        assertEquals(listOf("a"), s.recent.map { it.id })
+        assertTrue(s.recent.none { it.archived })
+        // 当前看的就是归档的那个:留着,不然不知道自己在哪
+        val cur = drawerSections(all, CurrentConversation("b", false, "二", ""), emptyList(), { null }, canSwitch = true, now = 0L, zone = zone)
+        assertEquals(listOf("a", "b"), cur.recent.map { it.id })
+        assertTrue(cur.recent.last().archived)
+        assertTrue(cur.recent.last().current)
+        // 没归档时一条不少
+        val plain = drawerSections(all.map { it.copy(archivedAt = null) }, CurrentConversation("a", false, "一", ""), emptyList(), { null }, true, 0L, zone)
+        assertEquals(listOf("a", "b", "c", "d"), plain.recent.map { it.id })
+    }
+
+    /** 多选的勾选范围跟着视图走:普通侧栏是列出来的对话,归档视图里是归档的那些;草稿没有编号,勾不了。 */
+    @Test fun drawerSelectableIdsFollowTheView() {
+        val sections = DrawerSections(
+            running = listOf(DrawerConversation("a", "一", "", running = true, current = true, enabled = true)),
+            recent = listOf(
+                DrawerConversation("b", "二", "", running = false, current = false, enabled = true),
+                DrawerConversation(null, "新对话", "", running = false, current = false, enabled = true),
+            ),
+        )
+        val archived = listOf(DrawerConversation("c", "三", "", running = false, current = false, enabled = true, archived = true))
+        assertEquals(setOf("a", "b"), drawerSelectableIds(sections, archived, archivedView = false))
+        assertEquals(setOf("c"), drawerSelectableIds(sections, archived, archivedView = true))
+    }
+
+    /** 搜索筛选:全部含归档,未归档/已归档各取一边;删掉的不搜。 */
+    @Test fun drawerSearchCandidatesFilterByArchiveState() {
+        val all = listOf(
+            ConversationSummary("a", "附件:/workspace/inbox/a.pdf(1 KB)", 3L),
+            ConversationSummary("b", "二", 2L, archivedAt = 1L),
+            ConversationSummary("c", "三", 1L),
+        )
+        val deleted = setOf("c")
+        assertEquals(listOf("a", "b"), drawerSearchCandidates(all, deleted, SearchArchiveFilter.All).map { it.id })
+        assertEquals(listOf("a"), drawerSearchCandidates(all, deleted, SearchArchiveFilter.Active).map { it.id })
+        assertEquals(listOf("b"), drawerSearchCandidates(all, deleted, SearchArchiveFilter.Archived).map { it.id })
+        // 标题还是侧栏里显示的样子(去掉附件行)
+        assertEquals("a.pdf", drawerSearchCandidates(all, deleted, SearchArchiveFilter.All).first().title)
+    }
+
+    private fun archivedRow(id: String, archivedAt: Long) =
+        DrawerConversation(id, id, "", running = false, current = false, enabled = true, archived = true, archivedAt = archivedAt)
+
+    /** 归档视图按归档时间分段:本周(周一起算)、本月、更早;没记归档时间的归到更早,不会漏。 */
+    @Test fun archiveViewGroupsByWeekMonthAndOlder() {
+        val now = at(2026, 11, 12, 15) // 周四
+        val rows = listOf(
+            archivedRow("a", at(2026, 11, 12, 9)),
+            archivedRow("b", at(2026, 11, 9, 20)),
+            archivedRow("c", at(2026, 11, 2)),
+            archivedRow("d", at(2026, 9, 30)),
+        )
+        val groups = archiveGroups(rows, now, zone)
+        assertEquals(listOf(ArchivePeriod.ThisWeek, ArchivePeriod.ThisMonth, ArchivePeriod.Earlier), groups.map { it.period })
+        assertEquals(listOf("a", "b"), groups[0].rows.map { it.id })
+        assertEquals(listOf("c"), groups[1].rows.map { it.id })
+        assertEquals(listOf("d"), groups[2].rows.map { it.id })
+        val unknown = archiveGroups(
+            listOf(DrawerConversation("e", "五", "", running = false, current = false, enabled = true, archived = true)),
+            now, zone,
+        )
+        assertEquals(listOf(ArchivePeriod.Earlier), unknown.map { it.period })
+    }
+
+    /** 一行写清归档了多久:当天是「今天归档」,其余是「归档于 N 天前」。 */
+    @Test fun archivedAgoSaysTodayOrDays() {
+        val now = at(2026, 11, 12, 15)
+        assertEquals("今天归档", archivedAgo(at(2026, 11, 12, 9), now, zone))
+        assertEquals("归档于 3 天前", archivedAgo(at(2026, 11, 9, 15), now, zone))
+        assertEquals("归档于 40 天前", archivedAgo(at(2026, 10, 3, 15), now, zone))
+        assertEquals("本周", archivePeriodLabel(ArchivePeriod.ThisWeek))
+        assertEquals("本月", archivePeriodLabel(ArchivePeriod.ThisMonth))
+        assertEquals("更早", archivePeriodLabel(ArchivePeriod.Earlier))
+    }
+
+    /** 只有存过的、没在跑、没归档的对话能左滑归档;草稿和在跑任务的不行。 */
+    @Test fun onlyIdleSavedConversationsCanBeSwipedToArchive() {
+        fun row(id: String?, saved: Boolean = true, running: Boolean = false, archived: Boolean = false) =
+            DrawerConversation(id, "一", "", running = running, current = false, enabled = true, archived = archived, saved = saved)
+        assertTrue(canSwipeArchive(row("a")))
+        assertFalse(canSwipeArchive(row("a", running = true)))
+        assertFalse(canSwipeArchive(row("a", archived = true)))
+        assertFalse(canSwipeArchive(row("a", saved = false)))
+        assertFalse(canSwipeArchive(row(null)))
+    }
+
     @Test fun greetingFollowsTheTimeOfDay() {
         assertEquals("早上好", ChatCopy.greeting(7))
         assertEquals("中午好", ChatCopy.greeting(12))

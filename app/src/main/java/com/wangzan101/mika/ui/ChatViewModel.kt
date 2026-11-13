@@ -20,6 +20,8 @@ import com.wangzan101.mika.chat.SharedDraft
 import com.wangzan101.mika.chat.SharedDraftStore
 import com.wangzan101.mika.chat.SharedFile
 import com.wangzan101.mika.cap.sandbox.ImportResult
+import com.wangzan101.mika.cap.sandbox.AttachmentFailure
+import com.wangzan101.mika.cap.sandbox.AttachmentFailureReason
 import com.wangzan101.mika.confirm.ConfirmationCopy
 import com.wangzan101.mika.confirm.ConfirmationNotifier
 import com.wangzan101.mika.core.agent.AttachmentLines
@@ -308,7 +310,7 @@ data class ChatUi(
     /** 正在把附件复制进工作区(发送时)。 */
     val importing: Boolean = false,
     /** 没收下的附件(太大或读不了);为空不提示。 */
-    val rejectedAttachments: List<String> = emptyList(),
+    val rejectedAttachments: List<AttachmentFailure> = emptyList(),
     /** 超过一次能带的个数([AttachTray.LIMIT])没加上的个数;为 0 不提示。 */
     val overLimit: Int = 0,
     /** 系统分享刚预填到新对话的内容;只供输入框展示,不会触发任务。 */
@@ -330,7 +332,7 @@ private data class ComposerDraft(
     val followUpMode: FollowUpMode = FollowUpMode.Steer,
     val sharedDraft: SharedDraft? = null,
     val importing: Boolean = false,
-    val rejected: List<String> = emptyList(),
+    val rejected: List<AttachmentFailure> = emptyList(),
     val overLimit: Int = 0,
 ) {
     val hasContent: Boolean get() = input.isNotEmpty() || attachments.isNotEmpty() || quote != null || importing || rejected.isNotEmpty()
@@ -469,6 +471,11 @@ class ChatViewModel(
     private val _ui = MutableStateFlow(ChatUi())
     val ui: StateFlow<ChatUi> = _ui.asStateFlow()
 
+    /** 从搜索或文件库过来的一次性跳转;聊天页滚到目标后清掉。 */
+    private val _jump = MutableStateFlow<ChatJump?>(null)
+    val jump: StateFlow<ChatJump?> = _jump.asStateFlow()
+    private var jumpSerial = 0L
+
     private val drafts = MutableStateFlow<Map<String, ComposerDraft>>(emptyMap())
     private var draftStateChanged = false
     private val libraryCopies = mutableMapOf<String, () -> Unit>()
@@ -501,7 +508,8 @@ class ChatViewModel(
     fun withDrafts(history: List<ConversationSummary>): List<ConversationSummary> =
         draftConversations.value.filter { draft -> history.none { it.id == draft.id } }.map {
             it.copy(title = store.title(it.id) ?: it.title, pinnedAt = store.pinnedAt(it.id),
-                page = store.pageOrigin(it.id), branchOf = store.branchOrigin(it.id))
+                page = store.pageOrigin(it.id), branchOf = store.branchOrigin(it.id), archivedAt = store.archivedAt(it.id),
+                restoredAt = store.restoredAt(it.id))
         } + history
 
     private fun draftConversation(): String {
@@ -1071,7 +1079,8 @@ class ChatViewModel(
 
     /**
      * 带着附件开新任务:先把附件复制进对话工作区的 inbox/(期间输入框上方显示正在添加),
-     * 再把每个附件写成一行「附件:<路径>(<大小>)」接在话后面开始任务。没收下的列在输入框上方;话和附件都没有了就不发。
+     * 全部复制成功后,把每个附件写成一行「附件:<路径>(<大小>)」接在话后面开始任务。
+     * 有附件没收下时保留草稿并列出失败项,由用户重试或移除后再发送。
      * 复制期间换了对话或开始了别的任务就不发了(复制进去的文件留在原对话的工作区里)。
      */
     private fun sendWithAttachments(text: String, items: List<PendingAttachment>, check: Prerequisites.Check): Boolean {
@@ -1101,6 +1110,7 @@ class ChatViewModel(
                     var checked = 0
                     val added = mutableListOf<Pair<String, Long>>()
                     val rejected = mutableListOf<String>()
+                    val failures = mutableListOf<AttachmentFailure>()
                     for (item in items) {
                         if (item.workspacePath != null) {
                             val result = checks[checked++]
@@ -1109,9 +1119,10 @@ class ChatViewModel(
                             val result = importAttachments(id, listOf(item.uri))
                             added += result.added
                             rejected += result.rejected
+                            failures += result.failures
                         }
                     }
-                    ImportResult(added, rejected)
+                    ImportResult(added, rejected, failures)
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -1125,9 +1136,9 @@ class ChatViewModel(
                 }
                 releaseUnusedLibraryCopies()
             }
+            updateDraft(id) { it.copy(importing = false, rejected = r.failures) }
+            if (r.rejected.isNotEmpty()) return@launch
             val goal = withAttachments(text, r.added)
-            updateDraft(id) { it.copy(importing = false, rejected = r.rejected) }
-            if (items.any { it.workspacePath != null } && r.added.isEmpty() && r.rejected.isNotEmpty()) return@launch
             val now = _ui.value
             if (goal.isEmpty() || now.conversationId != id || id in _deleted.value) return@launch
             val currentAttachments = now.attachments
@@ -1657,6 +1668,20 @@ class ChatViewModel(
         }
     }
 
+    /**
+     * 打开某个对话并跳到指定消息。已经在这个对话里时只设跳转,不重新载入;
+     * 任务进行中且没开并行时打不开,跳转也不会留下,调用方可以用 [ChatUi.conversationId] 判断是否成功。
+     */
+    fun openConversationAt(id: String, target: ChatTarget) {
+        if (_ui.value.conversationId != id) openConversation(id)
+        if (_ui.value.conversationId == id) _jump.value = ChatJump(id, target, ++jumpSerial)
+    }
+
+    /** 聊天页滚到目标后清掉请求;期间又来了新请求时不要误清。 */
+    fun consumeJump(jump: ChatJump) {
+        _jump.update { if (it == jump) null else it }
+    }
+
     /** 切到某个对话;任务在跑时不切。 */
     fun openConversation(id: String) {
         if (_ui.value.conversationId == id) return
@@ -1760,7 +1785,9 @@ class ChatViewModel(
         val prefill = retryText(raw)
         updateDraft(targetId) {
             it.copy(input = prefill, attachments = accepted,
-                rejected = if (_ui.value.conversationId == targetId) emptyList() else failures.map { failure -> failure.path.substringAfterLast('/') })
+                rejected = if (_ui.value.conversationId == targetId) emptyList() else failures.map { failure ->
+                    AttachmentFailure(failure.path.substringAfterLast('/'), AttachmentFailureReason.IO_ERROR)
+                })
         }
         val screen = UserScreenMessage.parse(AttachmentMessage.parse(QuoteMessage.words(AttachedPage.words(raw))).words).hasScreen
         return BranchRetry(targetId, prefill, screen || failures.isNotEmpty(), failures, screenNeedsReattach = screen)
@@ -1872,6 +1899,50 @@ class ChatViewModel(
     fun setPinned(id: String, pinned: Boolean) {
         if (id in _deleted.value) return
         runCatching { store.setPinned(id, pinned, clock()) }
+    }
+
+    /**
+     * 侧栏里归档对话 [id]:从列表收起,内容、工作区、定时任务都不动。
+     * 归档的是屏上这个对话时,先确认现在能换对话,再换成一个新的空对话(草稿留着,取消归档后接着用)。
+     * 跑着或排着任务的对话不归档,返回 false。
+     */
+    fun archiveConversation(id: String): Boolean {
+        if (id in _deleted.value || id in deleting) return false
+        if (id in activeConversations.value) return false
+        val current = _ui.value.conversationId == id
+        if (current) {
+            refreshParallel()
+            if (busy()) return false
+        }
+        val ok = runCatching { store.setArchived(id, true, clock()) }.getOrDefault(false)
+        // 先归档再换:换到新对话时侧栏重读,原来那个已经不在列表里了
+        if (ok && current) newConversation()
+        return ok
+    }
+
+    /** 侧栏里取消归档对话 [id];它回到原来的位置(置顶的还回置顶)。 */
+    fun unarchiveConversation(id: String) {
+        if (id in _deleted.value) return
+        runCatching { store.setArchived(id, false) }
+    }
+
+    /** 归档视图里多选恢复:一条条取消归档;已经删掉的跳过。 */
+    fun unarchiveConversations(ids: Collection<String>) {
+        ids.filter { it !in _deleted.value }.forEach { runCatching { store.setArchived(it, false) } }
+    }
+
+    /**
+     * 普通侧栏里多选后一次归档 [ids]:未保存首轮的草稿、在跑的、删掉的、当前正在看的跳过
+     * (当前对话归档要换新对话,批量里不悄悄换)。返回实际归档了几个。
+     */
+    fun archiveConversations(ids: Collection<String>): Int {
+        val current = _ui.value.conversationId
+        // 与侧栏判断已保存对话的依据一致,不能只看 ID:未发送的草稿也有 ID。
+        val savedIds = store.list(includeArchived = true).mapTo(mutableSetOf()) { it.id }
+        return ids.count { id ->
+            id in savedIds && id != current && id !in _deleted.value && id !in deleting && id !in activeConversations.value &&
+                runCatching { store.setArchived(id, true, clock()) }.getOrDefault(false)
+        }
     }
 
     /** 屏上的对话被删了:不再跟它的任务(还没交给服务的开始直接作废),换成新的空对话。 */

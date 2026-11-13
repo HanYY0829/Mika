@@ -27,6 +27,9 @@
     <string name="memory_auto_sub">タスクのあとに、あなた自身の言葉から整理します</string>
     <string name="memory_learn">過去のタスクから学ぶ(スキルとアプリのメモ)</string>
     <string name="memory_learn_sub">Mika が学んだ内容は、あなたが承認してから使われます</string>
+    <string name="memory_tasks">過去のタスクを覚える</string>
+    <string name="memory_tasks_sub">終わったタスクごとに短いまとめを残し、次回思い出せるようにする</string>
+    <string name="memory_tasks_title">過去のタスク</string>
     <string name="memory_clear_sub">すべてのメモリと学習したスキルを削除</string>
     <string name="edit_it">編集</string>
     <string name="unpin">ピン留めを解除</string>

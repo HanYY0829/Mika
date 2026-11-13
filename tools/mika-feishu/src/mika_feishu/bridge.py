@@ -172,9 +172,14 @@ class Bridge:
                 return self.reply(e, "No known task. " + ("The last write is uncertain; check the phone." if session["uncertain"] else ""))
             task = self.api.task(session["task_id"])
             text = describe(task)
+            notice = hashlib.sha256(text.encode()).hexdigest()
             sent = self.reply(e, text)
             if task["status"] == "waiting_for_answer":
-                self.store.remember_question(peer, task["task_id"], hashlib.sha256(text.encode()).hexdigest(), sent)
+                self.store.remember_question(peer, task["task_id"], notice, sent)
+            # The poller sends each state once and records it here. This reply shows the same text,
+            # so record it the same way; otherwise the user who just read the state is pushed the
+            # identical message again on the next poll.
+            self.store.update(peer, notice="terminal:" + notice if task["status"] in TERMINAL else notice)
             return
         if session["uncertain"]:
             return self.reply(e, "An operation is uncertain. New writes are blocked. Check the phone or task desk, then send /reset checked.")

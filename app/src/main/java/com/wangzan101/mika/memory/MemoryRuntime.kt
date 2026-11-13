@@ -6,6 +6,7 @@ import com.wangzan101.mika.core.memory.MemoryItem
 import com.wangzan101.mika.core.memory.MemoryNote
 import com.wangzan101.mika.core.memory.MemoryStore
 import com.wangzan101.mika.core.memory.ProfileStore
+import com.wangzan101.mika.core.memory.TaskMemoryStore
 import com.wangzan101.mika.core.skills.SkillNote
 import com.wangzan101.mika.settings.KeystoreKeyCipher
 import com.wangzan101.mika.settings.MemorySettings
@@ -48,6 +49,8 @@ class MemoryRuntime(context: Context) {
     private var settings: MemorySettings? = null
     private var profile: ProfileStore? = null
     private var appKnowledge: AppKnowledgeFiles? = null
+    private var taskMemoryFile: TaskMemoryFile? = null
+    private var taskMemory: TaskMemoryStore? = null
 
     /** 任务收尾后的学习在这里跑:不随服务退出而取消。 */
     val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -91,10 +94,18 @@ class MemoryRuntime(context: Context) {
     @Synchronized fun settings(): MemorySettings =
         settings ?: MemorySettings(File(app.filesDir, "memory_settings.json")).also { settings = it }
 
+    @Synchronized fun taskMemoryFile(): TaskMemoryFile =
+        taskMemoryFile ?: TaskMemoryFile(app.filesDir, KeystoreKeyCipher(KEY_ALIAS), System::currentTimeMillis).also { taskMemoryFile = it }
+
+    @Synchronized fun taskMemory(): TaskMemoryStore =
+        taskMemory ?: TaskMemoryStore(taskMemoryFile(), System::currentTimeMillis, { UUID.randomUUID().toString() }).also { taskMemory = it }
+
     /** 「全部清除」:记忆、另存的坏文件、个人技能与草稿都删掉,并重建记忆密钥;对话里的记忆提示也去掉。 */
     @Synchronized fun wipeAll() {
         store().clearAll()
         file().wipe()
+        taskMemory().clearAll()
+        taskMemoryFile().wipe()
         runCatching { KeyStore.getInstance("AndroidKeyStore").apply { load(null) }.deleteEntry(KEY_ALIAS) }
         File(app.filesDir, "skills").deleteRecursively()
         File(app.filesDir, "knowledge/app-drafts").deleteRecursively()

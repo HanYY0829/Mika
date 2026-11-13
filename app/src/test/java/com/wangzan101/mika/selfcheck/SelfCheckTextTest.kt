@@ -53,4 +53,20 @@ class SelfCheckTextTest {
         assertTrue(taps.matches("点了 3 次"))
         assertFalse(taps.matches("点了 3"))
     }
+
+    @Test
+    fun numberedTextMatchesArabicIndicDigits() {
+        // 阿拉伯语等语言里 %d 会被渲染成阿拉伯-印度数字,读屏报回的也是它。
+        val taps = SelfCheckText.Numbered("النقرات: ٩٨٧٦٥٤٣٢١", "987654321")
+        assertTrue(taps.matches("النقرات: ٠"))
+        assertTrue(taps.matches("النقرات: ١٢"))
+        assertFalse(taps.matches("النبضة: ٠"))
+    }
+
+    @Test
+    fun digitsToAsciiNormalizesVariants() {
+        assertTrue(SelfCheckText.same("Taps: ٠", "Taps: 0"))
+        assertTrue(SelfCheckText.same("Taps: ٩٨٧", "Taps: 987"))
+        assertFalse(SelfCheckText.same("Taps: ٠", "Taps: 1"))
+    }
 }

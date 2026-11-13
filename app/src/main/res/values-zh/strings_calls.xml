@@ -23,11 +23,11 @@
     <string name="calls_prepare">检查并准备</string>
     <string name="calls_enable">启用 AI 电话</string>
     <string name="calls_disable">停用并恢复正常电话</string>
-    <string name="calls_provider">火山实时语音 3.0</string>
-    <string name="calls_credentials">实时语音凭据</string>
+    <string name="calls_provider">火山方舟 Doubao 实时语音交互 API</string>
+    <string name="calls_credentials">火山方舟 Doubao 实时语音交互 API 凭据</string>
     <string name="calls_key_saved">凭据已加密保存，服务权限仍需实际验证</string>
     <string name="calls_key_missing">尚未配置</string>
-    <string name="calls_profile">开场白与通话目的</string>
+    <string name="calls_profile">通话配置</string>
     <string name="calls_model_label">模型 %1$s · 通话音频通道</string>
     <string name="calls_incoming">来电</string>
     <string name="calls_auto_answer">自动接听来电</string>
@@ -46,7 +46,7 @@
     <string name="calls_connected">通话已接通</string>
     <string name="calls_holding">通话保持中</string>
     <string name="calls_disconnecting">正在挂断</string>
-    <string name="calls_credentials_note">填写豆包语音平台具备实时语音权限的 API Key；方舟聊天 Key 或只有语音识别权限不能替代。此处不回显已存凭据。</string>
+    <string name="calls_credentials_note">填写火山方舟 Doubao 实时语音交互 API 的 API Key；方舟聊天 API Key 或只有语音识别权限的凭据不能替代。此处不回显已存凭据。</string>
     <string name="calls_legacy_credentials">使用旧版 App ID 与 Access Key</string>
     <string name="calls_save">保存</string>
     <string name="calls_cancel">取消</string>

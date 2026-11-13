@@ -48,11 +48,55 @@ import com.wangzan101.mika.ui.theme.MikaShapes
 import com.wangzan101.mika.ui.theme.MikaSize
 import com.wangzan101.mika.ui.theme.MikaTheme
 import com.wangzan101.mika.ui.theme.MikaType
+import com.wangzan101.mika.ui.theme.LocalSkinBackdrop
+import com.wangzan101.mika.ui.theme.SkinBackdrop
+import com.wangzan101.mika.ui.theme.rememberSkinBackdrop
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.composed
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 
-/** 页面底:干净的近白(深色下近黑),不加渐变。 */
+/**
+ * 页面底:干净的近白(深色下近黑),不加渐变。
+ * 设了背景图片时铺满图片、再盖一层同色遮罩(见 [SkinBackdrop]),卡片和文字照旧。
+ */
 @Composable
 fun PageBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    Box(modifier.fillMaxSize().background(MikaTheme.colors.bg), content = content)
+    val backdrop = rememberSkinBackdrop()
+    // 有没有图都是同一个结构:图是异步读的,换结构会让里面的页面整个重建、丢掉状态
+    Box(
+        modifier.fillMaxSize().background(MikaTheme.colors.bg).then(
+            if (backdrop == null) Modifier else Modifier
+                .onGloballyPositioned { backdrop.pageOrigin = it.positionInRoot(); backdrop.pageSize = it.size }
+                .drawBehind { backdrop.draw(this, backdrop.pageOrigin) },
+        ),
+    ) {
+        CompositionLocalProvider(LocalSkinBackdrop provides backdrop) { content() }
+    }
+}
+
+/**
+ * 页面底色:顶栏、输入栏底下的渐隐这些要挡住滚动内容的地方用它。
+ * 有背景图片且 [color] 就是页面底色时,照着同一位置画一块页面背景,和页面底连成一片;
+ * [fade] 是从透明到页面底色的渐变,有背景图片时当作透明度的遮罩用。
+ */
+fun Modifier.pageBackground(color: Color, fade: Brush? = null): Modifier = composed {
+    val backdrop = LocalSkinBackdrop.current
+    if (backdrop == null || color != MikaTheme.colors.bg) return@composed if (fade != null) background(fade) else background(color)
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    val placed = onGloballyPositioned { origin = it.positionInRoot() }
+    if (fade == null) {
+        placed.drawBehind { backdrop.draw(this, origin) }
+    } else {
+        // 先画背景,再按渐变的透明度裁掉:上面透明、下面实
+        placed.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+            .drawBehind {
+                backdrop.draw(this, origin)
+                drawRect(fade, blendMode = BlendMode.DstIn)
+            }
+    }
 }
 
 /** 卡片的底:白底 + 黑 5% 描边 + 极淡阴影;深色下只有描边。 */

@@ -127,6 +127,11 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- 覆盖磁贴长按的系统默认应用详情页，直接回到 Mika。 -->
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
             <!-- 系统分享只进入现有对话页的草稿;文字、链接或一张内容图片都不会自动执行。 -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -139,6 +144,14 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".self.SelfNotificationActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay" />
 
         <!-- 通知里接管按钮的落点:从通知启动 Activity 才会收起通知栏,让用户直接看到挪到主屏的 App -->
         <activity
@@ -184,6 +197,18 @@
             android:launchMode="singleInstance"
             android:taskAffinity=""
             android:windowSoftInputMode="stateHidden" />
+
+        <!-- Android Quick Settings binds this service; ordinary apps cannot toggle the capsule through it. -->
+        <service android:name=".capsule.CapsuleTileService"
+            android:enabled="false"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:label="@string/capsule_tile_label"
+            android:icon="@drawable/ic_notification">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
 
         <service
             android:name=".a11y.MikaAccessibilityService"
@@ -331,6 +356,15 @@
             </intent-filter>
         </receiver>
         <receiver android:name=".task.TriggerAlarmReceiver" android:exported="false" />
+
+        <!-- 外部脚本建任务的广播入口:对外开放(无权限),由「允许外部脚本建任务」开关 + 每分钟限流 + 来源标记把关 -->
+        <receiver
+            android:name=".task.ExternalScheduleReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.wangzan101.mika.SCHEDULE" />
+            </intent-filter>
+        </receiver>
         <receiver android:name=".teach.TeachReceiver" android:exported="false" />
     </application>
 

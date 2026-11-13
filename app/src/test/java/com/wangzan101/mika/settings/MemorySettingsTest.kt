@@ -24,4 +24,15 @@ class MemorySettingsTest {
         settings.update { it.copy(learnSkills = false) }
         assertFalse(MemorySettings(file).switches.value.learnSkills)
     }
+
+    @Test fun rememberTasksOnByDefaultAndSticks() {
+        val file = File(tmp.root, "memory.json")
+        // 没存过 rememberTasks 的旧文件:默认开
+        file.writeText("""{"useMemory":true,"autoRemember":true,"learnSkills":true}""")
+        assertTrue(MemorySettings(file).switches.value.rememberTasks)
+        // 用户关掉后保持关
+        val settings = MemorySettings(file)
+        settings.update { it.copy(rememberTasks = false) }
+        assertFalse(MemorySettings(file).switches.value.rememberTasks)
+    }
 }

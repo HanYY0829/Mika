@@ -579,7 +579,7 @@ class AndroidSelfCheck(context: Context, private val status: () -> SystemStatus)
     private val tickText by lazy { numbered(R.string.selfcheck_target_tick) }
     private val rowText by lazy { numbered(R.string.selfcheck_target_row) }
 
-    private fun UiElement.number(): Int? = Regex("\\d+").findAll(name).lastOrNull()?.value?.toIntOrNull()
+    private fun UiElement.number(): Int? = Regex("\\d+").findAll(SelfCheckText.digitsToAscii(name)).lastOrNull()?.value?.toIntOrNull()
 
     private fun reason(r: ActionResult): String = (r as? ActionResult.Failed)?.reason ?: "not on top"
 

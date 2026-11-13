@@ -34,6 +34,7 @@ enum class Verb {
     CallState, CallDial, CallAnswer, CallHangup, CallTakeover,
     Wait, AskUser, RequestConfirmation, HandToUser, HandleObstacle, EndNotDone,
     KnowledgeSearch, KnowledgeRead, SkillSearch, SkillRead, SkillSave, MemorySearch, MemorySave, MemoryEdit, ProfileEdit, HistoryRead, WebSearch,
+    TaskMemorySearch, TaskMemoryTimeline, TaskMemoryStep,
     ScheduleTask,
     SpawnAgent, SettingsList, SettingsSet,
     SelfStatus, SelfOpenScreen, SelfOpenFile, SelfNotify, SelfCopy,

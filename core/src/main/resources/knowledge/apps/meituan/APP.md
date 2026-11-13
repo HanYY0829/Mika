@@ -3,6 +3,7 @@ name: meituan
 display: 美团
 packages: ["com.sankuai.meituan"]
 aliases: ["美团", "Meituan"]
+sites: ["meituan.com"]
 open: 美团
 description: 外卖、到店团购、酒店旅行与本地生活服务
 ---

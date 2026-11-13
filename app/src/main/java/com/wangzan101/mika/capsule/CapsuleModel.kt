@@ -10,6 +10,8 @@ import com.wangzan101.mika.core.agent.TaskState
 import com.wangzan101.mika.takeover.Takeover
 import com.wangzan101.mika.task.SteerNote
 import com.wangzan101.mika.ui.Exchange
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 /** 设置里「悬浮胶囊」的三选一;存成名字,认不出(没设过、旧版本)时是默认的「一直显示」(随时能双击发这一屏)。 */
 enum class CapsuleMode {
@@ -33,6 +35,28 @@ enum class CapsuleIdleOpacity(val percent: Int) {
         fun parse(percent: Int): CapsuleIdleOpacity = entries.firstOrNull { it.percent == percent } ?: DEFAULT
     }
 }
+
+/** 展开的胶囊卡片整体缩放的档位;滑块只停在这四档,设置里存百分比(85 = 0.85×)。只缩放展开的卡片,
+ * 收起的一颗、胶囊条和按住说话面板不跟着变。 */
+enum class CapsuleCardScale(val percent: Int) {
+    Small(85), Normal(100), Large(115), XLarge(130);
+
+    val factor: Float get() = percent / 100f
+
+    /**
+     * 卡片在缩放前用的宽(标准 dp):卡片内容按 [factor] 放大渲染,所以上限除回 [factor],
+     * 任何档位渲染出来都不超过「屏宽 − 24dp」、不小于 240dp,和标准档同一个界。
+     */
+    fun width(screenWidthDp: Int): Dp = minOf(CardWidth, ((screenWidthDp - 24) / factor).coerceAtLeast(240f / factor).dp)
+
+    companion object {
+        val DEFAULT = Normal
+        fun parse(percent: Int): CapsuleCardScale = entries.firstOrNull { it.percent == percent } ?: DEFAULT
+    }
+}
+
+/** 标准档下卡片的宽;放大、缩小档见 [CapsuleCardScale.width]。 */
+val CardWidth = 322.dp
 
 /**
  * 一个任务此刻的样子:编号([TaskRun.key])、所在对话、状态、接管走到哪一步;
@@ -69,6 +93,7 @@ data class CapsuleInputs(
     val serviceAvailable: Boolean,
     val cardOpen: Boolean = false,
     val kept: KeptPage? = null,
+    val fullscreen: Boolean = false,
 )
 
 /** 胶囊的状态,按优先级从高到低排([ordinal] 小的先显示);[Idle] 是「一直显示」时没任务的图标。 */
@@ -180,7 +205,7 @@ class CapsuleModel(private val reasonLabel: (String) -> String? = { null }) {
         seen.retainAll(marks)
         if (inputs.cardOpen) seen += marks
 
-        if (inputs.mode == CapsuleMode.Off || !inputs.serviceAvailable || inputs.mikaInForeground || !inputs.screenInteractive) {
+        if (inputs.mode == CapsuleMode.Off || !inputs.serviceAvailable || inputs.fullscreen || inputs.mikaInForeground || !inputs.screenInteractive) {
             // 再出现时直接显示最新的那句,不接着上次的节流
             shownIdentity = null
             shownText = null

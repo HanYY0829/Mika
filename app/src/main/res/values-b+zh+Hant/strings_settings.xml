@@ -83,6 +83,12 @@
     <string name="capsule_mode_always_detail">沒有任務時也留一顆 Mika 圖示</string>
     <string name="capsule_idle_opacity">靜置不透明度</string>
     <string name="capsule_idle_opacity_detail">幾秒沒碰後的顯示程度；需要你處理時始終完整顯示</string>
+    <string name="capsule_card_size">卡片大小</string>
+    <string name="capsule_card_size_detail">展開的膠囊卡片與文字整體縮放；收起的一顆不變</string>
+    <string name="capsule_card_size_small">小</string>
+    <string name="capsule_card_size_normal">標準</string>
+    <string name="capsule_card_size_large">大</string>
+    <string name="capsule_card_size_xlarge">特大</string>
     <string name="routes_saved">已記住的操作路線</string>
     <string name="loading">正在讀取</string>
     <plurals name="routes_count">
@@ -124,8 +130,29 @@
     <string name="appearance_system_detail">手機是淺色就淺色，深色就深色</string>
     <string name="appearance_light">一直淺色</string>
     <string name="appearance_dark">一直深色</string>
+    <string name="accent_group">強調色</string>
+    <string name="accent_default">預設</string>
+    <string name="accent_blue">藍色</string>
+    <string name="accent_indigo">靛藍</string>
+    <string name="accent_purple">紫色</string>
+    <string name="accent_pink">粉紅色</string>
+    <string name="accent_teal">青色</string>
+    <string name="accent_graphite">石墨</string>
+    <string name="skin_group">背景圖片</string>
+    <string name="skin_pick">從相簿選一張</string>
+    <string name="skin_clear">換回純色背景</string>
+    <string name="skin_failed">這張圖片讀不出來</string>
+    <string name="skin_change">換一張</string>
+    <string name="skin_scrim">遮罩濃度</string>
+    <string name="skin_position">圖片位置</string>
+    <string name="skin_blur">模糊</string>
+    <string name="skin_blur_off">不模糊</string>
+    <string name="skin_blur_light">輕微</string>
+    <string name="skin_blur_strong">較強</string>
+    <string name="skin_accent_follow">強調色跟隨圖片</string>
+    <string name="skin_accent_follow_sub">用圖上的主色代替上面選的強調色；圖上沒有明顯顏色時照舊</string>
     <string name="settings_self_config">允許 Mika 改自己的設定</string>
-    <string name="settings_self_config_sub">打開後，任務裡會多一件工具，能看和改這些偏好（操作節奏、靜音、膠囊、外觀、螢幕常亮）。模型和 Key、容器聯網、任何刪資料的操作都不在其中</string>
+    <string name="settings_self_config_sub">打開後，任務裡會多一件工具，能看和改這些偏好（操作節奏、靜音、膠囊、外觀、強調色、螢幕常亮）。模型和 Key、容器聯網、任何刪資料的操作都不在其中</string>
     <string name="settings_step_limit">每個任務的步數上限</string>
     <string name="settings_step_limit_sub">關著表示不限制。到達上限時任務會停下，並說明停在哪一步。</string>
     <string name="settings_step_limit_off">不限制</string>
@@ -175,4 +202,10 @@
     <string name="settings_token_budget_custom">自訂 Token 預算</string>
     <string name="settings_token_budget_apply">使用</string>
     <string name="settings_token_budget_invalid">請輸入 %1$s 到 %2$s 的整數。</string>
+    <string name="settings_auto_archive">自動歸檔對話</string>
+    <string name="settings_auto_archive_sub">太久沒有新訊息的對話自動收進歸檔</string>
+    <string name="settings_auto_archive_hint">超過選定的時間沒有新訊息的對話會收進歸檔。置頂的對話和有任務在運行的對話不歸檔；隨時可以在對話列表的歸檔裡恢復。</string>
+    <plurals name="settings_auto_archive_days">
+        <item quantity="other">%1$d 天</item>
+    </plurals>
 </resources>

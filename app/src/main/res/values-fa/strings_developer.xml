@@ -25,4 +25,6 @@
     <string name="dev_speed">سرعت</string>
     <string name="dev_experiments">آزمایش‌ها</string>
     <string name="dev_run_log">سوابق اجرا</string>
+    <string name="dev_screen_tables">جدول عناصر صفحهٔ جدید</string>
+    <string name="dev_screen_tables_sub">در نخستین خواندن صفحه، فیلدهای تکراری به شکل ستون فرستاده می‌شوند. ارجاع عناصر و درخت کامل حفظ می‌شوند.</string>
 </resources>

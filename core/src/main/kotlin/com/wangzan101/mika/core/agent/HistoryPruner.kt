@@ -210,7 +210,7 @@ object HistoryPruner {
         val obj = parse(content) ?: return content
         val small = obj.mapValues { (k, v) ->
             val long = if (v is JsonPrimitive) v.isString && v.content.length > LONG_TEXT else v.toString().length > LONG_TEXT
-            if (k == "elements" || k == "tree" || (long && k !in OUTCOME)) JsonPrimitive(OMITTED) else v
+            if (k == "elements" || k == ScreenElementTable.KEY || k == "tree" || (long && k !in OUTCOME)) JsonPrimitive(OMITTED) else v
         }
         return JsonObject(small).toString()
     }

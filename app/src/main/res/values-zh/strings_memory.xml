@@ -27,6 +27,9 @@
     <string name="memory_auto_sub">任务结束后从你的原话里整理</string>
     <string name="memory_learn">从做过的事里学(技能和 App 知识)</string>
     <string name="memory_learn_sub">学到的技能和 App 知识要你收下才会用</string>
+    <string name="memory_tasks">记住办过的任务</string>
+    <string name="memory_tasks_sub">每次任务结束记一条摘要，下次同类任务能查到</string>
+    <string name="memory_tasks_title">办过的任务</string>
     <string name="memory_clear_sub">删掉所有记忆和学到的技能</string>
     <string name="edit_it">改一改</string>
     <string name="unpin">取消置顶</string>

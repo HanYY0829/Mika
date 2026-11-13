@@ -130,4 +130,14 @@
     <string name="terminal_task_running">Mika juga sedang bekerja di ruang kerja ini; perubahan dari kedua sisi bisa saling mengganggu.</string>
     <string name="terminal_copy_all">Salin semua</string>
     <string name="terminal_copied">Disalin</string>
+    <string name="personal_replay_title">Layar ponsel</string>
+    <string name="personal_replay_close">Tutup</string>
+    <string name="personal_replay_live_screen">Layar ponsel langsung</string>
+    <string name="personal_replay_recorded_screen">Rekaman layar tugas</string>
+    <string name="personal_replay_loading">Memuat layar…</string>
+    <string name="personal_replay_empty">Belum ada rekaman untuk diputar.</string>
+    <string name="personal_replay_live">Langsung</string>
+    <string name="personal_replay_pause">Jeda</string>
+    <string name="personal_replay_play">Putar</string>
+    <string name="personal_replay_return_live">Kembali ke siaran langsung</string>
 </resources>

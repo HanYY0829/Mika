@@ -36,12 +36,12 @@ class FilePersonalStore(file: File) : PersonalStore {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val _state = MutableStateFlow(
         if (!file.exists() && !File(file.path + ".bak").exists()) PersonalState()
-        else runCatching { json.decodeFromString<PersonalState>(atomic.openRead().bufferedReader().use { it.readText() }) }
+        else runCatching { decodePersonalState(json, atomic.openRead().bufferedReader().use { it.readText() }) }
             .getOrElse {
                 // Preserve the corrupt input for recovery, never silently overwrite the only copy.
                 file.copyTo(File(file.path + ".unreadable-" + System.currentTimeMillis()), overwrite = false)
                 PersonalState(messages = listOf(PersonalMessage(UUID.randomUUID().toString(), "assistant",
-                    "历史记录暂时无法读取，原文件已保留备份。可以继续聊；请保留备份以便恢复。", System.currentTimeMillis(), error = true)))
+                    "历史记录暂时无法读取，原文件已保留备份。可以继续聊；请保留备份以便恢复。", System.currentTimeMillis(), error = true, systemType = "history_unreadable")))
             }
     )
     override val state = _state.asStateFlow()
@@ -80,7 +80,7 @@ class PersonalRuntime(private val app: MikaApp) {
             return "补充已交给原任务。"
         }
         override fun cancel(conversationId: String): String {
-            val run = app.taskState.run(conversationId) ?: error("任务还未就绪或已经结束，请查看任务详情。")
+            val run = app.taskState.run(conversationId) ?: throw PersonalSystemException("stop_not_ready", "任务还未就绪或已经结束，请查看任务详情。")
             TaskService.cancel(app, run.key)
             return "已请求停止，等待执行服务交代当前进展。"
         }
@@ -99,7 +99,7 @@ class PersonalRuntime(private val app: MikaApp) {
         }
     }
     val agent = PersonalAgent(store, scope, { app.tasks.modelFactory(app, ModelSession.of("personal-main")) }, actions)
-    private val _error = MutableStateFlow<String?>(null)
+    private val _error = MutableStateFlow<Throwable?>(null)
     val error = _error.asStateFlow()
     fun clearError() { _error.value = null }
     val state get() = agent.state
@@ -159,14 +159,15 @@ class PersonalRuntime(private val app: MikaApp) {
     fun stop(id: String) {
         scope.launch {
             runCatching {
-                val task = state.value.tasks.first { it.id == id }
+                val task = state.value.tasks.firstOrNull { it.id == id }
+                    ?: throw PersonalSystemException("stop_not_ready", "任务还未就绪或已经结束，请查看任务详情。")
                 actions.cancel(task.conversationId)
-            }.onFailure { _error.value = it.message ?: "停止任务失败，请打开任务重试。" }
+            }.onFailure { _error.value = it }
         }
     }
 
     private fun refresh() {
-        state.value.tasks.filter { !it.terminal || !it.delivered || (it.status == "cancelled" && it.result == "已取消") }.forEach { task ->
+        state.value.tasks.filter { it.needsRefresh }.forEach { task ->
             val turns = app.conversations.turns(task.conversationId)
             val turn = turns.lastOrNull()
             if (turn != null) {
@@ -175,7 +176,7 @@ class PersonalRuntime(private val app: MikaApp) {
                     "failed" -> "failed"
                     else -> if (turn.result == "partial") "partial" else if (turn.result == "not_possible") "failed" else "completed"
                 }
-                agent.updateTask(task.id, status, result = turn.outcome)
+                agent.updateTask(task.id, status, result = turn.outcome, resultSystemType = turn.outcomeSystemType)
             } else {
                 val run = app.taskState.run(task.conversationId)
                 val current = run?.state?.value
@@ -190,10 +191,15 @@ class PersonalRuntime(private val app: MikaApp) {
                 }
                 val persisted = app.runStore.all().lastOrNull { it.threadId == task.conversationId }
                 if (run == null && persisted?.phase == RunPhase.Interrupted) {
-                    agent.updateTask(task.id, "failed", result = "上次运行中断了。已保留聊天与任务记录，你可以重新交代这件事。")
+                    agent.updateTask(task.id, "failed", result = "上次运行中断了。已保留聊天与任务记录，你可以重新交代这件事。", resultSystemType = "task_interrupted")
                 } else if (run == null && persisted?.phase == RunPhase.Ended && persisted.reply != null) {
                     agent.updateTask(task.id, if (persisted.runSucceeded == true) "completed" else "failed", result = persisted.reply)
-                } else agent.updateTask(task.id, pair.first, pair.second)
+                } else agent.updateTask(task.id, pair.first, pair.second, detailSystemType = when (current) {
+                    is TaskState.WaitingConfirmation -> "wait_confirmation"
+                    is TaskState.Terminal -> "saving"
+                    null, TaskState.Idle -> "waiting"
+                    else -> null
+                })
             }
         }
     }

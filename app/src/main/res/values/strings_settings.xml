@@ -97,6 +97,12 @@
     <string name="capsule_mode_always_detail">Keeps a Mika icon on screen even with no tasks</string>
     <string name="capsule_idle_opacity">Idle opacity</string>
     <string name="capsule_idle_opacity_detail">After a few seconds untouched; anything needing your attention stays fully visible</string>
+    <string name="capsule_card_size">Card size</string>
+    <string name="capsule_card_size_detail">The expanded capsule card and its text scale together; the collapsed capsule keeps its size</string>
+    <string name="capsule_card_size_small">Small</string>
+    <string name="capsule_card_size_normal">Standard</string>
+    <string name="capsule_card_size_large">Large</string>
+    <string name="capsule_card_size_xlarge">Extra large</string>
     <string name="routes_saved">Saved routes</string>
     <string name="loading">Loading</string>
     <plurals name="routes_count">
@@ -139,8 +145,29 @@
     <string name="appearance_system_detail">Light or dark, whichever the phone is in</string>
     <string name="appearance_light">Always light</string>
     <string name="appearance_dark">Always dark</string>
+    <string name="accent_group">Accent color</string>
+    <string name="accent_default">Default</string>
+    <string name="accent_blue">Blue</string>
+    <string name="accent_indigo">Indigo</string>
+    <string name="accent_purple">Purple</string>
+    <string name="accent_pink">Pink</string>
+    <string name="accent_teal">Teal</string>
+    <string name="accent_graphite">Graphite</string>
+    <string name="skin_group">Background image</string>
+    <string name="skin_pick">Choose from photos</string>
+    <string name="skin_clear">Use the plain background</string>
+    <string name="skin_failed">Couldn\'t read that image</string>
+    <string name="skin_change">Choose another image</string>
+    <string name="skin_scrim">Dim the image</string>
+    <string name="skin_position">Image position</string>
+    <string name="skin_blur">Blur</string>
+    <string name="skin_blur_off">None</string>
+    <string name="skin_blur_light">Light</string>
+    <string name="skin_blur_strong">Strong</string>
+    <string name="skin_accent_follow">Accent color from the image</string>
+    <string name="skin_accent_follow_sub">Uses the main color in the image instead of the accent color above, when it has one</string>
     <string name="settings_self_config">Let Mika change its own settings</string>
-    <string name="settings_self_config_sub">When on, tasks get one tool to read and change these preferences (pace, mute, capsule, appearance, screen-on). Models, API keys, container network and anything that deletes data are never included</string>
+    <string name="settings_self_config_sub">When on, tasks get one tool to read and change these preferences (pace, mute, capsule, appearance, accent color, screen-on). Models, API keys, container network and anything that deletes data are never included</string>
     <string name="settings_step_limit">Step limit per task</string>
     <string name="settings_step_limit_sub">Off means no limit. When the limit is reached, the task stops and says where it stopped.</string>
     <string name="settings_step_limit_off">No limit</string>
@@ -190,4 +217,11 @@
     <string name="settings_token_budget_custom">Custom token budget</string>
     <string name="settings_token_budget_apply">Use</string>
     <string name="settings_token_budget_invalid">Enter a whole number from %1$s to %2$s.</string>
+    <string name="settings_auto_archive">Auto-archive chats</string>
+    <string name="settings_auto_archive_sub">Chats without new messages for a while move to the archive</string>
+    <string name="settings_auto_archive_hint">Chats without new messages for the chosen time are moved to the archive. Pinned chats and chats with a task running stay put. You can restore them from the archive in the chat list at any time.</string>
+    <plurals name="settings_auto_archive_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
 </resources>

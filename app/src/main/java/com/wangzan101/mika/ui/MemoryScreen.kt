@@ -3,6 +3,7 @@ package com.wangzan101.mika.ui
 import com.wangzan101.mika.R
 import com.wangzan101.mika.i18n.tr
 import com.wangzan101.mika.i18n.trPlural
+import com.wangzan101.mika.i18n.uiLocale
 import androidx.compose.ui.res.stringResource
 import com.wangzan101.mika.ui.components.keepsKeyboard
 import com.wangzan101.mika.ui.components.KeyboardDismissArea
@@ -33,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wangzan101.mika.core.knowledge.GuideCatalog
 import com.wangzan101.mika.core.memory.MemoryKind
+import com.wangzan101.mika.core.memory.TaskMemory
 import com.wangzan101.mika.memory.MemoryRuntime
 import com.wangzan101.mika.ui.components.ActionSheet
 import com.wangzan101.mika.ui.components.BarIconButton
@@ -58,6 +60,8 @@ import com.wangzan101.mika.ui.theme.MikaType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
 
 private val SEGMENT_TAGS = Segment.entries.map { "segment-${it.name}" }
 
@@ -81,6 +85,7 @@ internal fun rememberMemoryViewModel(runtime: MemoryRuntime): State<MemoryViewMo
                 runnableScripts = bundled.runnableScripts(),
                 appDrafts = runtime.appKnowledge(),
                 builtinSkillNames = bundled.items.map { it.name }.toSet(),
+                taskMemory = runtime.taskMemory(),
             )
         }
     }
@@ -174,7 +179,9 @@ fun MemoryScreen(
             SwitchRow(stringResource(R.string.memory_use), stringResource(R.string.memory_use_sub), ui.switches.useMemory, first = true) { on -> vm.setSwitches { it.copy(useMemory = on) } }
             SwitchRow(stringResource(R.string.memory_auto), stringResource(R.string.memory_auto_sub), ui.switches.autoRemember) { on -> vm.setSwitches { it.copy(autoRemember = on) } }
             SwitchRow(stringResource(R.string.memory_learn), stringResource(R.string.memory_learn_sub), ui.switches.learnSkills) { on -> vm.setSwitches { it.copy(learnSkills = on) } }
+            SwitchRow(stringResource(R.string.memory_tasks), stringResource(R.string.memory_tasks_sub), ui.switches.rememberTasks) { on -> vm.setSwitches { it.copy(rememberTasks = on) } }
         }
+        TaskMemoriesSection(vm)
         if (webSitesCount != null || routes != null) {
             GroupLabel(stringResource(R.string.settings_saved_data))
             GroupCard {
@@ -207,6 +214,31 @@ fun MemoryScreen(
             text = { Text(if (ui.clearStage == 1) stringResource(R.string.memory_clear_body) else stringResource(R.string.memory_clear_final)) },
             confirmButton = { TextButton(vm::confirmClear, Modifier.testTag("confirm-clear")) { Text(if (ui.clearStage == 1) stringResource(R.string.chat_continue) else stringResource(R.string.routes_clear_all)) } },
             dismissButton = { TextButton(vm::cancelClear) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+}
+
+/** 跨会话任务摘要(任务结束自动记的):看得见、删得掉。没有就不占地方。 */
+@Composable
+private fun TaskMemoriesSection(vm: MemoryViewModel) {
+    val tasks by vm.tasks.collectAsState()
+    if (tasks.isEmpty()) return
+    var acting by remember { mutableStateOf<TaskMemory?>(null) }
+    GroupLabel(stringResource(R.string.memory_tasks_title))
+    GroupCard {
+        tasks.forEachIndexed { i, t ->
+            val subtitle = listOfNotNull(
+                SimpleDateFormat("yyyy-MM-dd HH:mm", uiLocale()).format(Date(t.createdAt)),
+                t.conclusion.takeIf { it.isNotBlank() },
+            ).joinToString(" · ")
+            ListRow(null, t.goal, subtitle, first = i == 0, onClick = { acting = t })
+        }
+    }
+    acting?.let { t ->
+        ActionSheet(
+            t.goal,
+            listOf(SheetAction(stringResource(R.string.confirm_delete), destructive = true) { vm.deleteTask(t.id); acting = null }),
+            onDismiss = { acting = null },
         )
     }
 }

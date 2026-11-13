@@ -2,6 +2,8 @@ package com.wangzan101.mika.calls
 
 import android.content.Context
 import android.util.Base64
+import java.io.File
+import java.io.FileOutputStream
 import com.wangzan101.mika.settings.KeystoreKeyCipher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +20,25 @@ data class CallTranscriptLine(val role: String, val text: String) {
     override fun toString(): String = "CallTranscriptLine(role=$role)"
 }
 
+/** Structured post-call information is stored with the encrypted call record. */
+@Serializable
+data class CallSummary(
+    val purpose: String? = null,
+    val highlights: List<String> = emptyList(),
+    val conclusion: String? = null,
+    val uncertainties: List<String> = emptyList(),
+    val actions: List<CallFollowUp> = emptyList(),
+)
+
+@Serializable
+data class CallFollowUp(
+    val text: String,
+    val status: Status = Status.UNKNOWN,
+) {
+    @Serializable
+    enum class Status { PENDING, DONE, UNKNOWN }
+}
+
 @Serializable
 data class CallRecord(
     val id: String,
@@ -30,9 +51,14 @@ data class CallRecord(
     val handled: Boolean = false,
     val task: CallTaskBrief? = null,
     val audioReport: CallAudioReport? = null,
+    val summary: CallSummary? = null,
+    val summaryStatus: SummaryStatus = SummaryStatus.NOT_REQUESTED,
 ) {
     override fun toString(): String = "CallRecord(direction=$direction, result=$result)"
 }
+
+@Serializable
+enum class SummaryStatus { NOT_REQUESTED, PENDING, READY, FAILED }
 
 /** Only bounded counters; copied reports never include numbers, IDs, speech or credentials. */
 @Serializable
@@ -97,6 +123,9 @@ internal class CallHistory(private val storage: Storage) {
     suspend fun setHandled(id: String, handled: Boolean): Result =
         edit(id) { records -> records.map { if (it.id == id) it.copy(handled = handled) else it } }
 
+    suspend fun setSummary(id: String, summary: CallSummary?, status: SummaryStatus): Result =
+        edit(id) { records -> records.map { if (it.id == id) it.copy(summary = summary, summaryStatus = status) else it } }
+
     suspend fun delete(id: String): Result = edit(id) { records -> records.filterNot { it.id == id } }
 
     // Explicit clearing can also remove an unreadable encrypted history.
@@ -137,36 +166,50 @@ internal class CallHistory(private val storage: Storage) {
     private class EncryptedStorage(context: Context) : Storage {
         private val prefs = context.getSharedPreferences("mika_call_history", Context.MODE_PRIVATE)
         private val cipher = KeystoreKeyCipher("mika-call-history")
+        private val file = File(context.filesDir, "call-history-v2.enc")
 
         override fun read(): List<CallRecord> {
-            val stored = prefs.getString(KEY, null) ?: return emptyList()
-            check(stored.length <= MAX_ENCODED_CHARS)
-            val bytes = cipher.decrypt(Base64.decode(stored, Base64.NO_WRAP))
-            return try {
-                Json.decodeFromString<List<CallRecord>>(bytes.toString(Charsets.UTF_8))
-            } finally {
-                bytes.fill(0)
+            if (file.exists()) {
+                check(file.length() in 1..MAX_ENCODED_BYTES)
+                val encrypted = file.readBytes()
+                val bytes = cipher.decrypt(encrypted)
+                return decode(bytes)
             }
+            val stored = prefs.getString(KEY, null) ?: return emptyList()
+            check(stored.length <= MAX_LEGACY_ENCODED_CHARS)
+            val bytes = cipher.decrypt(Base64.decode(stored, Base64.NO_WRAP))
+            return decode(bytes)
         }
 
         override fun write(records: List<CallRecord>): Boolean {
-            if (records.isEmpty()) return prefs.edit().remove(KEY).commit()
+            if (records.isEmpty()) return file.delete().or(!file.exists()) && prefs.edit().remove(KEY).commit()
             val bytes = Json.encodeToString(records).toByteArray()
+            val tmp = File(file.parentFile, "${file.name}.tmp")
             return try {
-                val encrypted = Base64.encodeToString(cipher.encrypt(bytes), Base64.NO_WRAP)
-                encrypted.length <= MAX_ENCODED_CHARS && prefs.edit().putString(KEY, encrypted).commit()
+                val encrypted = cipher.encrypt(bytes)
+                if (encrypted.size > MAX_ENCODED_BYTES) return false
+                FileOutputStream(tmp).use { output -> output.write(encrypted); output.fd.sync() }
+                if (!tmp.renameTo(file)) return false
+                prefs.edit().remove(KEY).commit()
             } finally {
                 bytes.fill(0)
+                tmp.delete()
             }
         }
+
+        private fun decode(bytes: ByteArray): List<CallRecord> = try {
+            Json.decodeFromString<List<CallRecord>>(bytes.toString(Charsets.UTF_8))
+        } finally { bytes.fill(0) }
     }
 
     companion object {
         const val MAX_CALLS = 50
-        const val MAX_LINES = 32
-        const val MAX_LINE_LENGTH = 240
-        // Allow worst-case JSON escaping + Base64 for 50 bounded transcripts and task briefs.
-        private const val MAX_ENCODED_CHARS = 5_000_000
+        // Preserve substantially longer calls; history now uses a bounded encrypted file.
+        const val MAX_LINES = 128
+        const val MAX_LINE_LENGTH = 600
+        // This encrypted file is bounded independently from the small legacy SharedPreferences record.
+        private const val MAX_ENCODED_BYTES = 24_000_000L
+        private const val MAX_LEGACY_ENCODED_CHARS = 5_000_000
         private const val KEY = "encrypted_calls_v1"
     }
 }

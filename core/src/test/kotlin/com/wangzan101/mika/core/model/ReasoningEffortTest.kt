@@ -91,4 +91,24 @@ class ReasoningEffortTest {
             assertEquals(listOf("low", "high"), models[3].reasoningEfforts)
         }
     }
+
+    // DeepSeek 的 /models 把档位写在 effort.supported_levels(#563)
+    @Test fun catalogReadsDeepSeekEffortLevels() = runTest {
+        MockWebServer().use { server ->
+            server.start()
+            server.enqueue(MockResponse().setBody("""{"object":"list","data":[
+                {"id":"deepseek-flash","name":"DeepSeek-V4.1-Flash","effort":{"supported_levels":["low","high","max","high",3," "],"default_level":"high"}},
+                {"id":"e","effort":{"supported_levels":[]}},
+                {"id":"f","effort":"high"},
+                {"id":"g","effort":{"default_level":"high"}}
+            ]}"""))
+            val models = (ModelCatalog(OkHttpClient()).openAiCompat(server.url("/").toString(), null) as ModelListResult.Ok).models
+            assertEquals(listOf("low", "high", "max"), models[0].reasoningEfforts)
+            assertEquals(true, models[0].reasoning)
+            assertEquals(emptyList<String>(), models[1].reasoningEfforts)
+            // 不是这种写法的不当成档位
+            assertNull(models[2].reasoningEfforts)
+            assertNull(models[3].reasoningEfforts)
+        }
+    }
 }

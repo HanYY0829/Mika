@@ -98,6 +98,6 @@ object WebUrlPolicy {
     }
 
     private fun queryParam(url: String, name: String): String? =
-        url.substringAfter('?', "").substringBefore('#').split('&')
+        url.substringBefore('#').substringAfter('?', "").split('&')
             .firstOrNull { it.startsWith("$name=") }?.removePrefix("$name=")?.takeIf { it.isNotBlank() }
 }

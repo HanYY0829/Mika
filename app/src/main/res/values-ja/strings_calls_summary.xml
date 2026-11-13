@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_completed_notification_channel">AI通話終了通知</string>
+    <string name="calls_completed_notification_title">AIが電話に応答しました</string>
+    <string name="calls_completed_notification_text">タップして通話の詳細を表示</string>
+    <string name="calls_summary_enable">AI通話の要約とフォローアップを作成</string>
+    <string name="calls_summary_cloud_consent">有効にすると、通話の文字起こしが選択中のAIモデルサービスに送信され、要約されます。原文はこの端末に暗号化して保存されます。無効の場合、文字起こしは送信されません。</string>
+    <string name="calls_summary_failed">要約を作成できませんでした。この通話の詳細から再試行できます。</string>
+    <string name="calls_summary_generating">要約を作成しています…</string>
+    <string name="calls_summary_retry">要約を再試行</string>
+    <string name="calls_summary_purpose">通話の目的</string>
+    <string name="calls_summary_highlights">主な内容</string>
+    <string name="calls_summary_conclusion">結論</string>
+    <string name="calls_summary_uncertainties">未確認事項</string>
+    <string name="calls_summary_actions">フォローアップと状態</string>
+    <string name="calls_summary_pending">未対応</string>
+    <string name="calls_summary_done">完了</string>
+    <string name="calls_summary_unknown">不明</string>
+</resources>

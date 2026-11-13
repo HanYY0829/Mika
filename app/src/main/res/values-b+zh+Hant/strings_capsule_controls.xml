@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capsule_edge_reveal">顯示膠囊</string>
+    <string name="capsule_hide_at_edge">貼邊自動隱藏</string>
+    <string name="capsule_hide_fullscreen">全螢幕時隱藏膠囊</string>
+    <string name="capsule_tile_label">Mika 膠囊</string>
+    <string name="capsule_tile_enabled">允許加入快速設定</string>
+    <string name="capsule_tile_setup">請開啟 Mika，設定好手機操作後使用浮動膠囊。</string>
+    <string name="pip_size_smaller">縮小畫面</string>
+    <string name="pip_size_larger">放大畫面</string>
+    <string name="pip_size_reset">恢復預設大小</string>
+</resources>

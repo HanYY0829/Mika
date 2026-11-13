@@ -190,6 +190,25 @@ class BridgeTests(unittest.TestCase):
         self.deliver("明天呢", "om_2")
         self.assertEqual(self.api.writes[-1], ("start", "明天呢", "mcp-test"))
 
+    def test_question_shown_by_status_is_not_pushed_again(self):
+        self.deliver()
+        self.api.status.update(status="waiting_for_answer", question="Which city?")
+        self.deliver("/status", "om_2")
+        shown = len(self.sent)
+        self.bridge.poll_once()
+        self.assertEqual(len(self.sent), shown)
+        # The question is still answerable: the record above must not cost the user their answer.
+        self.deliver("/answer Shanghai", "om_3")
+        self.assertEqual(self.api.writes[-1], ("answer", "Shanghai"))
+
+    def test_final_result_shown_by_status_is_not_pushed_again(self):
+        self.deliver()
+        self.api.status.update(status="done", answer="今天晴天")
+        self.deliver("/status", "om_2")
+        shown = len(self.sent)
+        self.bridge.poll_once()
+        self.assertEqual(len(self.sent), shown)
+
     def test_old_poll_failure_does_not_mark_replacement_task_uncertain(self):
         peer = "oc_chat:ou_owner"
         self.store.update(peer, task_id="task_old")

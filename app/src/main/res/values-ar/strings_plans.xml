@@ -70,6 +70,9 @@
     <string name="plans_condition">يعمل فقط إذا: %1$s · %2$s</string>
     <string name="plans_last">الأخير %1$s · %2$s</string>
     <string name="plans_never_run">لم يُشغّل بعد</string>
+    <string name="plans_source_user">يدوي</string>
+    <string name="plans_source_model">النموذج</string>
+    <string name="plans_source_external">سكربت</string>
     <string name="plans_delivered">تم التسليم</string>
     <string name="plans_unchanged">لم يتغير الشرط</string>
     <string name="plans_not_met">الشرط غير متحقق</string>

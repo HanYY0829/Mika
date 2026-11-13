@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_completed_notification_channel">اعلان‌های پایان تماس هوش مصنوعی</string>
+    <string name="calls_completed_notification_title">هوش مصنوعی به تماس پاسخ داد</string>
+    <string name="calls_completed_notification_text">برای دیدن جزئیات تماس بزنید</string>
+    <string name="calls_summary_enable">ساخت خلاصه و پیگیری تماس با هوش مصنوعی</string>
+    <string name="calls_summary_cloud_consent">با فعال‌کردن، متن تماس برای خلاصه‌سازی به سرویس مدل هوش مصنوعی انتخاب‌شده فرستاده می‌شود. متن اصلی به‌صورت رمزگذاری‌شده روی این دستگاه می‌ماند. با غیرفعال‌بودن، متنی فرستاده نمی‌شود.</string>
+    <string name="calls_summary_failed">ساخت خلاصه ناموفق بود. از جزئیات این تماس دوباره تلاش کنید.</string>
+    <string name="calls_summary_generating">در حال ساخت خلاصه…</string>
+    <string name="calls_summary_retry">تلاش دوباره</string>
+    <string name="calls_summary_purpose">هدف تماس</string>
+    <string name="calls_summary_highlights">نکات مهم</string>
+    <string name="calls_summary_conclusion">نتیجه</string>
+    <string name="calls_summary_uncertainties">موارد تأییدنشده</string>
+    <string name="calls_summary_actions">پیگیری‌ها و وضعیت</string>
+    <string name="calls_summary_pending">در انتظار</string>
+    <string name="calls_summary_done">انجام‌شده</string>
+    <string name="calls_summary_unknown">نامشخص</string>
+</resources>

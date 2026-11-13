@@ -17,6 +17,7 @@ class SelfConfigImpl(
         SelfConfig.Option(KEY_PACE, "操作节奏", flags.operatingPace().name.lowercase(), listOf("fast", "standard", "human")),
         SelfConfig.Option(KEY_MUTE, "干活时把被操作的 App 静音", onOff(flags.muteTarget()), ON_OFF),
         SelfConfig.Option(KEY_THEME, "外观", flags.themeMode().name.lowercase(), listOf("system", "light", "dark")),
+        SelfConfig.Option(KEY_ACCENT, "强调色", flags.themeAccent().name.lowercase(), ACCENTS),
         SelfConfig.Option(KEY_CAPSULE, "悬浮胶囊", flags.capsuleMode().name.lowercase(), listOf("off", "duringtasks", "always")),
         SelfConfig.Option(KEY_KEEP_ON, "干活时屏幕常亮", onOff(flags.keepScreenOn()), ON_OFF),
     )
@@ -47,6 +48,12 @@ class SelfConfigImpl(
                 flags.setThemeMode(mode)
                 null
             }
+            KEY_ACCENT -> {
+                val accent = ThemeAccent.entries.firstOrNull { it.name.equals(v, true) }
+                    ?: return "accent color is one of ${ACCENTS.joinToString(", ")}"
+                flags.setThemeAccent(accent)
+                null
+            }
             KEY_CAPSULE -> {
                 val mode = com.wangzan101.mika.capsule.CapsuleMode.entries.firstOrNull { it.name.equals(v, true) }
                     ?: return "capsule is one of off, duringtasks, always"
@@ -66,6 +73,8 @@ class SelfConfigImpl(
         const val KEY_PACE = "operating_pace"
         const val KEY_MUTE = "mute_apps"
         const val KEY_THEME = "appearance"
+        const val KEY_ACCENT = "accent_color"
+        val ACCENTS = ThemeAccent.entries.map { it.name.lowercase() }
         const val KEY_CAPSULE = "capsule"
         const val KEY_KEEP_ON = "keep_screen_on"
     }

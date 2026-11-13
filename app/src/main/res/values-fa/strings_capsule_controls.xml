@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capsule_edge_reveal">نمایش کپسول</string>
+    <string name="capsule_hide_at_edge">پنهان شدن خودکار در لبه صفحه</string>
+    <string name="capsule_hide_fullscreen">پنهان کردن کپسول در حالت تمام‌صفحه</string>
+    <string name="capsule_tile_label">کپسول Mika</string>
+    <string name="capsule_tile_enabled">در تنظیمات سریع در دسترس است</string>
+    <string name="capsule_tile_setup">Mika را باز کنید و کنترل تلفن را برای استفاده از کپسول شناور راه‌اندازی کنید.</string>
+    <string name="pip_size_smaller">کوچک‌تر کردن پیش‌نمایش</string>
+    <string name="pip_size_larger">بزرگ‌تر کردن پیش‌نمایش</string>
+    <string name="pip_size_reset">بازنشانی اندازه پیش‌نمایش</string>
+</resources>

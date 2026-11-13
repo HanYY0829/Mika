@@ -70,6 +70,16 @@ class HistoryPrunerTest {
         assertTrue("old tree/read-aid payload survived pruning", long !in old)
     }
 
+    @Test fun oldSmallTableIsOmittedAtTheSamePressureBoundaryAsElements() {
+        val packed = obs("p").map { m -> m.copy(parts = m.parts.map { p ->
+            if (p is Part.ToolResult) p.copy(content = """{"ok":true,"snapshotId":"s1","elementTables":[{"columns":["ref"],"rows":[["@e1"]]}]}""") else p
+        }) }
+        val h = listOf(task) + packed + obs("latest") + (1..5).flatMap { tap("t$it") }
+        val visible = results(HistoryPruner.prune(h, TOOLS, cut))
+        assertTrue(HistoryPruner.OMITTED in visible.first().content)
+        assertTrue("@e1" in visible[1].content)
+    }
+
     @Test fun smallResultsAndHeadUntouched() {
         val h = listOf(task) + (1..8).flatMap { obs("c$it") + tap("t$it") }
         val out = HistoryPruner.prune(h, TOOLS, cut)

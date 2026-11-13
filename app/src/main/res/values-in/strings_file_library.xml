@@ -39,4 +39,6 @@
     <string name="file_library_file_count">%1$d file</string>
     <string name="file_library_select_title">Pilih file</string>
     <string name="file_library_preview">Pratinjau</string>
+    <string name="file_library_open_in_chat">Lihat di percakapan</string>
+    <string name="file_library_open_failed">Tidak dapat membuka percakapan ini</string>
 </resources>

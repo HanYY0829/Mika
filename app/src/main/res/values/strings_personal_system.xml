@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_system_interrupted">The previous reply was interrupted. Your chat history has been saved, and you can continue the conversation. Existing tasks are available in Activity.</string>
+    <string name="personal_system_timeout">This reply timed out. Existing tasks will not be repeated because of this, and you can continue sending messages.</string>
+    <string name="personal_system_reply_failed">Reply failed. Please try again later.</string>
+    <string name="personal_system_task_start_failed">Failed to start task</string>
+    <string name="personal_system_task_cancelled">Task cancelled</string>
+    <string name="personal_system_task_completed">Task completed</string>
+    <string name="personal_system_task_failed">Task failed</string>
+    <string name="personal_system_task_running">Task in progress</string>
+    <string name="personal_system_task_queued">Task queued</string>
+    <string name="personal_system_no_model">Please select a primary model in Settings, then come back to continue the conversation.</string>
+    <string name="personal_system_context_long">This message exceeds the current model’s context limit. Please split it into several messages.</string>
+    <string name="personal_system_empty_reply">The model did not return a reply that can be displayed. Please try again.</string>
+    <string name="personal_system_too_many_actions">This turn involved many actions, so processing has stopped. Created tasks are still available in Activity.</string>
+    <string name="personal_system_message_long">This message is too long. Please split it into several messages.</string>
+    <string name="personal_system_task_done_detail">The task has ended. Open it to view the result.</string>
+    <string name="personal_system_task_stopped_detail">The task has stopped. Current progress is preserved in the task record.</string>
+    <string name="personal_system_task_failed_detail">The task could not be completed. Open it to see why.</string>
+    <string name="personal_system_history_unreadable">Chat history cannot be read right now. A backup of the original file has been kept. You can continue chatting; please keep the backup for recovery.</string>
+    <string name="personal_system_task_interrupted">The previous run was interrupted. Chat and task records have been preserved, and you can explain the request again.</string>
+    <string name="personal_system_wait_confirmation">Your confirmation is needed. Open the task to respond.</string>
+    <string name="personal_system_saving">Saving the result</string>
+    <string name="personal_system_waiting">Waiting to start</string>
+    <string name="personal_system_stop_not_ready">The task is not ready or has already ended. Open the task to check its details.</string>
+    <string name="personal_system_stop_failed">Could not stop the task. Open the task and try again.</string>
+    <string name="personal_system_task_amendment">Additional instruction: %1$s</string>
+</resources>

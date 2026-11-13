@@ -1,0 +1,37 @@
+package com.wangzan101.mika.calls
+
+import com.wangzan101.mika.core.model.*
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.*
+import org.junit.Test
+
+class CallSummaryGeneratorTest {
+    private class FakeModel(private val response: String) : ChatModel {
+        override val capabilities = Capabilities(false, false, 4096, false)
+        var received = ""
+        override suspend fun complete(system: String, messages: List<Message>, tools: List<ToolSpec>): ModelReply {
+            received = messages.flatMap { it.parts }.filterIsInstance<Part.Text>().joinToString { it.text }
+            assertTrue(system.contains("请求不能写成已达成的承诺"))
+            assertTrue(tools.isEmpty())
+            return ModelReply(listOf(Part.Text(response)), StopReason.EndTurn, null)
+        }
+    }
+
+    @Test fun parsesStructuredSummaryAndLimitsUntrustedOutput() = runBlocking {
+        val model = FakeModel("""摘要如下：{"purpose":"确认维修时间","highlights":["周五上门"],"conclusion":"尚未预约","uncertainties":["具体时间待确认"],"actions":[{"text":"回复确认时间","status":"PENDING"}]}""")
+        val result = CallSummaryGenerator.generate(model, listOf(CallTranscriptLine("caller", "请周五联系我，具体时间再确认。")))
+        assertEquals("确认维修时间", result?.purpose)
+        assertEquals(CallFollowUp.Status.PENDING, result?.actions?.single()?.status)
+        assertTrue(model.received.contains("请周五联系我"))
+    }
+
+    @Test fun malformedReplyFailsWithoutInventingFields() = runBlocking {
+        assertNull(CallSummaryGenerator.generate(FakeModel("这通电话很好。"), listOf(CallTranscriptLine("caller", "你好"))))
+    }
+
+    @Test fun emptyTranscriptDoesNotCallModel() = runBlocking {
+        val model = FakeModel("{}")
+        assertNull(CallSummaryGenerator.generate(model, emptyList()))
+        assertTrue(model.received.isEmpty())
+    }
+}

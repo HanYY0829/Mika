@@ -158,6 +158,7 @@ const STRINGS = {
   historyOff: ["在手机「连接电脑 → 高级设置」打开「允许电脑查看历史记录」，即可查看手机上的对话和 Trace。", "In Connect a computer → Advanced on the phone, allow computers to view history to read saved conversations and traces."],
   phoneReadOnly: ["在手机上继续此对话", "Continue this conversation on the phone"],
   olderChats: ["加载更多对话", "Load more conversations"],
+  archivedChat: ["已归档", "Archived"],
   olderTurns: ["加载更早的轮次", "Load earlier turns"],
   historyLoading: ["正在读取手机记录…", "Reading saved phone records…"],
   historyFailed: ["未能读取这份记录，请重试。", "Could not read this record. Try again."],
@@ -461,6 +462,7 @@ function mergeHistoryGroups() {
     }
     g.title = chat.title;
     g.updated = chat.updated_at_ms;
+    g.archived = chat.archived === true;
     g.conversation = chat.id;
   }
   for (const g of merged) {
@@ -646,7 +648,7 @@ function renderNav() {
     const task = g.primary;
     const shortLabel = { waiting_for_answer: "attention", waiting_on_phone: "handoff" }[task?.status];
     const marker = task && isActive(task) ? t(shortLabel || task.status) : "";
-    return { key: g.key, name: g.title || label(g.turns[0]), count: g.turns.length, marker };
+    return { key: g.key, name: g.title || label(g.turns[0]), count: g.turns.length, marker, archived: g.archived };
   });
   const signature = JSON.stringify([rows, groupKey, busy, !!overview, moreChats, overview?.history_enabled]);
   if (signature === navSignature) return;
@@ -661,8 +663,9 @@ function renderNav() {
     b.dataset.group = row.key;
     b.disabled = busy;
     b.setAttribute("aria-current", String(row.key === groupKey));
-    b.title = row.name + (row.count ? " · " + t("rounds", { n: row.count }) : "");
+    b.title = row.name + (row.archived ? " · " + t("archivedChat") : "") + (row.count ? " · " + t("rounds", { n: row.count }) : "");
     b.append(icon("chat"), el("span", "name", row.name));
+    if (row.archived) b.append(el("small", "archive-mark", t("archivedChat")));
     if (row.marker) b.append(el("small", "", row.marker));
     list.append(b);
     if (focus === row.key && !busy) b.focus({ preventScroll: true });

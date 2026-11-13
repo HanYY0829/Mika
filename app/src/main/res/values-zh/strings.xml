@@ -130,4 +130,14 @@
     <string name="terminal_task_running">Mika 也在这个工作区里工作，两边同时改可能互相影响。</string>
     <string name="terminal_copy_all">复制全部</string>
     <string name="terminal_copied">已复制</string>
+    <string name="personal_replay_title">手机画面</string>
+    <string name="personal_replay_close">关闭</string>
+    <string name="personal_replay_live_screen">实时手机画面</string>
+    <string name="personal_replay_recorded_screen">录制的任务画面</string>
+    <string name="personal_replay_loading">正在加载画面…</string>
+    <string name="personal_replay_empty">还没有可播放的画面。</string>
+    <string name="personal_replay_live">实时</string>
+    <string name="personal_replay_pause">暂停</string>
+    <string name="personal_replay_play">播放</string>
+    <string name="personal_replay_return_live">回到实时</string>
 </resources>

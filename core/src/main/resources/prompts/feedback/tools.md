@@ -429,6 +429,18 @@ Memory is full; the user needs to tidy it up in settings. Continue the task.
 ## memory.unavailable
 Memory cannot be read right now. Continue the task without saving.
 
+## task_memory.since_invalid
+`since` must be a date like 2026-11-01. Try again with a valid date, or leave it out.
+
+## task_memory.none
+No past task matches. Try other words, a wider date range, or no app filter.
+
+## task_memory.not_found
+The id is not in the latest task_memory_search result set, or no search has run. Search again and use an exact returned id.
+
+## task_memory.step_not_found
+That task has {{steps}} steps and no step with that number. Read the timeline again and pick a step that exists.
+
 ## type.unseen_pasted
 The element list has no field here, so the text was pasted into the box that holds focus and checked against the text read from the screen afterwards.
 

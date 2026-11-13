@@ -48,6 +48,9 @@ Main pages, bottom tabs, the search entry point, where common features are.
 ## 功能 (Features)
 - **Feature name**: how to get there; whether sign-in is needed; what information it shows (prices, status, fields).
 
+## 常用流程 (Common flows)
+Optional: something that is asked for often and takes only a few steps (post a Moments, send money, search for a kind of content). If the steps are few, write them in the body; if there are many and they must be matched against specific menu names, put the steps in a `references/` attachment and say in the body when to read which one. Leave this section out if there is nothing to say.
+
 ## 已知现象 (Known behavior)
 Entry points that are easy to confuse, common pop-ups, quirks in loading or refreshing. Leave this section out if there is nothing to say.
 ```

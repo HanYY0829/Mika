@@ -122,6 +122,22 @@
     <string name="drawer_rename_title">改名</string>
     <string name="drawer_pinned">置頂</string>
     <string name="drawer_pinned_mark">已置頂</string>
+    <string name="drawer_archive">歸檔</string>
+    <string name="drawer_unarchive">取消歸檔</string>
+    <string name="drawer_archived">已歸檔</string>
+    <string name="drawer_archived_count">%1$d 條已歸檔</string>
+    <string name="drawer_archive_empty">還沒有歸檔的對話</string>
+    <string name="drawer_archive_done">已歸檔「%1$s」</string>
+    <string name="drawer_archive_this_week">本週</string>
+    <string name="drawer_archive_this_month">本月</string>
+    <string name="drawer_archive_earlier">更早</string>
+    <string name="drawer_archived_today">今天歸檔</string>
+    <plurals name="drawer_archived_days_ago">
+        <item quantity="other">歸檔於 %1$d 天前</item>
+    </plurals>
+    <string name="drawer_search_filter_all">全部</string>
+    <string name="drawer_search_filter_active">未歸檔</string>
+    <string name="drawer_search_filter_archived">已歸檔</string>
     <string name="drawer_search_hint">搜尋對話</string>
     <string name="drawer_search_results">搜尋結果</string>
     <string name="drawer_search_empty">找不到「%1$s」</string>
@@ -205,6 +221,10 @@
     <string name="chat_branch_retry">從這裡重新問</string>
     <string name="chat_branch_attachments_readd">附件需要重新加入</string>
     <string name="chat_attach_unavailable">沒能加入：%1$s。請確認檔案存在且未超過大小限制。</string>
+    <string name="chat_attach_too_large">%1$s：超過 200 MiB 限制</string>
+    <string name="chat_attach_low_device_space">%1$s：手機儲存空間不足，請清理空間後重試</string>
+    <string name="chat_attach_workspace_limit">%1$s：工作區儲存已達上限，請清理工作區檔案後重試</string>
+    <string name="chat_attach_io_error">%1$s：無法讀取或複製，請確認檔案可用後重試</string>
     <string name="chat_retry_missing">%1$s：檔案不存在</string>
     <string name="chat_retry_limit">%1$s：超過複製上限</string>
     <string name="chat_retry_failed">%1$s：複製失敗</string>
@@ -216,6 +236,7 @@
     <string name="chat_withdraw_message">收回訊息</string>
     <string name="pip_close">這個任務不再顯示小畫面</string>
     <string name="pip_unmute">恢復聲音</string>
+    <string name="pip_back">在虛擬螢幕上返回</string>
     <string name="pip_reopen">顯示畫面</string>
     <string name="pip_closed_needs_you">等你處理</string>
     <string name="pip_closed_hint">這個任務不再浮出小畫面。點右下角「顯示畫面」，或在側欄「背景螢幕」裡看。</string>
@@ -236,4 +257,10 @@
     <string name="chat_placeholder_queue">寫下下一件事…</string>
     <string name="voice_placeholder_queue">說下一件事…</string>
     <string name="steer_received_paused">已收到，任務繼續後處理</string>
+    <plurals name="drawer_archive_many_done">
+        <item quantity="other">已歸檔 %1$d 個對話</item>
+    </plurals>
+    <plurals name="drawer_archive_many_skipped">
+        <item quantity="other">%1$d 個未歸檔</item>
+    </plurals>
 </resources>

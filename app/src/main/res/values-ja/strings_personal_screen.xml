@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_status_running">実行中</string>
+    <string name="personal_status_queued">待機中</string>
+    <string name="personal_status_needs_you">あなたの対応が必要</string>
+    <string name="personal_status_paused">再開待ち</string>
+    <string name="personal_status_finishing">仕上げ中</string>
+    <string name="personal_status_completed">完了</string>
+    <string name="personal_status_cancelled">停止済み</string>
+    <string name="personal_status_partial">一部完了</string>
+    <string name="personal_status_incomplete">未完了</string>
+    <string name="personal_send_failed">送信できませんでした。もう一度お試しください。</string>
+    <string name="personal_welcome_title">ここから会話を続けましょう。</string>
+    <string name="personal_welcome_body">アイデア、日常、あなたからの依頼。\nいつでも戻って続きを話せます。</string>
+    <string name="personal_view_model">現在のモデルを見る</string>
+    <string name="personal_received">受信済み</string>
+    <string name="personal_view_task">タスクを見る</string>
+    <string name="personal_latest">最新に戻る</string>
+    <string name="personal_ok">了解</string>
+    <string name="personal_close">閉じる</string>
+    <string name="personal_no_tasks">タスクはまだありません。</string>
+    <string name="personal_open_sidebar">サイドバーを開く</string>
+    <string name="personal_view_activity">アクティビティを見る</string>
+    <string name="personal_expand_phone">スマートフォンの操作画面を拡大</string>
+    <string name="personal_task_details">タスクの詳細を見る</string>
+    <string name="personal_goal">タスクの目標</string>
+    <string name="personal_progress">進捗</string>
+    <string name="personal_result">タスクの結果</string>
+    <string name="personal_handle_task">タスクを開いて対応</string>
+    <string name="personal_view_execution">実行過程を見る</string>
+    <string name="personal_view_replay">リプレイを見る</string>
+    <string name="personal_stop_task">このタスクを停止</string>
+    <string name="personal_tab_tasks">タスク</string>
+    <string name="personal_tab_memory">記憶</string>
+    <string name="personal_tab_skills">スキル</string>
+</resources>

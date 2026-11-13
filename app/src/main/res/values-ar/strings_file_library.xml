@@ -39,4 +39,6 @@
     <string name="file_library_file_count">%1$d ملفات</string>
     <string name="file_library_select_title">تحديد الملفات</string>
     <string name="file_library_preview">معاينة</string>
+    <string name="file_library_open_in_chat">عرض في المحادثة</string>
+    <string name="file_library_open_failed">تعذّر فتح هذه المحادثة</string>
 </resources>

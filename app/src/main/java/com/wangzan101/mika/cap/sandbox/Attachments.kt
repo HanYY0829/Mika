@@ -19,7 +19,15 @@ import java.io.IOException
 import java.io.InputStream
 
 /** 附加进来的一批文件:[added] 是 (沙箱路径, 大小),[rejected] 是没收下的文件名(太大或读不了)。 */
-data class ImportResult(val added: List<Pair<String, Long>>, val rejected: List<String>)
+data class ImportResult(
+    val added: List<Pair<String, Long>>,
+    val rejected: List<String>,
+    val failures: List<AttachmentFailure> = rejected.map { AttachmentFailure(it, AttachmentFailureReason.IO_ERROR) },
+)
+
+data class AttachmentFailure(val name: String, val reason: AttachmentFailureReason)
+
+enum class AttachmentFailureReason { TOO_LARGE, LOW_DEVICE_SPACE, WORKSPACE_LIMIT, IO_ERROR }
 
 /** 用户在聊天里附加的文件:复制进当前对话工作区的 inbox/,沙箱里在 /workspace/inbox/。 */
 object Attachments {
@@ -58,28 +66,48 @@ object Attachments {
         freeBytes: () -> Long = { workspace.usableSpace }, workspaceBytes: () -> Long = { 0L },
     ): ImportResult = tree.shared { withContext(Dispatchers.IO) { // 写进 files/sandbox/:和重置互斥
         val added = mutableListOf<Pair<String, Long>>()
-        val rejected = mutableListOf<String>()
+        val failures = mutableListOf<AttachmentFailure>()
         for (uri in uris) {
             currentCoroutineContext().ensureActive()
             val display = displayName(context, uri) ?: uri.lastPathSegment ?: "attachment"
             val base = safeName(display)
-            if (!roomLeft(freeBytes, workspaceBytes)) { rejected += base; continue }
-            val result = try {
-                copyOne(workspace, gate, base, { roomLeft(freeBytes, workspaceBytes) }) {
-                    context.contentResolver.openInputStream(uri) ?: throw IOException("Cannot open attachment")
-                }.use { it.entry() }
-            } catch (e: CancellationException) { throw e } catch (e: Exception) {
-                // 之前这里把异常吞掉、只记名字,上传失败的原因用户和日志都看不到;记下来好定位是哪一步(读不到/超限/空间不足)。
+            val result = importOne(workspace, gate, base, freeBytes, workspaceBytes, {
+                context.contentResolver.openInputStream(uri) ?: throw IOException("Cannot open attachment")
+            }) { e ->
                 Log.w(TAG, "Attachment import failed for \"$base\" (${e.javaClass.simpleName}: ${e.message})")
-                null
             }
-            if (result == null) rejected += base else added += result
+            added += result.added
+            failures += result.failures
         }
-        ImportResult(added, rejected)
+        ImportResult(added, failures.map { it.name }, failures)
     } }
 
-    private fun roomLeft(freeBytes: () -> Long, workspaceBytes: () -> Long) =
-        freeBytes() >= MIN_FREE && workspaceBytes() <= WORKSPACE_MAX
+    private fun roomFailure(freeBytes: () -> Long, workspaceBytes: () -> Long): AttachmentFailureReason? = when {
+        freeBytes() < MIN_FREE -> AttachmentFailureReason.LOW_DEVICE_SPACE
+        workspaceBytes() > WORKSPACE_MAX -> AttachmentFailureReason.WORKSPACE_LIMIT
+        else -> null
+    }
+
+    internal suspend fun importOne(
+        workspace: File, gate: WorkspaceFileGate, base: String,
+        freeBytes: () -> Long, workspaceBytes: () -> Long, open: () -> InputStream,
+        logFailure: (Exception) -> Unit = {},
+    ): ImportResult {
+        return try {
+            roomFailure(freeBytes, workspaceBytes)?.let { throw AttachmentLimitException(it) }
+            val entry = copyOne(workspace, gate, base, { roomFailure(freeBytes, workspaceBytes) }, open)
+                .use { it.entry() }
+            ImportResult(listOf(entry), emptyList())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logFailure(e)
+            val reason = (e as? AttachmentLimitException)?.reason ?: AttachmentFailureReason.IO_ERROR
+            ImportResult(emptyList(), listOf(base), listOf(AttachmentFailure(base, reason)))
+        }
+    }
+
+    private class AttachmentLimitException(val reason: AttachmentFailureReason) : IOException("Attachment storage limit reached: $reason")
 
     /** Keep the exact handles until the phone accepts the task, so a failed batch leaves no partial input. */
     suspend fun <T> withTaskFiles(
@@ -90,7 +118,7 @@ object Attachments {
         try {
             for ((name, source) in sources) {
                 if (!room()) throw IOException("Not enough space for task attachments")
-                created += copyOne(workspace, gate, safeName(name), room) { source.inputStream() }
+                created += copyOne(workspace, gate, safeName(name), { if (room()) null else AttachmentFailureReason.IO_ERROR }) { source.inputStream() }
             }
             launch(created.map { it.entry() })
         } catch (e: Throwable) {
@@ -99,7 +127,7 @@ object Attachments {
         } finally { created.forEach { it.close() } }
     }
 
-    private suspend fun copyOne(workspace: File, gate: WorkspaceFileGate, base: String, room: () -> Boolean,
+    private suspend fun copyOne(workspace: File, gate: WorkspaceFileGate, base: String, room: () -> AttachmentFailureReason?,
         open: () -> InputStream): GatedFile {
         workspace.mkdirs()
         val (_, g) = gate.createNumbered(workspace, INBOX, base, max = 1000)
@@ -112,7 +140,8 @@ object Attachments {
                     val r = input.read(buf)
                     if (r < 0) break
                     size += r
-                    if (size > MAX_BYTES || (size % CHECK_EVERY < r && !room())) throw IOException("Attachment storage limit reached")
+                    if (size > MAX_BYTES) throw AttachmentLimitException(AttachmentFailureReason.TOO_LARGE)
+                    if (size % CHECK_EVERY < r) room()?.let { throw AttachmentLimitException(it) }
                     g.write(if (r == buf.size) buf else buf.copyOf(r))
                 }
             }

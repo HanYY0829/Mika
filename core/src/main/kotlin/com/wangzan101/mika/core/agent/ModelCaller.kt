@@ -19,7 +19,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -247,7 +246,7 @@ internal fun visibleReads(messages: List<Message>): Set<String> {
     for (m in messages) for (p in m.parts) {
         if (p !is Part.ToolResult) continue
         val obj = try { Json.parseToJsonElement(p.content) as? JsonObject } catch (e: SerializationException) { null } ?: continue
-        val shown = (obj["screen"] as? JsonObject) ?: obj.takeIf { it["elements"] is JsonArray } ?: continue
+        val shown = (obj["screen"] as? JsonObject) ?: obj.takeIf(ScreenElementTable::hasRows) ?: continue
         (shown["snapshotId"] as? JsonPrimitive)?.contentOrNull?.let(out::add)
     }
     return out

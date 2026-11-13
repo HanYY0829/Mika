@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capsule_edge_reveal">显示胶囊</string>
+    <string name="capsule_hide_at_edge">贴边自动隐藏</string>
+    <string name="capsule_hide_fullscreen">全屏时隐藏胶囊</string>
+    <string name="capsule_tile_label">Mika 胶囊</string>
+    <string name="capsule_tile_enabled">允许添加到快捷设置</string>
+    <string name="capsule_tile_setup">请打开 Mika，设置好手机操作后使用悬浮胶囊。</string>
+    <string name="pip_size_smaller">缩小画面</string>
+    <string name="pip_size_larger">放大画面</string>
+    <string name="pip_size_reset">恢复默认大小</string>
+</resources>

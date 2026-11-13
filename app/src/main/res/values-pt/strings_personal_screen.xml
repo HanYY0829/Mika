@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_status_running">Em andamento</string>
+    <string name="personal_status_queued">Na fila</string>
+    <string name="personal_status_needs_you">Precisa de você</string>
+    <string name="personal_status_paused">Aguardando para continuar</string>
+    <string name="personal_status_finishing">Finalizando</string>
+    <string name="personal_status_completed">Concluída</string>
+    <string name="personal_status_cancelled">Interrompida</string>
+    <string name="personal_status_partial">Parcialmente concluída</string>
+    <string name="personal_status_incomplete">Incompleta</string>
+    <string name="personal_send_failed">Não foi possível enviar. Tente novamente.</string>
+    <string name="personal_welcome_title">Continue a conversa por aqui.</string>
+    <string name="personal_welcome_body">Ideias, o dia a dia e o que você me pede.\nVolte quando quiser para continuar.</string>
+    <string name="personal_view_model">Ver modelo atual</string>
+    <string name="personal_received">Recebido</string>
+    <string name="personal_view_task">Ver tarefa</string>
+    <string name="personal_latest">Voltar às mensagens recentes</string>
+    <string name="personal_ok">Entendi</string>
+    <string name="personal_close">Fechar</string>
+    <string name="personal_no_tasks">Ainda não há tarefas.</string>
+    <string name="personal_open_sidebar">Abrir barra lateral</string>
+    <string name="personal_view_activity">Ver atividade</string>
+    <string name="personal_expand_phone">Ampliar tela do telefone</string>
+    <string name="personal_task_details">Ver detalhes da tarefa</string>
+    <string name="personal_goal">Objetivo da tarefa</string>
+    <string name="personal_progress">Progresso</string>
+    <string name="personal_result">Resultado da tarefa</string>
+    <string name="personal_handle_task">Abrir tarefa para agir</string>
+    <string name="personal_view_execution">Ver execução</string>
+    <string name="personal_view_replay">Ver replay</string>
+    <string name="personal_stop_task">Parar esta tarefa</string>
+    <string name="personal_tab_tasks">Tarefas</string>
+    <string name="personal_tab_memory">Memória</string>
+    <string name="personal_tab_skills">Habilidades</string>
+</resources>

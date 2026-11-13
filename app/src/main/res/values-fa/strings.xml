@@ -131,4 +131,14 @@
     <string name="terminal_task_running">میکا در همین فضای کاری در حال کار است؛ تغییرات هر دو طرف ممکن است تداخل ایجاد کند.</string>
     <string name="terminal_copy_all">کپی همه</string>
     <string name="terminal_copied">کپی شد</string>
+    <string name="personal_replay_title">صفحه تلفن</string>
+    <string name="personal_replay_close">بستن</string>
+    <string name="personal_replay_live_screen">صفحه زنده تلفن</string>
+    <string name="personal_replay_recorded_screen">ضبط صفحه وظیفه</string>
+    <string name="personal_replay_loading">در حال بارگذاری صفحه…</string>
+    <string name="personal_replay_empty">هنوز تصویری برای پخش وجود ندارد.</string>
+    <string name="personal_replay_live">زنده</string>
+    <string name="personal_replay_pause">مکث</string>
+    <string name="personal_replay_play">پخش</string>
+    <string name="personal_replay_return_live">بازگشت به پخش زنده</string>
 </resources>

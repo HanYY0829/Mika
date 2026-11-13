@@ -25,4 +25,6 @@
     <string name="dev_speed">速度</string>
     <string name="dev_experiments">实验</string>
     <string name="dev_run_log">运行记录</string>
+    <string name="dev_screen_tables">新屏幕元素表格</string>
+    <string name="dev_screen_tables_sub">首次读取屏幕时，把重复字段写成表格；保留元素引用和完整界面树。</string>
 </resources>

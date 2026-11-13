@@ -210,7 +210,9 @@ class ModelCatalog(private val http: OkHttpClient) {
         val caps = o["capabilities"] as? JsonObject
         val modalIn = ((o.obj("modalities")?.get("input") ?: o["input_modalities"]) as? JsonArray)
             ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
-        val reasoningLevels = (o["supported_reasoning_levels"] ?: caps?.obj("reasoning")?.get("effort")) as? JsonArray
+        // DeepSeek 的列表写在 `effort.supported_levels`(另有 `default_level`,这里不用)
+        val reasoningLevels = (o["supported_reasoning_levels"] ?: caps?.obj("reasoning")?.get("effort")
+            ?: o.obj("effort")?.get("supported_levels")) as? JsonArray
         val efforts = reasoningLevels?.mapNotNull { level ->
             (((level as? JsonObject)?.get("effort") ?: level) as? JsonPrimitive)?.takeIf { it.isString }?.contentOrNull
                 ?.trim()?.takeIf { it.isNotEmpty() }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertEquals
@@ -22,6 +23,9 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit.SECONDS
+import kotlin.concurrent.thread
 
 class TerminalSessionTest {
     private class FakeShell : SandboxShell {
@@ -131,6 +135,38 @@ class TerminalSessionTest {
         } finally {
             session.close()
             scope.cancel()
+        }
+    }
+
+    @Test fun closingDoesNotWaitForShellCleanupOnTheCaller() {
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val returned = CountDownLatch(1)
+        val cleaned = CountDownLatch(1)
+        val backing = FakeShell()
+        val shell = object : SandboxShell by backing {
+            override fun close() {
+                entered.countDown()
+                release.await(5, SECONDS)
+                backing.close()
+                cleaned.countDown()
+            }
+        }
+        val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher())
+        val session = TerminalSession("c5", null, network = false, shell = shell, scope = scope)
+        val caller = thread(isDaemon = true) {
+            session.close()
+            returned.countDown()
+        }
+        try {
+            assertTrue(entered.await(2, SECONDS))
+            assertTrue("close waited for shell cleanup", returned.await(1, SECONDS))
+            assertEquals(TerminalSession.Phase.Closed, session.phase.value)
+        } finally {
+            release.countDown()
+            caller.join(2_000)
+            scope.cancel()
+            assertTrue(cleaned.await(2, SECONDS))
         }
     }
 

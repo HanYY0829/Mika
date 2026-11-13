@@ -2,6 +2,7 @@ package com.wangzan101.mika.ui
 
 import com.wangzan101.mika.R
 import com.wangzan101.mika.i18n.tr
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.wangzan101.mika.settings.ProviderConnection
 import android.app.ActivityManager
@@ -29,6 +30,8 @@ import androidx.compose.ui.semantics.semantics
 import com.wangzan101.mika.BuildConfig
 import com.wangzan101.mika.cap.sandbox.SandboxState
 import com.wangzan101.mika.capsule.CapsuleMode
+import com.wangzan101.mika.capsule.CapsuleSetup
+import com.wangzan101.mika.cap.phone.a11y.ScreenAccessibility
 import com.wangzan101.mika.core.agent.SpeedFlags
 import com.wangzan101.mika.core.cap.sandbox.SandboxStatus
 import com.wangzan101.mika.core.model.ModelRole
@@ -124,8 +127,13 @@ fun SettingsScreen(
     var tokenBudget by remember { mutableStateOf(flags.taskTokenBudget()) }
     var selfConfig by remember { mutableStateOf(flags.selfConfig()) }
     var selfOperate by remember { mutableStateOf(flags.selfOperate()) }
-    var capsuleMode by remember { mutableStateOf(flags.capsuleMode()) }
+    var pipOperate by remember { mutableStateOf(flags.pipOperate()) }
+    var externalSchedule by remember { mutableStateOf(flags.externalSchedule()) }
+    var autoArchiveDays by remember { mutableStateOf(flags.autoArchiveDays()) }
+    var editingAutoArchive by remember { mutableStateOf(false) }
+    val capsuleMode by remember(flags) { flags.capsuleModeChanges() }.collectAsState(flags.capsuleMode())
     var capsuleIdleOpacity by remember { mutableStateOf(flags.capsuleIdleOpacity()) }
+    var capsuleCardScale by remember { mutableStateOf(flags.capsuleCardScale()) }
     // 换语言时界面会重建,这里每次进来读一次即可
     val language = remember { AppLanguage.current(context) }
     val runtimeLimit by (context.applicationContext as com.wangzan101.mika.MikaApp).taskState.parallelLimit.collectAsState()
@@ -193,6 +201,8 @@ fun SettingsScreen(
             language = language, onOpenLanguage = { page = SettingsPage.Language },
             personalStart = personalStart,
             onPersonalStart = { flags.setPersonalStart(it); personalStart = it },
+            autoArchiveDays = autoArchiveDays,
+            onOpenAutoArchive = { editingAutoArchive = true },
             onOpenMemory = onOpenMemory,
             onOpenRecommendations = { page = SettingsPage.Recommendations },
             onOpenAdvanced = { page = SettingsPage.Advanced },
@@ -228,13 +238,20 @@ fun SettingsScreen(
             tokenBudget = tokenBudget, onTokenBudget = { flags.setTaskTokenBudget(it); tokenBudget = it },
             selfConfig = selfConfig, onSelfConfig = { flags.setSelfConfig(it); selfConfig = it },
             selfOperate = selfOperate, onSelfOperate = { flags.setSelfOperate(it); selfOperate = it },
+            pipOperate = pipOperate, onPipOperate = { flags.setPipOperate(it); pipOperate = it },
+            externalSchedule = externalSchedule, onExternalSchedule = { flags.setExternalSchedule(it); externalSchedule = it },
         )
         SettingsPage.Language -> LanguageScreen(language, onLanguage = { AppLanguage.set(context, it) }, onBack = toHome)
         SettingsPage.Recommendations -> RecommendedTasksScreen(recommendedTasks, onBack = toHome)
         SettingsPage.Capsule -> CapsuleScreen(
-            capsuleMode, onMode = { flags.setCapsuleMode(it); capsuleMode = it }, onBack = toHome,
+            capsuleMode, onMode = {
+                flags.setCapsuleMode(it)
+                if (CapsuleSetup.needsAccessibility(it, ScreenAccessibility.instance.value != null)) onFix(Fix.OpenAccessibility)
+            }, onBack = toHome,
             idleOpacity = capsuleIdleOpacity,
             onIdleOpacity = { flags.setCapsuleIdleOpacity(it); capsuleIdleOpacity = it },
+            cardScale = capsuleCardScale,
+            onCardScale = { flags.setCapsuleCardScale(it); capsuleCardScale = it },
         )
         SettingsPage.Sandbox -> SandboxScreen(onBack = toAdvanced)
         SettingsPage.Recovery -> RecoveryScreen(onBack = toAdvanced, onOpenSelfCheck = { page = SettingsPage.SelfCheck })
@@ -315,6 +332,20 @@ fun SettingsScreen(
             dismissButton = { TextButton({ confirmingQuit = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
+
+    if (editingAutoArchive) {
+        AutoArchiveDialog(
+            current = autoArchiveDays,
+            onPick = { days ->
+                flags.setAutoArchiveDays(days)
+                autoArchiveDays = days
+                editingAutoArchive = false
+                // 选完马上按新设置跑一次,老对话立刻进归档
+                (context.applicationContext as com.wangzan101.mika.MikaApp).autoArchiveNow()
+            },
+            onDismiss = { editingAutoArchive = false },
+        )
+    }
 }
 
 /** 不带状态的设置首页,便于测试。首页只列常用入口,高级能力统一从 [onOpenAdvanced] 进入。 */
@@ -349,6 +380,9 @@ fun SettingsContent(
     onOpenAbout: () -> Unit = {},
     personalStart: Boolean = false,
     onPersonalStart: ((Boolean) -> Unit)? = null,
+    /** 自动归档:多久没有新消息的对话自动归档;0 表示关闭。 */
+    autoArchiveDays: Int = 0,
+    onOpenAutoArchive: () -> Unit = {},
 ) {
     val check = Prerequisites.check(status, hasMainModel = mainModel != null)
     PageScaffold(stringResource(R.string.settings_title), onBack) {
@@ -397,10 +431,22 @@ fun SettingsContent(
                 ListRow(MikaIcons.Heart, stringResource(R.string.settings_memory_data), stringResource(R.string.settings_memory_sub), first = true, onClick = it) { RowChevron() }
             }
             ListRow(
+                MikaIcons.Archive,
+                stringResource(R.string.settings_auto_archive),
+                stringResource(R.string.settings_auto_archive_sub),
+                first = onOpenMemory == null,
+                onClick = onOpenAutoArchive,
+            ) {
+                RowValue(
+                    if (autoArchiveDays <= 0) stringResource(R.string.state_off)
+                    else pluralStringResource(R.plurals.settings_auto_archive_days, autoArchiveDays, autoArchiveDays),
+                )
+                RowChevron()
+            }
+            ListRow(
                 MikaIcons.Message,
                 stringResource(R.string.recommendations_title),
                 stringResource(R.string.recommendations_sub),
-                first = onOpenMemory == null,
                 onClick = onOpenRecommendations,
             ) { RowChevron() }
             ListRow(MikaIcons.Shield, stringResource(R.string.appaccess_title), stringResource(R.string.appaccess_row_sub), onClick = onOpenAppAccess) { RowChevron() }

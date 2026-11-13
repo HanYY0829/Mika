@@ -58,6 +58,7 @@ class CallSettings(
         )
         val committed = prefs.edit()
             .putBoolean("enabled", next.enabled)
+            .putBoolean("summary_enabled", next.summaryEnabled)
             .putBoolean("auto_answer", next.autoAnswer)
             .putBoolean(BACKGROUND_AUTHORIZED, next.backgroundStandbyAuthorized)
             .putInt("auto_answer_delay_seconds", next.autoAnswerDelaySeconds)
@@ -163,6 +164,7 @@ class CallSettings(
             audioMode = prefs.getString("audio_mode", null)?.let(CallAudioMode::valueOf) ?: defaults.audioMode,
             audioVerified = verified,
             credentialsConfigured = credentials() != null,
+            summaryEnabled = prefs.getBoolean("summary_enabled", false),
             greeting = CallPolicy.migrateDefaultGreeting(prefs.getString("greeting", defaults.greeting).orEmpty())
                 .take(CallPolicy.MAX_GREETING_CHARS),
             systemPrompt = prefs.getString("prompt", "").orEmpty().take(CallPolicy.MAX_PROMPT_CHARS),

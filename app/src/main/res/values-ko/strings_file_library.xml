@@ -39,4 +39,6 @@
     <string name="file_library_file_count">파일 %1$d개</string>
     <string name="file_library_select_title">파일 선택</string>
     <string name="file_library_preview">미리보기</string>
+    <string name="file_library_open_in_chat">대화에서 보기</string>
+    <string name="file_library_open_failed">이 대화를 열지 못했습니다</string>
 </resources>

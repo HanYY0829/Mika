@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_status_running">Running</string>
+    <string name="personal_status_queued">Queued</string>
+    <string name="personal_status_needs_you">Needs you</string>
+    <string name="personal_status_paused">Waiting to continue</string>
+    <string name="personal_status_finishing">Finishing</string>
+    <string name="personal_status_completed">Completed</string>
+    <string name="personal_status_cancelled">Stopped</string>
+    <string name="personal_status_partial">Partially complete</string>
+    <string name="personal_status_incomplete">Incomplete</string>
+    <string name="personal_send_failed">Couldn’t send. Please try again.</string>
+    <string name="personal_welcome_title">Keep the conversation going.</string>
+    <string name="personal_welcome_body">Ideas, everyday life, and the things you ask me to do.\nCome back anytime and pick up where we left off.</string>
+    <string name="personal_view_model">View current model</string>
+    <string name="personal_received">Received</string>
+    <string name="personal_view_task">View task</string>
+    <string name="personal_latest">Back to latest</string>
+    <string name="personal_ok">Got it</string>
+    <string name="personal_close">Close</string>
+    <string name="personal_no_tasks">No tasks yet.</string>
+    <string name="personal_open_sidebar">Open sidebar</string>
+    <string name="personal_view_activity">View activity</string>
+    <string name="personal_expand_phone">Enlarge phone screen</string>
+    <string name="personal_task_details">View task details</string>
+    <string name="personal_goal">Task goal</string>
+    <string name="personal_progress">Progress</string>
+    <string name="personal_result">Task result</string>
+    <string name="personal_handle_task">Open task to take action</string>
+    <string name="personal_view_execution">View execution</string>
+    <string name="personal_view_replay">View replay</string>
+    <string name="personal_stop_task">Stop this task</string>
+    <string name="personal_tab_tasks">Tasks</string>
+    <string name="personal_tab_memory">Memory</string>
+    <string name="personal_tab_skills">Skills</string>
+</resources>

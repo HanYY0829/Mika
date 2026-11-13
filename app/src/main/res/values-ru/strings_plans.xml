@@ -68,6 +68,9 @@
     <string name="plans_condition">Запускается, только если: %1$s · %2$s</string>
     <string name="plans_last">Последний раз: %1$s · %2$s</string>
     <string name="plans_never_run">Ещё не запускалась</string>
+    <string name="plans_source_user">Вручную</string>
+    <string name="plans_source_model">Модель</string>
+    <string name="plans_source_external">Скрипт</string>
     <string name="plans_delivered">Доставлено</string>
     <string name="plans_unchanged">Условие не изменилось</string>
     <string name="plans_not_met">Условие не выполнено</string>

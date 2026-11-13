@@ -49,7 +49,7 @@ class CallHistoryClearDeviceTest {
             MikaTheme {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     CallHistorySection(history, false, { _, _ -> CallActionResult(true, "ok") },
-                        { CallActionResult(true, "ok") }, onClear = {
+                        { CallActionResult(true, "ok") }, onRetrySummary = { CallActionResult(true, "ok") }, onClear = {
                             calls++
                             history = emptyList()
                             CallActionResult(true, "ok")
@@ -92,7 +92,7 @@ class CallHistoryClearDeviceTest {
             MikaTheme {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     CallHistorySection(emptyList(), true, { _, _ -> CallActionResult(true, "ok") },
-                        { CallActionResult(true, "ok") }, onClear = {
+                        { CallActionResult(true, "ok") }, onRetrySummary = { CallActionResult(true, "ok") }, onClear = {
                             calls++
                             CallActionResult(true, "ok")
                         })
@@ -109,7 +109,7 @@ class CallHistoryClearDeviceTest {
             MikaTheme {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     CallHistorySection(history, false, { _, _ -> CallActionResult(true, "ok") },
-                        { CallActionResult(true, "ok") }, onClear = onClear)
+                        { CallActionResult(true, "ok") }, onRetrySummary = { CallActionResult(true, "ok") }, onClear = onClear)
                 }
             }
         }

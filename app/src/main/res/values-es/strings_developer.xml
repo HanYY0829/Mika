@@ -25,4 +25,6 @@
     <string name="dev_speed">Velocidad</string>
     <string name="dev_experiments">Experimentos</string>
     <string name="dev_run_log">Registros de ejecución</string>
+    <string name="dev_screen_tables">Compactar elementos de pantallas nuevas</string>
+    <string name="dev_screen_tables_sub">Al leer una pantalla por primera vez, envía los campos repetidos como columnas. Conserva las referencias y el árbol completo.</string>
 </resources>

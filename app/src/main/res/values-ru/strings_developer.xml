@@ -25,4 +25,6 @@
     <string name="dev_speed">Скорость</string>
     <string name="dev_experiments">Эксперименты</string>
     <string name="dev_run_log">Журнал запусков</string>
+    <string name="dev_screen_tables">Таблицы элементов новых экранов</string>
+    <string name="dev_screen_tables_sub">При первом чтении повторяющиеся поля передаются как столбцы. Ссылки на элементы и полное дерево сохраняются.</string>
 </resources>

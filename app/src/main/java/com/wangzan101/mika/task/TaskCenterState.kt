@@ -107,4 +107,7 @@ class TaskCenterState {
     val summarizing: StateFlow<Set<String>> = _summarizing.asStateFlow()
     val _frames = MutableStateFlow<Bitmap?>(null)
     val frames: StateFlow<Bitmap?> = _frames.asStateFlow()
+    /** 显示中任务的小窗输入口:只有建了虚拟屏、开着「直接操作」开关时才有,屏释放后回到 null。 */
+    val _pipInput = MutableStateFlow<com.wangzan101.mika.cap.phone.display.PipInput?>(null)
+    val pipInput: StateFlow<com.wangzan101.mika.cap.phone.display.PipInput?> = _pipInput.asStateFlow()
 }

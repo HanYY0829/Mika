@@ -122,6 +122,22 @@
     <string name="drawer_rename_title">改名</string>
     <string name="drawer_pinned">置顶</string>
     <string name="drawer_pinned_mark">已置顶</string>
+    <string name="drawer_archive">归档</string>
+    <string name="drawer_unarchive">取消归档</string>
+    <string name="drawer_archived">已归档</string>
+    <string name="drawer_archived_count">%1$d 条已归档</string>
+    <string name="drawer_archive_empty">还没有归档的对话</string>
+    <string name="drawer_archive_done">已归档「%1$s」</string>
+    <string name="drawer_archive_this_week">本周</string>
+    <string name="drawer_archive_this_month">本月</string>
+    <string name="drawer_archive_earlier">更早</string>
+    <string name="drawer_archived_today">今天归档</string>
+    <plurals name="drawer_archived_days_ago">
+        <item quantity="other">归档于 %1$d 天前</item>
+    </plurals>
+    <string name="drawer_search_filter_all">全部</string>
+    <string name="drawer_search_filter_active">未归档</string>
+    <string name="drawer_search_filter_archived">已归档</string>
     <string name="drawer_search_hint">搜索对话</string>
     <string name="drawer_search_results">搜索结果</string>
     <string name="drawer_search_empty">没有找到「%1$s」</string>
@@ -205,6 +221,10 @@
     <string name="chat_branch_retry">从这里重新问</string>
     <string name="chat_branch_attachments_readd">附件需要重新添加</string>
     <string name="chat_attach_unavailable">没能添加：%1$s。请检查文件是否存在且未超过大小限制。</string>
+    <string name="chat_attach_too_large">%1$s：超过 200 MiB 限制</string>
+    <string name="chat_attach_low_device_space">%1$s：手机存储空间不足，请清理空间后重试</string>
+    <string name="chat_attach_workspace_limit">%1$s：工作区存储已达上限，请清理工作区文件后重试</string>
+    <string name="chat_attach_io_error">%1$s：无法读取或复制，请检查文件是否可用后重试</string>
     <string name="chat_retry_missing">%1$s：文件不存在</string>
     <string name="chat_retry_limit">%1$s：超过复制上限</string>
     <string name="chat_retry_failed">%1$s：复制失败</string>
@@ -216,6 +236,7 @@
     <string name="chat_withdraw_message">撤回消息</string>
     <string name="pip_close">这个任务不再显示小画面</string>
     <string name="pip_unmute">恢复声音</string>
+    <string name="pip_back">在虚拟屏上返回</string>
     <string name="pip_reopen">显示画面</string>
     <string name="pip_closed_needs_you">等你处理</string>
     <string name="pip_closed_hint">这个任务不再浮出小画面。点右下角「显示画面」，或在侧栏「后台屏」里看。</string>
@@ -236,4 +257,10 @@
     <string name="chat_placeholder_queue">写下下一件事…</string>
     <string name="voice_placeholder_queue">说下一件事…</string>
     <string name="steer_received_paused">已收到，任务继续后处理</string>
+    <plurals name="drawer_archive_many_done">
+        <item quantity="other">已归档 %1$d 个对话</item>
+    </plurals>
+    <plurals name="drawer_archive_many_skipped">
+        <item quantity="other">%1$d 个未归档</item>
+    </plurals>
 </resources>

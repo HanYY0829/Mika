@@ -41,10 +41,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wangzan101.mika.R
 import androidx.compose.ui.semantics.Role
+import com.wangzan101.mika.ui.components.SegmentedControl
 import com.wangzan101.mika.ui.components.keepsKeyboard
 import com.wangzan101.mika.ui.theme.MikaIcons
 import com.wangzan101.mika.ui.theme.MikaTheme
 import com.wangzan101.mika.ui.theme.MikaType
+
+/** 搜索时按归档状态筛选:[All] 全部(归档的带上标记)、[Active] 只看未归档、[Archived] 只看已归档。 */
+enum class SearchArchiveFilter { All, Active, Archived }
 
 /** 侧栏搜索结果:标题和命中片段已经换成行要显示的样子;没搜完时 [searching] 为真。 */
 data class DrawerSearch(
@@ -96,6 +100,22 @@ internal fun DrawerSearchField(query: String, onQueryChange: (String) -> Unit) {
             ) { Icon(MikaIcons.Close, clear, Modifier.size(14.dp), tint = c.ink3) }
         }
     }
+}
+
+/** 搜索框下面按归档状态筛选的三段;只在有搜索词时显示。 */
+@Composable
+internal fun SearchArchiveFilterRow(selected: SearchArchiveFilter, onSelect: (SearchArchiveFilter) -> Unit) {
+    SegmentedControl(
+        options = listOf(
+            stringResource(R.string.drawer_search_filter_all),
+            stringResource(R.string.drawer_search_filter_active),
+            stringResource(R.string.drawer_search_filter_archived),
+        ),
+        selected = SearchArchiveFilter.entries.indexOf(selected),
+        onSelect = { onSelect(SearchArchiveFilter.entries[it]) },
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+        tags = listOf("drawer-search-filter-all", "drawer-search-filter-active", "drawer-search-filter-archived"),
+    )
 }
 
 /** 搜索结果里的一行提示:搜索中、结果太多只显示前若干条。 */

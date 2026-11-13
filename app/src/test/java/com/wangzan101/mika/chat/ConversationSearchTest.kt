@@ -6,6 +6,7 @@ import com.wangzan101.mika.core.agent.Turn
 import com.wangzan101.mika.core.cap.web.AttachedPage
 import com.wangzan101.mika.core.userscreen.UserScreenMessage
 import com.wangzan101.mika.ui.ChatCopy
+import com.wangzan101.mika.ui.ChatTarget
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -227,6 +228,39 @@ class ConversationSearchTest {
         store.append("a", Turn("问", "答", "succeeded"))
         assertTrue(hits(store, "   ").hits.isEmpty())
         assertTrue(store.search.titleMatches("   ", store.list()).isEmpty())
+    }
+
+    @Test fun bodyHitsCarryTheMessageTarget() {
+        val store = ConversationStore(tmp.newFolder())
+        store.append("a", Turn("买票", "已经买好", "succeeded", steers = listOf("改成靠窗")))
+        assertEquals(ChatTarget.Message(0, null), hits(store, "买票").hits.single().target)
+        assertEquals(ChatTarget.Message(0, 0), hits(store, "靠窗").hits.single().target)
+        assertEquals(ChatTarget.Status(0), hits(store, "买好").hits.single().target)
+    }
+
+    @Test fun replyHitsCarryTheSteerReplyTarget() {
+        val store = ConversationStore(tmp.newFolder())
+        store.append("a", Turn("买票", "完成", "succeeded", steers = listOf("改成靠窗"), finishedReplies = listOf("正在改")))
+        store.append("b", Turn("退票", "完成", "succeeded", steers = listOf("算了"), interruptedReplies = listOf("被打断的话")))
+        assertEquals(ChatTarget.Reply(0, 0, interrupted = false), hits(store, "正在改").hits.single().target)
+        assertEquals(ChatTarget.Reply(0, 0, interrupted = true), hits(store, "被打断").hits.single().target)
+    }
+
+    @Test fun targetPointsAtTheTurnThatMatched() {
+        val store = ConversationStore(tmp.newFolder())
+        store.append("a", Turn("第一轮", "回答一", "succeeded"))
+        store.append("a", Turn("第二轮", "回答二", "succeeded"))
+        store.append("a", Turn("第三轮", "回答三", "succeeded"))
+        assertEquals(ChatTarget.Message(2, null), hits(store, "第三轮").hits.single().target)
+        assertEquals(ChatTarget.Status(1), hits(store, "回答二").hits.single().target)
+    }
+
+    @Test fun titleOnlyHitsHaveNoTarget() {
+        val store = ConversationStore(tmp.newFolder())
+        store.append("a", Turn("正文里没有那个词", "回答", "succeeded"))
+        store.rename("a", "苹果")
+        assertNull(hits(store, "苹果").hits.single().target)
+        assertNull(store.search.titleMatches("苹果", store.list()).single().target)
     }
 
     private fun hasLoneSurrogate(s: String): Boolean = s.withIndex().any { (i, c) ->

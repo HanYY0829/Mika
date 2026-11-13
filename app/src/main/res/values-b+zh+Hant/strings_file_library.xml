@@ -39,4 +39,6 @@
     <string name="file_library_file_count">%1$d 個檔案</string>
     <string name="file_library_select_title">選擇檔案</string>
     <string name="file_library_preview">預覽</string>
+    <string name="file_library_open_in_chat">在對話中檢視</string>
+    <string name="file_library_open_failed">暫時無法開啟這個對話</string>
 </resources>

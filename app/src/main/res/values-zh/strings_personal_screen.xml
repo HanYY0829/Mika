@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_status_running">进行中</string>
+    <string name="personal_status_queued">排队中</string>
+    <string name="personal_status_needs_you">需要你</string>
+    <string name="personal_status_paused">等待继续</string>
+    <string name="personal_status_finishing">正在收尾</string>
+    <string name="personal_status_completed">已完成</string>
+    <string name="personal_status_cancelled">已停止</string>
+    <string name="personal_status_partial">部分完成</string>
+    <string name="personal_status_incomplete">未完成</string>
+    <string name="personal_send_failed">发送失败，请再试一次。</string>
+    <string name="personal_welcome_title">从这里，一直聊下去。</string>
+    <string name="personal_welcome_body">想法、日常，和你交给我的事。\n随时回来，都能接着讲。</string>
+    <string name="personal_view_model">查看当前模型</string>
+    <string name="personal_received">已收到</string>
+    <string name="personal_view_task">查看任务</string>
+    <string name="personal_latest">回到最新消息</string>
+    <string name="personal_ok">知道了</string>
+    <string name="personal_close">关闭</string>
+    <string name="personal_no_tasks">还没有任务。</string>
+    <string name="personal_open_sidebar">打开侧栏</string>
+    <string name="personal_view_activity">查看活动</string>
+    <string name="personal_expand_phone">放大手机操作画面</string>
+    <string name="personal_task_details">查看任务详情</string>
+    <string name="personal_goal">任务目标</string>
+    <string name="personal_progress">进展</string>
+    <string name="personal_result">任务结果</string>
+    <string name="personal_handle_task">打开任务处理</string>
+    <string name="personal_view_execution">查看执行过程</string>
+    <string name="personal_view_replay">查看回放</string>
+    <string name="personal_stop_task">停止这项任务</string>
+    <string name="personal_tab_tasks">任务</string>
+    <string name="personal_tab_memory">记忆</string>
+    <string name="personal_tab_skills">技能</string>
+</resources>

@@ -550,7 +550,7 @@ class TaskService : Service() {
             try {
                 val text = runCatching { run.stopSummary(draft) }.onFailure { Log.w(TAG, "stop summary failed", it) }.getOrNull()
                 if (text != null) withContext(Dispatchers.IO) {
-                    runCatching { store.updateTurn(run.conversationId, runId) { it.copy(outcome = text) } }
+                    runCatching { store.updateTurn(run.conversationId, runId) { it.copy(outcome = text, outcomeSystemType = null) } }
                         .onFailure { Log.w(TAG, "could not save stop summary", it) }
                 }
             } finally {
@@ -689,7 +689,7 @@ class TaskService : Service() {
             is TaskState.Succeeded -> if (end.doubtful) Turn(goal, end.answer, "unverified", end.note, unconfirmed = end.unconfirmed, verified = false)
                 else Turn(goal, end.answer, "succeeded", verified = end.verified.takeIf { end.reviewed })
             is TaskState.Failed -> Turn(goal, end.reason, "failed")
-            TaskState.Cancelled -> Turn(goal, Conversation.CANCELLED_OUTCOME, "cancelled")
+            TaskState.Cancelled -> Turn(goal, Conversation.CANCELLED_OUTCOME, "cancelled", outcomeSystemType = "task_cancelled")
             else -> return
         }.copy(runId = runId, remoteTaskId = run.mcpExternalId, steers = steers, groups = groups, interruptedReplies = interrupted, finishedReplies = finished)
             // 这一轮留下了一页:记下站点(已经关了的连同原因),对话页那一轮下面据此显示

@@ -25,4 +25,6 @@
     <string name="dev_speed">속도</string>
     <string name="dev_experiments">실험</string>
     <string name="dev_run_log">실행 기록</string>
+    <string name="dev_screen_tables">새 화면 요소를 표로 표시</string>
+    <string name="dev_screen_tables_sub">화면을 처음 읽을 때 반복 필드를 표로 보냅니다. 요소 참조와 전체 트리는 유지됩니다.</string>
 </resources>

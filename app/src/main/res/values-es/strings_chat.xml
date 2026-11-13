@@ -138,6 +138,24 @@
     <string name="drawer_rename_title">Cambiar el nombre del chat</string>
     <string name="drawer_pinned">Fijados</string>
     <string name="drawer_pinned_mark">Fijado</string>
+    <string name="drawer_archive">Archivar</string>
+    <string name="drawer_unarchive">Desarchivar</string>
+    <string name="drawer_archived">Archivada</string>
+    <string name="drawer_archived_count">%1$d archivadas</string>
+    <string name="drawer_archive_empty">No hay conversaciones archivadas</string>
+    <string name="drawer_archive_done">Se archivó “%1$s”</string>
+    <string name="drawer_archive_this_week">Esta semana</string>
+    <string name="drawer_archive_this_month">Este mes</string>
+    <string name="drawer_archive_earlier">Anteriores</string>
+    <string name="drawer_archived_today">Archivada hoy</string>
+    <plurals name="drawer_archived_days_ago">
+        <item quantity="one">Archivada hace %1$d día</item>
+        <item quantity="many">Archivada hace %1$d días</item>
+        <item quantity="other">Archivada hace %1$d días</item>
+    </plurals>
+    <string name="drawer_search_filter_all">Todas</string>
+    <string name="drawer_search_filter_active">Sin archivar</string>
+    <string name="drawer_search_filter_archived">Archivadas</string>
     <string name="drawer_search_hint">Buscar chats</string>
     <string name="drawer_search_results">Resultados de la búsqueda</string>
     <string name="drawer_search_empty">Ningún chat coincide con «%1$s»</string>
@@ -227,6 +245,10 @@
     <string name="chat_branch_retry">Volver a preguntar desde aquí</string>
     <string name="chat_branch_attachments_readd">Vuelve a adjuntar los archivos que quieras incluir</string>
     <string name="chat_attach_unavailable">No se pudo añadir: %1$s. Comprueba que los archivos estén disponibles y no superen el límite de tamaño.</string>
+    <string name="chat_attach_too_large">%1$s: supera el límite de 200 MiB</string>
+    <string name="chat_attach_low_device_space">%1$s: no hay suficiente espacio en el teléfono; libera espacio y vuelve a intentarlo</string>
+    <string name="chat_attach_workspace_limit">%1$s: se alcanzó el límite de almacenamiento del espacio de trabajo; elimina archivos del espacio de trabajo y vuelve a intentarlo</string>
+    <string name="chat_attach_io_error">%1$s: no se pudo leer ni copiar; comprueba que el archivo esté disponible y vuelve a intentarlo</string>
     <string name="chat_retry_missing">%1$s: el archivo no existe</string>
     <string name="chat_retry_limit">%1$s: se alcanzó el límite de copia</string>
     <string name="chat_retry_failed">%1$s: no se pudo copiar</string>
@@ -238,6 +260,7 @@
     <string name="chat_withdraw_message">Retirar mensaje</string>
     <string name="pip_close">Cerrar la vista pequeña de esta tarea</string>
     <string name="pip_unmute">Volver al sonido</string>
+    <string name="pip_back">Atrás en la pantalla virtual</string>
     <string name="pip_reopen">Mostrar pantalla</string>
     <string name="pip_closed_needs_you">Te necesita</string>
     <string name="pip_closed_hint">Cerrada para esta tarea. Toca “Mostrar pantalla” abajo a la derecha, o abre “Pantallas en segundo plano” en el menú lateral.</string>
@@ -258,4 +281,14 @@
     <string name="chat_placeholder_queue">Escribe la siguiente tarea…</string>
     <string name="voice_placeholder_queue">Di la siguiente tarea…</string>
     <string name="steer_received_paused">Entendido — se usará cuando continúe la tarea</string>
+    <plurals name="drawer_archive_many_done">
+        <item quantity="one">%1$d chat archivado</item>
+        <item quantity="many">%1$d chats archivados</item>
+        <item quantity="other">%1$d chats archivados</item>
+    </plurals>
+    <plurals name="drawer_archive_many_skipped">
+        <item quantity="one">%1$d sin archivar</item>
+        <item quantity="many">%1$d sin archivar</item>
+        <item quantity="other">%1$d sin archivar</item>
+    </plurals>
 </resources>

@@ -65,6 +65,9 @@
     <string name="plans_condition">Hanya berjalan jika: %1$s · %2$s</string>
     <string name="plans_last">Terakhir %1$s · %2$s</string>
     <string name="plans_never_run">Belum pernah berjalan</string>
+    <string name="plans_source_user">Manual</string>
+    <string name="plans_source_model">Model</string>
+    <string name="plans_source_external">Skrip</string>
     <string name="plans_delivered">Terkirim</string>
     <string name="plans_unchanged">Kondisi tidak berubah</string>
     <string name="plans_not_met">Kondisi tidak terpenuhi</string>

@@ -27,6 +27,9 @@
     <string name="memory_auto_sub">Organizado a partir das suas próprias palavras após cada tarefa</string>
     <string name="memory_learn">Aprender com tarefas anteriores (habilidades e notas de apps)</string>
     <string name="memory_learn_sub">O que o Mika aprende só é usado depois que você aceitar</string>
+    <string name="memory_tasks">Lembrar tarefas anteriores</string>
+    <string name="memory_tasks_sub">Guarda um pequeno resumo de cada tarefa concluída para relembrar da próxima vez</string>
+    <string name="memory_tasks_title">Tarefas anteriores</string>
     <string name="memory_clear_sub">Excluir toda a memória e as habilidades aprendidas</string>
     <string name="edit_it">Editar</string>
     <string name="unpin">Desafixar</string>

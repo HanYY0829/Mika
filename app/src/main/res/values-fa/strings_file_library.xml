@@ -40,4 +40,6 @@
     <string name="file_library_file_count">%1$d فایل</string>
     <string name="file_library_select_title">انتخاب فایل‌ها</string>
     <string name="file_library_preview">پیش‌نمایش</string>
+    <string name="file_library_open_in_chat">نمایش در گفتگو</string>
+    <string name="file_library_open_failed">امکان باز کردن این گفتگو نیست</string>
 </resources>

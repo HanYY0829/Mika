@@ -200,7 +200,7 @@ object OauthUrls {
 
     fun allowed(url: String, allowedHosts: Set<String>): Boolean {
         val u = url.toHttpUrlOrNull() ?: return false
-        if (u.username.isNotEmpty()) return false
+        if (u.username.isNotEmpty() || u.password.isNotEmpty()) return false
         val local = u.host == "127.0.0.1" || u.host == "localhost"
         if (!local && u.scheme != "https") return false
         return u.host in allowedHosts

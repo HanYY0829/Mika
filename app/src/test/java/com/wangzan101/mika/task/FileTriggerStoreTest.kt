@@ -2,6 +2,7 @@ package com.wangzan101.mika.task
 
 import com.wangzan101.mika.core.trigger.ConditionNotify
 import com.wangzan101.mika.core.trigger.TriggerDefinition
+import com.wangzan101.mika.core.trigger.TriggerSource
 import com.wangzan101.mika.core.trigger.TriggerWindowState
 import com.wangzan101.mika.core.trigger.TriggerSnapshot
 import kotlinx.serialization.decodeFromString
@@ -122,6 +123,21 @@ class FileTriggerStoreTest {
         assertEquals("¥700", restored.baselineValue)
         assertEquals(10L, restored.baselineAtMs)
         assertEquals(10L, restored.lastFiredAtMs)
+    }
+
+    // 来源属于扩展状态:存进 sidecar,不写进主文件,旧版严格解码仍能读整份计划。
+    @Test fun sourceSurvivesStoreReopenWithoutEnteringTheMainFile() {
+        val file = Files.createTempDirectory("trigger-source").resolve("triggers.json").toFile()
+        val store = FileTriggerStore(file)
+        store.upsert(TriggerDefinition("ext", "thread", "检查", 1_000, source = TriggerSource.External))
+        store.upsert(TriggerDefinition("mine", "thread", "提醒", 2_000, reminderText = "喝水", source = TriggerSource.User))
+
+        val restored = FileTriggerStore(file)
+        assertEquals(TriggerSource.External, restored.get("ext")!!.source)
+        assertEquals(TriggerSource.User, restored.get("mine")!!.source)
+
+        assertEquals(false, file.readText().contains("source"))
+        Json.decodeFromString<TriggerSnapshot>(file.readText())
     }
 
     // 升级前存下的计划文件没有新字段:照常读,按默认值算

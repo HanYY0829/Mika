@@ -144,6 +144,8 @@ class LoopPoliciesTest {
 
     @Test fun knowledgeLookups() {
         assertEquals(listOf(KnowledgeLookup.App("com.x")), NoticePolicy.knowledgeAfter(Verb.Observe, Place.app("com.x"), true))
+        // 打开一个 App 后也要补它的资料(没在开局 top 3 里的,靠这里补进来)
+        assertEquals(listOf(KnowledgeLookup.App("com.x")), NoticePolicy.knowledgeAfter(Verb.LaunchApp, Place.app("com.x"), true))
         assertEquals(listOf(KnowledgeLookup.Site("example.com")), NoticePolicy.knowledgeAfter(Verb.Observe, Place.site("WWW.Example.com"), true))
         assertEquals(listOf(KnowledgeLookup.Site("shop.example.com")), NoticePolicy.knowledgeAfter(Verb.Navigate, Place.site("shop.example.com"), true))
         assertEquals(emptyList<KnowledgeLookup>(), NoticePolicy.knowledgeAfter(Verb.Navigate, Place.site("shop.example.com"), false))

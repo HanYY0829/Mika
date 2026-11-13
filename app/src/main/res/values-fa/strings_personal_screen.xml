@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_status_running">در حال اجرا</string>
+    <string name="personal_status_queued">در صف</string>
+    <string name="personal_status_needs_you">به شما نیاز دارد</string>
+    <string name="personal_status_paused">در انتظار ادامه</string>
+    <string name="personal_status_finishing">در حال پایان</string>
+    <string name="personal_status_completed">تکمیل شد</string>
+    <string name="personal_status_cancelled">متوقف شد</string>
+    <string name="personal_status_partial">تا حدی تکمیل شد</string>
+    <string name="personal_status_incomplete">ناتمام</string>
+    <string name="personal_send_failed">ارسال نشد. دوباره تلاش کنید.</string>
+    <string name="personal_welcome_title">گفتگو را از اینجا ادامه دهیم.</string>
+    <string name="personal_welcome_body">ایده‌ها، زندگی روزمره و کارهایی که به من می‌سپارید.\nهر زمان برگردید می‌توانیم ادامه دهیم.</string>
+    <string name="personal_view_model">مشاهده مدل فعلی</string>
+    <string name="personal_received">دریافت شد</string>
+    <string name="personal_view_task">مشاهده وظیفه</string>
+    <string name="personal_latest">بازگشت به آخرین پیام‌ها</string>
+    <string name="personal_ok">متوجه شدم</string>
+    <string name="personal_close">بستن</string>
+    <string name="personal_no_tasks">هنوز وظیفه‌ای وجود ندارد.</string>
+    <string name="personal_open_sidebar">باز کردن نوار کناری</string>
+    <string name="personal_view_activity">مشاهده فعالیت</string>
+    <string name="personal_expand_phone">بزرگ کردن صفحه عملیات گوشی</string>
+    <string name="personal_task_details">مشاهده جزئیات وظیفه</string>
+    <string name="personal_goal">هدف وظیفه</string>
+    <string name="personal_progress">پیشرفت</string>
+    <string name="personal_result">نتیجه وظیفه</string>
+    <string name="personal_handle_task">باز کردن وظیفه برای اقدام</string>
+    <string name="personal_view_execution">مشاهده روند اجرا</string>
+    <string name="personal_view_replay">مشاهده بازپخش</string>
+    <string name="personal_stop_task">توقف این وظیفه</string>
+    <string name="personal_tab_tasks">وظایف</string>
+    <string name="personal_tab_memory">حافظه</string>
+    <string name="personal_tab_skills">مهارت‌ها</string>
+</resources>

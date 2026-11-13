@@ -93,6 +93,18 @@ class CallHistoryTest {
         assertFalse(legacy.handled)
         assertNull(legacy.task)
         assertNull(legacy.audioReport)
+        assertNull(legacy.summary)
+        assertEquals(SummaryStatus.NOT_REQUESTED, legacy.summaryStatus)
+    }
+
+    @Test fun summaryAndFollowUpStatusesSurviveSerialization() {
+        val original = record(1).copy(summary = CallSummary(
+            purpose = "询问营业时间",
+            uncertainties = listOf("时间尚未确认"),
+            actions = listOf(CallFollowUp("回复来电", CallFollowUp.Status.PENDING)),
+        ))
+        assertEquals(original, Json.decodeFromString<CallRecord>(Json.encodeToString(original)))
+        assertEquals(CallFollowUp.Status.UNKNOWN, CallFollowUp("待确认").status)
     }
 
     @Test fun outgoingTaskRoundTripsWithoutClaimingCompletionOrReusingItOnTheNextCall() = runBlocking {

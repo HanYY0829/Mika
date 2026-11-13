@@ -97,6 +97,12 @@
     <string name="capsule_mode_always_detail">حتی بدون کار، نماد میکا را روی صفحه نگه می‌دارد</string>
     <string name="capsule_idle_opacity">میزان وضوح در حالت غیرفعال</string>
     <string name="capsule_idle_opacity_detail">پس از چند ثانیه بدون لمس اعمال می‌شود؛ موارد نیازمند توجه شما کاملاً قابل مشاهده می‌مانند</string>
+    <string name="capsule_card_size">اندازهٔ کارت</string>
+    <string name="capsule_card_size_detail">کارت بازشده و متنش با هم کوچک و بزرگ می‌شوند؛ کپسول جمع‌شده تغییر نمی‌کند</string>
+    <string name="capsule_card_size_small">کوچک</string>
+    <string name="capsule_card_size_normal">استاندارد</string>
+    <string name="capsule_card_size_large">بزرگ</string>
+    <string name="capsule_card_size_xlarge">بسیار بزرگ</string>
     <string name="routes_saved">مسیرهای ذخیره‌شده</string>
     <string name="loading">در حال بارگذاری</string>
     <plurals name="routes_count">
@@ -139,8 +145,29 @@
     <string name="appearance_system_detail">روشن یا تیره، مطابق تنظیم گوشی</string>
     <string name="appearance_light">همیشه روشن</string>
     <string name="appearance_dark">همیشه تیره</string>
+    <string name="accent_group">رنگ تأکیدی</string>
+    <string name="accent_default">پیش‌فرض</string>
+    <string name="accent_blue">آبی</string>
+    <string name="accent_indigo">نیلی</string>
+    <string name="accent_purple">بنفش</string>
+    <string name="accent_pink">صورتی</string>
+    <string name="accent_teal">سبزآبی</string>
+    <string name="accent_graphite">گرافیتی</string>
+    <string name="skin_group">تصویر پس‌زمینه</string>
+    <string name="skin_pick">انتخاب از عکس‌ها</string>
+    <string name="skin_clear">استفاده از پس‌زمینهٔ ساده</string>
+    <string name="skin_failed">این تصویر خوانده نشد</string>
+    <string name="skin_change">انتخاب تصویر دیگر</string>
+    <string name="skin_scrim">کم‌رنگ کردن تصویر</string>
+    <string name="skin_position">جای تصویر</string>
+    <string name="skin_blur">تاری</string>
+    <string name="skin_blur_off">هیچ</string>
+    <string name="skin_blur_light">کم</string>
+    <string name="skin_blur_strong">زیاد</string>
+    <string name="skin_accent_follow">رنگ تأکیدی از تصویر</string>
+    <string name="skin_accent_follow_sub">اگر تصویر رنگ غالبی داشته باشد، به جای رنگ تأکیدی بالا از آن استفاده می‌شود</string>
     <string name="settings_self_config">اجازه به میکا برای تغییر تنظیمات خودش</string>
-    <string name="settings_self_config_sub">در حالت روشن، کارها یک ابزار برای خواندن و تغییر این ترجیحات دارند (سرعت، بی‌صدا کردن، کپسول، ظاهر و روشن ماندن صفحه). مدل‌ها، کلیدهای API، شبکهٔ محیط اجرا و موارد حذف داده هرگز شامل آن نیستند</string>
+    <string name="settings_self_config_sub">در حالت روشن، کارها یک ابزار برای خواندن و تغییر این ترجیحات دارند (سرعت، بی‌صدا کردن، کپسول، ظاهر، رنگ تأکیدی و روشن ماندن صفحه). مدل‌ها، کلیدهای API، شبکهٔ محیط اجرا و موارد حذف داده هرگز شامل آن نیستند</string>
     <string name="settings_step_limit">محدودیت مراحل هر کار</string>
     <string name="settings_step_limit_sub">خاموش یعنی بدون محدودیت. با رسیدن به محدودیت، کار متوقف می‌شود و محل توقف را اعلام می‌کند.</string>
     <string name="settings_step_limit_off">بدون محدودیت</string>
@@ -190,4 +217,11 @@
     <string name="settings_token_budget_custom">سقف توکن دلخواه</string>
     <string name="settings_token_budget_invalid">یک عدد صحیح از %1$s تا %2$s وارد کنید.</string>
     <string name="settings_token_budget_unlimited">بدون محدودیت</string>
+    <string name="settings_auto_archive">بایگانی خودکار گفتگوها</string>
+    <string name="settings_auto_archive_sub">گفتگوهایی که مدتی پیام جدید ندارند به بایگانی منتقل می‌شوند</string>
+    <string name="settings_auto_archive_hint">گفتگوهایی که در مدت انتخاب‌شده پیام جدیدی ندارند به بایگانی منتقل می‌شوند. گفتگوهای سنجاق‌شده و گفتگوهایی که وظیفه‌ای در آن‌ها در حال اجراست دست‌نخورده می‌مانند. هر زمان می‌توانید آن‌ها را از بایگانی در فهرست گفتگوها بازیابی کنید.</string>
+    <plurals name="settings_auto_archive_days">
+        <item quantity="one">%1$d روز</item>
+        <item quantity="other">%1$d روز</item>
+    </plurals>
 </resources>

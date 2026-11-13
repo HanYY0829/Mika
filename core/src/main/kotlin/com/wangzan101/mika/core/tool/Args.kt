@@ -58,7 +58,9 @@ internal class Args(val tool: ToolDef, val o: JsonObject) {
             val a = (v[0] as? JsonPrimitive)?.content?.toDoubleOrNull()
             val b = (v[1] as? JsonPrimitive)?.content?.toDoubleOrNull()
             if (a != null && b != null) {
-                val c = ((a + b) / 2).roundToInt()
+                val mid = (a + b) / 2
+                if (!mid.isFinite()) throw ArgError(k, "must be a finite number")
+                val c = mid.roundToInt()
                 if (c !in 0..999) throw ArgError(k, "must be between 0 and 999")
                 return c
             }

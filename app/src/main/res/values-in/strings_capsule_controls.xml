@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capsule_edge_reveal">Tampilkan kapsul</string>
+    <string name="capsule_hide_at_edge">Sembunyikan otomatis di tepi layar</string>
+    <string name="capsule_hide_fullscreen">Sembunyikan kapsul saat layar penuh</string>
+    <string name="capsule_tile_label">Kapsul Mika</string>
+    <string name="capsule_tile_enabled">Tersedia di Setelan Cepat</string>
+    <string name="capsule_tile_setup">Buka Mika dan siapkan kontrol ponsel untuk menggunakan kapsul mengambang.</string>
+    <string name="pip_size_smaller">Perkecil pratinjau</string>
+    <string name="pip_size_larger">Perbesar pratinjau</string>
+    <string name="pip_size_reset">Atur ulang ukuran</string>
+</resources>

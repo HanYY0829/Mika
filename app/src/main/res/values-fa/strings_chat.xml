@@ -104,6 +104,23 @@
     <string name="drawer_rename_title">تغییر نام گفتگو</string>
     <string name="drawer_pinned">سنجاق‌شده</string>
     <string name="drawer_pinned_mark">سنجاق‌شده</string>
+    <string name="drawer_archive">بایگانی</string>
+    <string name="drawer_unarchive">خارج کردن از بایگانی</string>
+    <string name="drawer_archived">بایگانی‌شده</string>
+    <string name="drawer_archived_count">%1$d بایگانی‌شده</string>
+    <string name="drawer_archive_empty">هیچ گفتگویی بایگانی نشده است</string>
+    <string name="drawer_archive_done">«%1$s» بایگانی شد</string>
+    <string name="drawer_archive_this_week">این هفته</string>
+    <string name="drawer_archive_this_month">این ماه</string>
+    <string name="drawer_archive_earlier">قدیمی‌تر</string>
+    <string name="drawer_archived_today">امروز بایگانی شد</string>
+    <plurals name="drawer_archived_days_ago">
+        <item quantity="one">%1$d روز پیش بایگانی شد</item>
+        <item quantity="other">%1$d روز پیش بایگانی شد</item>
+    </plurals>
+    <string name="drawer_search_filter_all">همه</string>
+    <string name="drawer_search_filter_active">بایگانی‌نشده</string>
+    <string name="drawer_search_filter_archived">بایگانی‌شده</string>
     <string name="settings_title">تنظیمات</string>
     <string name="chat_unconfirmed">تأیید ممکن نشد: %1$s</string>
     <string name="chat_unverified">انجام شد، اما تأیید نتیجه ممکن نشد</string>
@@ -190,6 +207,7 @@
     <string name="chat_withdraw_message">پس گرفتن پیام</string>
     <string name="pip_close">بستن نمای کوچک این کار</string>
     <string name="pip_unmute">روشن کردن دوبارهٔ صدا</string>
+    <string name="pip_back">بازگشت در صفحهٔ مجازی</string>
     <string name="pip_reopen">نمایش صفحه</string>
     <string name="pip_closed_needs_you">به توجه شما نیاز دارد</string>
     <string name="pip_closed_hint">نمای این کار بسته شد. روی «نمایش صفحه» در پایین سمت راست بزنید، یا «صفحه‌های پس‌زمینه» را در منوی کناری باز کنید.</string>
@@ -244,7 +262,19 @@
     <string name="recommendations_unreadable">کارهای پیشنهادی ذخیره‌شده خوانده نشدند، بنابراین فعلاً قابل تغییر نیستند.</string>
     <string name="share_draft_replace_body">این محتوای به‌اشتراک‌گذاشته‌شده جایگزین پیش‌نویس فعلی شما می‌شود.</string>
     <string name="chat_attach_unavailable">افزودن ممکن نشد: %1$s. بررسی کنید فایل‌ها در دسترس و در محدودهٔ حجم باشند.</string>
+    <string name="chat_attach_too_large">%1$s: از محدودیت 200 MiB بیشتر است</string>
+    <string name="chat_attach_low_device_space">%1$s: فضای ذخیره‌سازی گوشی کافی نیست؛ فضا را آزاد کنید و دوباره تلاش کنید</string>
+    <string name="chat_attach_workspace_limit">%1$s: فضای ذخیره‌سازی محیط کار به سقف رسیده است؛ فایل‌های محیط کار را پاک کنید و دوباره تلاش کنید</string>
+    <string name="chat_attach_io_error">%1$s: خواندن یا کپی کردن ممکن نیست؛ بررسی کنید فایل در دسترس باشد و دوباره تلاش کنید</string>
     <string name="chat_retry_missing">%1$s: فایل موجود نیست</string>
     <string name="chat_retry_limit">%1$s: به سقف کپی رسید</string>
     <string name="chat_retry_failed">%1$s: کپی ممکن نشد</string>
+    <plurals name="drawer_archive_many_done">
+        <item quantity="one">%1$d گفتگو بایگانی شد</item>
+        <item quantity="other">%1$d گفتگو بایگانی شد</item>
+    </plurals>
+    <plurals name="drawer_archive_many_skipped">
+        <item quantity="one">%1$d بایگانی نشد</item>
+        <item quantity="other">%1$d بایگانی نشد</item>
+    </plurals>
 </resources>

@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.wangzan101.mika.R
 import com.wangzan101.mika.core.personal.PersonalTask
 import com.wangzan101.mika.personal.PersonalPhonePreview
 import com.wangzan101.mika.personal.PersonalReplayFrame
@@ -36,7 +37,10 @@ class PersonalHeaderTest {
         val preview = MutableStateFlow<PersonalPhonePreview?>(null)
         val frame = Bitmap.createBitmap(120, 240, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.RED) }
         var openedTask: String? = null
-        val cache = InstrumentationRegistry.getInstrumentation().targetContext.cacheDir
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val liveLabel = context.getString(R.string.personal_replay_live)
+        val returnLiveLabel = context.getString(R.string.personal_replay_return_live)
+        val cache = context.cacheDir
         val olderFrame = Bitmap.createBitmap(120, 240, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.BLUE) }
         val saved = File.createTempFile("personal-preview", ".jpg", cache)
         saved.outputStream().use { olderFrame.compress(Bitmap.CompressFormat.JPEG, 80, it) }
@@ -74,7 +78,7 @@ class PersonalHeaderTest {
         compose.onNodeWithTag("personal-phone-preview").performClick()
         val pane = compose.onNodeWithTag("personal-preview-image")
         val timeline = compose.onNodeWithTag("personal-preview-timeline")
-        compose.onNodeWithText("实时").assertExists()
+        compose.onNodeWithText(liveLabel).assertExists()
         compose.onNodeWithText("从头看").assertDoesNotExist()
         assertTrue(pane.fetchSemanticsNode().boundsInRoot.bottom <= timeline.fetchSemanticsNode().boundsInRoot.top)
         val portrait = pane.captureToImage().toPixelMap()
@@ -95,13 +99,13 @@ class PersonalHeaderTest {
         timeline.performTouchInput {
             swipe(Offset(width * 0.95f, center.y), Offset(width * 0.1f, center.y))
         }
-        compose.onNodeWithText("回到实时").assertExists()
+        compose.onNodeWithText(returnLiveLabel).assertExists()
         compose.waitUntil(5_000) {
             val pixels = pane.captureToImage().toPixelMap()
             pixels[pixels.width / 2, pixels.height / 2].blue > 0.9f
         }
-        compose.onNodeWithText("回到实时").performClick()
-        compose.onNodeWithText("实时").assertExists()
+        compose.onNodeWithText(returnLiveLabel).performClick()
+        compose.onNodeWithText(liveLabel).assertExists()
         val live = pane.captureToImage().toPixelMap()
         assertTrue(live[live.width / 2, live.height / 2].red > 0.9f)
         compose.runOnIdle { preview.value = null }

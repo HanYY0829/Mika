@@ -37,7 +37,6 @@ import com.wangzan101.mika.settings.ProviderConnection
 import com.wangzan101.mika.settings.SystemStatusMonitor
 import com.wangzan101.mika.settings.WebSearchSettings
 import com.wangzan101.mika.task.TriggerRuntime
-import com.wangzan101.mika.ui.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
@@ -258,7 +257,7 @@ class AndroidSelfPort(
         return SelfConsent(prompt, app.getString(R.string.self_consent_allow), app.getString(R.string.self_consent_deny))
     }
 
-    /** 后台通知:点开后带 extra 回 MainActivity,由它开同一页/同一个文件。 */
+    /** 后台通知经内部入口打开对应页面或文件。 */
     private fun post(
         title: String,
         body: String,
@@ -272,8 +271,8 @@ class AndroidSelfPort(
         if (!NotificationManagerCompat.from(app).areNotificationsEnabled()) return false
         val nm = app.getSystemService(NotificationManager::class.java) ?: return false
         ensureChannel(nm)
-        val intent = Intent(app, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val intent = Intent(app, SelfNotificationActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             screen?.let { putExtra(SelfIntents.EXTRA_SCREEN, it.wire) }
             file?.let {
                 putExtra(SelfIntents.EXTRA_FILE, it.path)

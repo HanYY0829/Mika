@@ -1,6 +1,10 @@
 package com.wangzan101.mika.ui
 
+import com.wangzan101.mika.chat.SharedFile
+import com.wangzan101.mika.task.SteerNote
+import com.wangzan101.mika.task.SteerState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ChatRowsTest {
@@ -34,5 +38,47 @@ class ChatRowsTest {
         assertEquals(3, count(listOf(done)))
         assertEquals(4, count(listOf(done), phoneSetupNeeded = true))
         assertEquals(5, count(listOf(done), phoneSetupNeeded = true, hasBlocked = true))
+    }
+
+    @Test
+    fun keysListRowsInTheSameOrderTheDslEmitsThem() {
+        val working = Exchange("问", emptyList(), ExchangeStatus.Working, live = true, draft = "正在回答")
+        assertEquals(listOf("u0", "d0", "r0"), chatItemKeys(listOf(working), kept = null, phoneSetupNeeded = false, hasBlocked = false))
+
+        val steer = SteerNote("s1", "改成靠窗", SteerState.Joined, interrupted = "被打断", finished = "正在改")
+        val done = Exchange(
+            "买票", emptyList(), ExchangeStatus.Done("完成", null), live = false, runId = "run",
+            steers = listOf(steer),
+            files = listOf(SharedFile("a.txt", 1L, "a.txt", "content://a")),
+        )
+        assertEquals(
+            listOf("u0", "s0", "a0-s1", "i0-s1", "m0-s1", "r0", "f0"),
+            chatItemKeys(listOf(done), kept = null, phoneSetupNeeded = false, hasBlocked = false),
+        )
+    }
+
+    @Test
+    fun targetKeysPointAtTheRenderedRow() {
+        val steer = SteerNote("s1", "改成靠窗", SteerState.Joined, interrupted = "被打断", finished = "正在改")
+        val done = Exchange(
+            "买票", emptyList(), ExchangeStatus.Done("完成", null), live = false, runId = "run",
+            steers = listOf(steer),
+            files = listOf(SharedFile("a.txt", 1L, "a.txt", "content://a")),
+        )
+        val list = listOf(done)
+        assertEquals("u0", chatTargetKey(list, ChatTarget.Message(0, null)))
+        assertEquals("m0-s1", chatTargetKey(list, ChatTarget.Message(0, 0)))
+        assertEquals("a0-s1", chatTargetKey(list, ChatTarget.Reply(0, 0, interrupted = false)))
+        assertEquals("i0-s1", chatTargetKey(list, ChatTarget.Reply(0, 0, interrupted = true)))
+        assertEquals("f0", chatTargetKey(list, ChatTarget.Files(0)))
+        assertEquals("r0", chatTargetKey(list, ChatTarget.Status(0)))
+        assertNull(chatTargetKey(list, ChatTarget.Message(1, null)))
+    }
+
+    @Test
+    fun withdrawnSteerFallsBackToTheTurnStart() {
+        val withdrawn = SteerNote("s1", "撤回的话", SteerState.Withdrawn)
+        val done = Exchange("问", emptyList(), ExchangeStatus.Done("答", null), live = false, steers = listOf(withdrawn))
+        assertEquals("u0", chatTargetKey(listOf(done), ChatTarget.Message(0, 0)))
     }
 }

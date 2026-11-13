@@ -27,6 +27,9 @@
     <string name="memory_auto_sub">Organized from your own words after each task</string>
     <string name="memory_learn">Learn from past tasks (skills and app notes)</string>
     <string name="memory_learn_sub">What Mika learns is used only after you accept it</string>
+    <string name="memory_tasks">Remember past tasks</string>
+    <string name="memory_tasks_sub">Keep a short summary of each finished task to recall next time</string>
+    <string name="memory_tasks_title">Past tasks</string>
     <string name="memory_clear_sub">Delete all memory and learned skills</string>
     <string name="edit_it">Edit</string>
     <string name="unpin">Unpin</string>

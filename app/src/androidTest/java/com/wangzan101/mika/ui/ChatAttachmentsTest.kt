@@ -1,6 +1,8 @@
 package com.wangzan101.mika.ui
 
 import com.wangzan101.mika.ChineseUi
+import com.wangzan101.mika.cap.sandbox.AttachmentFailure
+import com.wangzan101.mika.cap.sandbox.AttachmentFailureReason
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,6 +50,7 @@ class ChatAttachmentsTest {
         attachments: List<PendingAttachment> = emptyList(),
         text: String = "",
         mode: ComposerMode = ComposerMode.Idle,
+        rejected: List<AttachmentFailure> = emptyList(),
         onSend: () -> Unit = {},
     ) = compose.setContent {
         MikaTheme {
@@ -63,6 +66,7 @@ class ChatAttachmentsTest {
                         attachPanel = if (canAttach) ({ Box(Modifier.fillMaxSize().testTag("panel-body")) }) else null,
                         attachBlocked = !canAttach,
                         attachments = attachments,
+                        rejected = rejected,
                     )
                 }
             }
@@ -70,6 +74,17 @@ class ChatAttachmentsTest {
     }
 
     private fun waitGone(tag: String) = compose.waitUntil(3_000) { compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty() }
+
+    @Test fun rejectedAttachmentsShowTheirIndividualReasons() {
+        composer(rejected = listOf(
+            AttachmentFailure("big.zip", AttachmentFailureReason.TOO_LARGE),
+            AttachmentFailure("photo.jpg", AttachmentFailureReason.LOW_DEVICE_SPACE),
+            AttachmentFailure("notes.txt", AttachmentFailureReason.IO_ERROR),
+        ))
+        compose.onNodeWithText("big.zip：超过 200 MiB 限制", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("photo.jpg：手机存储空间不足", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("notes.txt：无法读取或复制", substring = true).assertIsDisplayed()
+    }
 
     @Test fun plusOpensThePanelAndTurnsIntoClose() {
         composer()

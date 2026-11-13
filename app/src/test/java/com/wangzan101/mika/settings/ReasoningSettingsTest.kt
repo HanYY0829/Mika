@@ -135,6 +135,26 @@ class ReasoningSettingsTest {
         assertNull(ReasoningOptions.of(custom, ListedModel("m3")))
     }
 
+    // DeepSeek 列表只写开着思考的强度(low / high / max),官方文档另写 none 关掉思考:读到列表后照样关得掉(#563)
+    @Test fun listedLevelsKeepTheDocumentedOffSwitch() {
+        val deepSeek = ListedModel("deepseek-flash", reasoningEfforts = listOf("low", "high", "max"))
+        val official = ProviderConfig("d1", ProviderConfig.Kind.OpenAiCompat, "https://api.deepseek.com", "deepseek-flash", caps)
+        val options = ReasoningOptions.of(official, deepSeek)!!
+        assertEquals(listOf("none", "low", "high", "max"), options.levels)
+        assertTrue(options.fromProvider)
+        // 地址写成 /v1、对不上预设时,以前整行没有,现在照列表给
+        val v1 = official.copy(baseUrl = "https://api.deepseek.com/v1")
+        assertEquals(listOf("low", "high", "max"), ReasoningOptions.of(v1, deepSeek)!!.levels)
+        // 列表已有 none、或这家文档没写 none、或列表说没有档位:都不补
+        assertEquals(listOf("none", "high"), ReasoningOptions.of(official, ListedModel("m", reasoningEfforts = listOf("none", "high")))!!.levels)
+        val agg = ProviderConfig("d2", ProviderConfig.Kind.OpenAiCompat, "https://agg.example/v1", "m", caps)
+        assertEquals(listOf("low"), ReasoningOptions.of(agg, ListedModel("m", reasoningEfforts = listOf("low")))!!.levels)
+        assertEquals(emptyList<String>(), ReasoningOptions.of(official, ListedModel("m", reasoningEfforts = emptyList()))!!.levels)
+        // 列表让这个模型走别的协议(这里是 Messages)时,OpenAI 兼容文档里的 none 不适用
+        val viaMessages = deepSeek.copy(endpoint = ModelEndpoint(ModelProtocol.Messages, "https://api.deepseek.com/anthropic", null))
+        assertEquals(listOf("low", "high", "max"), ReasoningOptions.of(official, viaMessages)!!.levels)
+    }
+
     // Anthropic 列表写明的档位照给;只接受按预算思考的模型能思考但没有可选档位,也不接受档位
     @Test fun anthropicOffersExactlyTheCatalogLevels() {
         val cfg = ProviderConfig("c", ProviderConfig.Kind.Anthropic, "https://api.anthropic.example", "m", caps)

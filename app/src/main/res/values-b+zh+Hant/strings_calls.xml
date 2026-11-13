@@ -23,11 +23,11 @@
     <string name="calls_prepare">檢查並準備</string>
     <string name="calls_enable">啟用 AI 電話</string>
     <string name="calls_disable">停用並恢復一般通話</string>
-    <string name="calls_provider">火山即時語音 3.0</string>
-    <string name="calls_credentials">即時語音憑證</string>
+    <string name="calls_provider">火山方舟 Doubao 即時語音互動 API</string>
+    <string name="calls_credentials">火山方舟 Doubao 即時語音互動 API 憑據</string>
     <string name="calls_key_saved">憑證已安全儲存，服務權限仍須實際測試</string>
     <string name="calls_key_missing">尚未設定</string>
-    <string name="calls_profile">開場白與通話目的</string>
+    <string name="calls_profile">通話配置</string>
     <string name="calls_model_label">模型 %1$s · 通話音訊路徑</string>
     <string name="calls_incoming">來電</string>
     <string name="calls_auto_answer">自動接聽來電</string>
@@ -46,7 +46,7 @@
     <string name="calls_connected">通話已接通</string>
     <string name="calls_holding">通話保留中</string>
     <string name="calls_disconnecting">正在掛斷</string>
-    <string name="calls_credentials_note">請使用具備即時語音權限的豆包語音 API 金鑰。方舟聊天金鑰或僅有語音辨識權限的金鑰皆無法使用。此處不顯示已儲存的憑證。</string>
+    <string name="calls_credentials_note">請填寫火山方舟 Doubao 即時語音互動 API 的 API Key；方舟聊天 API Key 或僅有語音辨識權限的憑據不能替代。此處不會顯示已儲存的憑據。</string>
     <string name="calls_legacy_credentials">使用舊版 App ID 與 Access Key</string>
     <string name="calls_save">儲存</string>
     <string name="calls_cancel">取消</string>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_system_interrupted">前回の返信が中断されました。チャット履歴は保存されているので、会話を続けられます。既存のタスクはアクティビティで確認できます。</string>
+    <string name="personal_system_timeout">今回の返信がタイムアウトしました。これによって既存のタスクがやり直されることはありません。引き続きメッセージを送信できます。</string>
+    <string name="personal_system_reply_failed">返信に失敗しました。しばらくしてからもう一度お試しください。</string>
+    <string name="personal_system_task_start_failed">タスクの開始に失敗しました</string>
+    <string name="personal_system_task_cancelled">タスクをキャンセルしました</string>
+    <string name="personal_system_task_completed">タスクが完了しました</string>
+    <string name="personal_system_task_failed">タスクに失敗しました</string>
+    <string name="personal_system_task_running">タスクを実行中</string>
+    <string name="personal_system_task_queued">タスクは待機中</string>
+    <string name="personal_system_no_model">まず設定でメインモデルを選択してから、ここに戻って会話を続けてください。</string>
+    <string name="personal_system_context_long">このメッセージは現在のモデルのコンテキスト上限を超えています。複数に分けて送信してください。</string>
+    <string name="personal_system_empty_reply">モデルから表示できる応答が返されませんでした。もう一度お試しください。</string>
+    <string name="personal_system_too_many_actions">今回の操作回数が多いため、処理を停止しました。作成済みのタスクは引き続きアクティビティにあります。</string>
+    <string name="personal_system_message_long">このメッセージは長すぎます。複数に分けて送信してください。</string>
+    <string name="personal_system_task_done_detail">タスクが終了しました。タスクを開いて結果を確認してください。</string>
+    <string name="personal_system_task_stopped_detail">タスクが停止しました。現在の進捗はタスクの記録に保存されています。</string>
+    <string name="personal_system_task_failed_detail">タスクを完了できませんでした。タスクを開いて原因を確認してください。</string>
+    <string name="personal_system_history_unreadable">履歴を一時的に読み取れません。元のファイルのバックアップは保持されています。会話は続けられます。復元のためバックアップを保管してください。</string>
+    <string name="personal_system_task_interrupted">前回の実行が中断されました。チャットとタスクの記録は保存されています。もう一度内容を伝えてください。</string>
+    <string name="personal_system_wait_confirmation">確認が必要です。タスクを開いて対応してください</string>
+    <string name="personal_system_saving">結果を保存しています</string>
+    <string name="personal_system_waiting">開始待ち</string>
+    <string name="personal_system_stop_not_ready">タスクの準備ができていないか、すでに終了しています。タスクの詳細を確認してください。</string>
+    <string name="personal_system_stop_failed">タスクを停止できませんでした。タスクを開いてもう一度お試しください。</string>
+    <string name="personal_system_task_amendment">追加指示：%1$s</string>
+</resources>

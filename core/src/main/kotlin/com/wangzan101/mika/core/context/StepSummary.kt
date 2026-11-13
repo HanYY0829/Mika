@@ -31,7 +31,14 @@ data class StepSummary(
         var p = progress + line
         var e = earlier
         while (p.size > MAX_PROGRESS) {
-            val outcome = p.first().substringAfterLast("→ ").trim().let { if (it in e || e.size < MAX_EARLIER_KINDS) it else OTHER }
+            val kind = p.first().substringAfterLast("→ ").trim()
+            // 超出种类上限的新结局都并进 OTHER,而 OTHER 自己也要占一格:先给它留好位置,不然会多出第 6 种
+            val outcome = when {
+                kind in e -> kind
+                e.size + 1 < MAX_EARLIER_KINDS -> kind
+                OTHER in e && e.size < MAX_EARLIER_KINDS -> kind
+                else -> OTHER
+            }
             e = e + (outcome to (e[outcome] ?: 0) + 1)
             p = p.drop(1)
         }

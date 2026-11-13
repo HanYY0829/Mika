@@ -176,6 +176,24 @@ class ChatViewModelTest {
         assertEquals("another draft", vm.ui.value.input)
     }
 
+    @Test fun openingAtAMessageKeepsTheTargetForTheChatPage() = runTest {
+        val vm = vm()
+        vm.openConversation("a")
+        vm.openConversationAt("b", ChatTarget.Message(1, null))
+        assertEquals("b", vm.ui.value.conversationId)
+        assertEquals(ChatTarget.Message(1, null), vm.jump.value?.target)
+
+        val first = vm.jump.value!!
+        vm.consumeJump(first)
+        assertNull(vm.jump.value)
+
+        // 已经在这个对话里也要能重新跳;serial 让聊天页把同一处当成新请求
+        vm.openConversationAt("b", ChatTarget.Status(2))
+        assertEquals("b", vm.ui.value.conversationId)
+        assertEquals(ChatTarget.Status(2), vm.jump.value?.target)
+        assertTrue(vm.jump.value!!.serial > first.serial)
+    }
+
     @Test fun parallelRunningTasksKeepTheirDraftsAndFollowUpModes() = runTest {
         val running = MutableStateFlow<TaskState>(TaskState.Running(1, "working"))
         val vm = ChatViewModel(backgroundScope, state, stage, actions, ConversationStore(tmp.newFolder()),
@@ -1639,7 +1657,7 @@ class ChatViewModelTest {
         }
     }
 
-    @Test fun attachmentsGoWithTheNextMessage() = runTest {
+    @Test fun partialAttachmentFailureKeepsDraftUntilFailedFileIsRemoved() = runTest {
         val sandbox = MutableStateFlow(false)
         val imported = mutableListOf<Pair<String, List<String>>>()
         val vm = ChatViewModel(
@@ -1647,7 +1665,11 @@ class ChatViewModelTest {
             sandboxReady = sandbox,
             importAttachments = { id, uris ->
                 imported += id to uris
-                com.wangzan101.mika.cap.sandbox.ImportResult(listOf("/workspace/inbox/报表 (1).csv" to 2048L), listOf("big.iso"))
+                ImportResult(
+                    listOf("/workspace/inbox/报表 (1).csv" to 2048L),
+                    if (uris.size > 1) listOf("big.iso") else emptyList(),
+                    if (uris.size > 1) listOf(com.wangzan101.mika.cap.sandbox.AttachmentFailure("big.iso", com.wangzan101.mika.cap.sandbox.AttachmentFailureReason.TOO_LARGE)) else emptyList(),
+                )
             },
             describeAttachments = { uris -> uris.map { PendingAttachment(it, if (it.endsWith("1")) "报表.csv" else "big.iso", 10L) } },
         ).also { runCurrent() }
@@ -1666,15 +1688,27 @@ class ChatViewModelTest {
         assertEquals(listOf("content://x/1", "content://x/2"), vm.ui.value.attachments.map { it.uri })
         assertTrue(imported.isEmpty())
 
-        // 发送时才复制进工作区,路径写进消息
-        assertTrue(vm.send("汇总一下", ok))
+        // 部分失败时不启动,文字和整批附件保留,供用户选择如何继续。
+        vm.input("汇总一下")
+        assertTrue(vm.send(vm.ui.value.input, ok))
         runCurrent()
         val id = vm.ui.value.conversationId!!
         assertEquals(listOf(id to listOf("content://x/1", "content://x/2")), imported)
+        assertTrue(calls.isEmpty())
+        assertEquals("汇总一下", vm.ui.value.input)
+        assertEquals(listOf("content://x/1", "content://x/2"), vm.ui.value.attachments.map { it.uri })
+        assertEquals(listOf("big.iso"), vm.ui.value.rejectedAttachments.map { it.name })
+        assertEquals(com.wangzan101.mika.cap.sandbox.AttachmentFailureReason.TOO_LARGE, vm.ui.value.rejectedAttachments.single().reason)
+        assertFalse(vm.ui.value.importing)
+
+        // 用户明确移除失败项后,发送剩余附件。
+        vm.removeAttachment("content://x/2")
+        assertTrue(vm.send(vm.ui.value.input, ok))
+        runCurrent()
+        assertEquals(id to listOf("content://x/1"), imported.last())
         assertEquals(listOf("start:汇总一下\n附件:/workspace/inbox/报表 (1).csv(2 KB)"), calls)
         assertTrue(vm.ui.value.attachments.isEmpty())
-        assertEquals(listOf("big.iso"), vm.ui.value.rejectedAttachments)
-        assertFalse(vm.ui.value.importing)
+        assertTrue(vm.ui.value.input.isEmpty())
         // 任务在跑时不收附件
         vm.attach(listOf("content://x/3"))
         runCurrent()
@@ -1711,6 +1745,52 @@ class ChatViewModelTest {
         assertEquals(listOf("看下一张\n附件:/workspace/inbox/a.jpg(1 KB)"), vm.ui.value.queued.map { it.text })
     }
 
+    @Test fun failedImportWithTextKeepsDraftAndCanBeRetried() = runTest {
+        var fails = true
+        val vm = ChatViewModel(
+            backgroundScope, state, stage, actions, ConversationStore(tmp.newFolder()),
+            sandboxReady = MutableStateFlow(true),
+            importAttachments = { _, _ ->
+                if (fails) throw java.io.IOException("read failed")
+                ImportResult(listOf("/workspace/inbox/a.pdf" to 1L), emptyList())
+            },
+        ).also { runCurrent() }
+        vm.input("分析这个文件")
+        vm.toggleAttachment(PendingAttachment("content://a", "a.pdf", 1L))
+        assertTrue(vm.send(vm.ui.value.input, ok))
+        runCurrent()
+        assertTrue(calls.isEmpty())
+        assertEquals("分析这个文件", vm.ui.value.input)
+        assertEquals(listOf("a.pdf"), vm.ui.value.attachments.map { it.name })
+        assertEquals(listOf("a.pdf"), vm.ui.value.rejectedAttachments.map { it.name })
+        fails = false
+        assertTrue(vm.send(vm.ui.value.input, ok))
+        runCurrent()
+        assertEquals(listOf("start:分析这个文件\n附件:/workspace/inbox/a.pdf(1 B)"), calls)
+        assertTrue(vm.ui.value.attachments.isEmpty())
+    }
+
+    @Test fun failedQueuedAttachmentImportDoesNotEnqueueAndKeepsDraft() = runTest {
+        val vm = ChatViewModel(
+            backgroundScope, state, stage, actions, ConversationStore(tmp.newFolder()),
+            sandboxReady = MutableStateFlow(true), followUps = followUpFlow,
+            importAttachments = { _, _ -> ImportResult(listOf("/workspace/inbox/a.pdf" to 1L), listOf("b.pdf")) },
+        ).also { runCurrent() }
+        vm.send("当前任务", ok)
+        emit(TaskState.Running(1, "在做"))
+        vm.setFollowUpMode(FollowUpMode.Queue)
+        vm.input("分析文件")
+        vm.toggleAttachment(PendingAttachment("content://a", "a.pdf", 1L))
+        vm.toggleAttachment(PendingAttachment("content://b", "b.pdf", 1L))
+        assertTrue(vm.send(vm.ui.value.input, ok))
+        runCurrent()
+        assertTrue(calls.none { it.startsWith("queue:") })
+        assertTrue(vm.ui.value.queued.isEmpty())
+        assertEquals("分析文件", vm.ui.value.input)
+        assertEquals(listOf("a.pdf", "b.pdf"), vm.ui.value.attachments.map { it.name })
+        assertEquals(listOf("b.pdf"), vm.ui.value.rejectedAttachments.map { it.name })
+    }
+
     @Test fun nothingIsSentWhenEveryAttachmentFailsAndThereAreNoWords() = runTest {
         val vm = ChatViewModel(
             backgroundScope, state, stage, actions, ConversationStore(tmp.newFolder()),
@@ -1722,7 +1802,7 @@ class ChatViewModelTest {
         runCurrent()
         assertTrue(calls.isEmpty())
         assertTrue(vm.ui.value.exchanges.isEmpty())
-        assertEquals(listOf("huge.mov"), vm.ui.value.rejectedAttachments)
+        assertEquals(listOf("huge.mov"), vm.ui.value.rejectedAttachments.map { it.name })
     }
 
     @Test fun pickingPhotosStopsAtTheLimit() = runTest {
@@ -3309,7 +3389,7 @@ class ChatViewModelTest {
         runCurrent()
         assertTrue(calls.none { it.startsWith("start:") })
         assertEquals("看看", vm.ui.value.input)
-        assertEquals(listOf("a.pdf"), vm.ui.value.rejectedAttachments)
+        assertEquals(listOf("a.pdf"), vm.ui.value.rejectedAttachments.map { it.name })
         assertEquals(1, vm.ui.value.attachments.size)
     }
 
@@ -3385,6 +3465,120 @@ class ChatViewModelTest {
         assertTrue(vm.send("新一句", ok))
         assertNull(vm.branchBefore(0))
     }
+    /** 归档屏上这个对话:换到新的空对话,原来的草稿留着,打开后还能接着改。 */
+    @Test fun archiveCurrentConversationStartsNewOneAndKeepsDraft() = runTest {
+        val store = ConversationStore(tmp.newFolder())
+        store.append("a", Turn("查天气", "晴", "succeeded"))
+        val vm = vm(store)
+        vm.openConversation("a")
+        vm.input("还没发出去的补充")
+        runCurrent()
+
+        assertTrue(vm.archiveConversation("a"))
+
+        assertTrue(vm.ui.value.conversationId != "a")
+        assertNotNull(store.archivedAt("a"))
+        assertTrue(store.list().none { it.id == "a" })
+        vm.openConversation("a")
+        assertEquals("还没发出去的补充", vm.ui.value.input)
+    }
+
+    /** 归档别的对话不动当前对话,只把它从列表里收起来。 */
+    @Test fun archiveOtherConversationKeepsCurrentAndHidesIt() = runTest {
+        val store = ConversationStore(tmp.newFolder())
+        store.append("a", Turn("查天气", "晴", "succeeded"))
+        store.append("b", Turn("订票", "好了", "succeeded"))
+        val vm = vm(store)
+        vm.openConversation("a")
+
+        assertTrue(vm.archiveConversation("b"))
+
+        assertEquals("a", vm.ui.value.conversationId)
+        assertNotNull(store.archivedAt("b"))
+        assertEquals(listOf("a"), store.list().map { it.id })
+    }
+
+    /** 跑着或排着任务的对话不归档。 */
+    @Test fun archiveRunningConversationIsRefused() = runTest {
+        val store = ConversationStore(tmp.newFolder())
+        store.append("a", Turn("查天气", "晴", "succeeded"))
+        val running = MutableStateFlow(listOf("a"))
+        val vm = ChatViewModel(backgroundScope, state, stage, actions, store, activeConversations = running).also { runCurrent() }
+
+        assertFalse(vm.archiveConversation("a"))
+        assertNull(store.archivedAt("a"))
+    }
+
+    /** 取消归档后回到列表,原来的置顶还在。 */
+    @Test fun unarchiveConversationBringsItBack() = runTest {
+        val store = ConversationStore(tmp.newFolder())
+        store.append("a", Turn("查天气", "晴", "succeeded"))
+        val vm = vm(store)
+        vm.setPinned("a", true)
+        assertTrue(vm.archiveConversation("a"))
+
+        vm.unarchiveConversation("a")
+
+        assertNull(store.archivedAt("a"))
+        assertEquals(listOf("a"), store.list().map { it.id })
+        assertNotNull(store.pinnedAt("a"))
+    }
+
+    /** 归档视图里多选恢复:选中的回到列表,没选的还收着。 */
+    @Test fun unarchiveConversationsRestoresSelectedOnes() = runTest {
+        val store = ConversationStore(tmp.newFolder())
+        store.append("a", Turn("查天气", "晴", "succeeded"))
+        store.append("b", Turn("订票", "好了", "succeeded"))
+        store.append("c", Turn("记账", "记好了", "succeeded"))
+        val vm = vm(store)
+        listOf("a", "b", "c").forEach { assertTrue(store.setArchived(it, true)) }
+
+        vm.unarchiveConversations(listOf("a", "c"))
+
+        assertNull(store.archivedAt("a"))
+        assertNull(store.archivedAt("c"))
+        assertNotNull(store.archivedAt("b"))
+        assertEquals(setOf("a", "c"), store.list().map { it.id }.toSet())
+    }
+
+    /** 普通侧栏多选归档:在跑的和当前正在看的跳过,其余收起;返回实际归档了几个。 */
+    @Test fun archiveConversationsSkipsRunningAndCurrentOnes() = runTest {
+        val store = ConversationStore(tmp.newFolder())
+        listOf("a", "b", "c", "d").forEach { store.append(it, Turn("第 $it 个", "好", "succeeded")) }
+        val running = MutableStateFlow(listOf("c"))
+        val vm = ChatViewModel(backgroundScope, state, stage, actions, store, activeConversations = running).also { runCurrent() }
+        vm.openConversation("a")
+
+        assertEquals(2, vm.archiveConversations(listOf("a", "b", "c", "d")))
+
+        assertEquals("a", vm.ui.value.conversationId)
+        assertNull(store.archivedAt("a"))
+        assertNotNull(store.archivedAt("b"))
+        assertNull(store.archivedAt("c"))
+        assertNotNull(store.archivedAt("d"))
+    }
+
+    @Test fun batchArchiveSkipsUnsentDraftButArchivesSavedConversationWithDraft() = runTest {
+        val store = ConversationStore(tmp.newFolder())
+        store.append("saved", Turn("已有消息", "回答", "succeeded"))
+        val vm = vm(store)
+        vm.input("尚未发送")
+        val unsent = vm.ui.value.conversationId!!
+        vm.openConversation("saved")
+        vm.input("已有对话的草稿")
+        vm.newConversation()
+        runCurrent()
+
+        assertTrue(vm.withDrafts(store.list()).any { it.id == unsent })
+        assertEquals(1, vm.archiveConversations(listOf(unsent, "saved")))
+        assertNull(store.archivedAt(unsent))
+        assertNotNull(store.archivedAt("saved"))
+        vm.openConversation(unsent)
+        assertEquals("尚未发送", vm.ui.value.input)
+        vm.openConversation("saved")
+        assertEquals("已有对话的草稿", vm.ui.value.input)
+    }
+
     @Test fun personalTaskCanBeOpenedWhileOrdinaryConversationIsBusyWithoutStartingWork() = runTest {
         val store = ConversationStore(tmp.newFolder())
         store.append("personal-work", Turn("整理资料", "整理完成", "succeeded"))

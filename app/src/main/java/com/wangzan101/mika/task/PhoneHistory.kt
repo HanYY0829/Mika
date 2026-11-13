@@ -28,11 +28,12 @@ class PhoneHistory(
         val pending = live().distinctBy { it.conversation }.asReversed().map {
             ConversationSummary(it.conversation, it.goal, it.createdAtMs)
         }
-        val page = conversations.listPage(offset, limit + 1, pending)
+        val page = conversations.listPage(offset, limit + 1, pending, includeArchived = true)
         return buildJsonObject {
             putJsonArray("conversations") {
                 for (c in page.take(limit)) addJsonObject {
                     put("id", c.id); put("title", c.title.take(TEXT_LIMIT)); put("updated_at_ms", c.updatedAt)
+                    put("archived", c.archivedAt != null)
                 }
             }
             put("next_offset", if (page.size > limit) JsonPrimitive(offset + limit) else JsonNull)

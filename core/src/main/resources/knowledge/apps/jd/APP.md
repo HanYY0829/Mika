@@ -3,6 +3,7 @@ name: jd
 display: 京东
 packages: ["com.jingdong.app.mall"]
 aliases: ["京东", "JD", "京东商城"]
+sites: ["jd.com"]
 open: 京东
 description: 商品搜索、自营与第三方店铺、订单和物流的购物 App
 ---

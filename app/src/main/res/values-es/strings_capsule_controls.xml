@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capsule_edge_reveal">Mostrar cápsula</string>
+    <string name="capsule_hide_at_edge">Ocultar automáticamente en el borde</string>
+    <string name="capsule_hide_fullscreen">Ocultar cápsula en pantalla completa</string>
+    <string name="capsule_tile_label">Cápsula Mika</string>
+    <string name="capsule_tile_enabled">Disponible en ajustes rápidos</string>
+    <string name="capsule_tile_setup">Abre Mika y configura el control del teléfono para usar la cápsula flotante.</string>
+    <string name="pip_size_smaller">Reducir vista previa</string>
+    <string name="pip_size_larger">Ampliar vista previa</string>
+    <string name="pip_size_reset">Restablecer tamaño</string>
+</resources>

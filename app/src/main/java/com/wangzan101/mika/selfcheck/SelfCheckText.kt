@@ -10,7 +10,18 @@ import java.util.Locale
 internal object SelfCheckText {
     private val SPACES = Regex("[\\s\\p{Z}]+")
 
-    fun normalize(s: String): String = s.replace(SPACES, " ").trim().uppercase(Locale.ROOT).lowercase(Locale.ROOT)
+    /**
+     * 把任意十进制数字变体统一成 ASCII 数字:阿拉伯-印度数字(٠-٩)、扩展阿拉伯-印度数字(۰-۹)、全角数字等。
+     * 读屏给的文字在阿拉伯语等语言里会把数字按本地写法报回来,而页面模板和别处代码按 ASCII 数字算,不统一就认不上。
+     */
+    fun digitsToAscii(s: String): String = buildString(s.length) {
+        for (c in s) {
+            val d = Character.digit(c, 10)
+            append(if (d >= 0) ('0' + d) else c)
+        }
+    }
+
+    fun normalize(s: String): String = digitsToAscii(s).replace(SPACES, " ").trim().uppercase(Locale.ROOT).lowercase(Locale.ROOT)
 
     fun same(a: String, b: String): Boolean = normalize(a) == normalize(b)
 

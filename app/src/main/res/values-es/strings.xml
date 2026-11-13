@@ -130,4 +130,14 @@
     <string name="terminal_task_running">Mika también está trabajando en este espacio. Los cambios de ambos lados pueden interferir.</string>
     <string name="terminal_copy_all">Copiar todo</string>
     <string name="terminal_copied">Copiado</string>
+    <string name="personal_replay_title">Pantalla del teléfono</string>
+    <string name="personal_replay_close">Cerrar</string>
+    <string name="personal_replay_live_screen">Pantalla del teléfono en directo</string>
+    <string name="personal_replay_recorded_screen">Grabación de la pantalla de la tarea</string>
+    <string name="personal_replay_loading">Cargando pantalla…</string>
+    <string name="personal_replay_empty">Todavía no hay ninguna grabación para reproducir.</string>
+    <string name="personal_replay_live">En directo</string>
+    <string name="personal_replay_pause">Pausar</string>
+    <string name="personal_replay_play">Reproducir</string>
+    <string name="personal_replay_return_live">Volver al directo</string>
 </resources>

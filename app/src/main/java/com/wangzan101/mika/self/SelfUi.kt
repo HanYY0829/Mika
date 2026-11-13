@@ -52,7 +52,7 @@ class SelfUi {
 }
 
 /** 后台通知点开后带回来的 extra。 */
-object SelfIntents {
+internal object SelfIntents {
     const val EXTRA_SCREEN = "mika_self_screen"
     const val EXTRA_FILE = "mika_self_file"
     const val EXTRA_FILE_CONVERSATION = "mika_self_file_conversation"

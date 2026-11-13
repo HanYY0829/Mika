@@ -25,4 +25,6 @@
     <string name="dev_speed">速度</string>
     <string name="dev_experiments">実験的機能</string>
     <string name="dev_run_log">実行ログ</string>
+    <string name="dev_screen_tables">新しい画面の要素を表にする</string>
+    <string name="dev_screen_tables_sub">画面の初回読み取りで重複する項目を表にします。要素の参照と画面ツリーは保持します。</string>
 </resources>

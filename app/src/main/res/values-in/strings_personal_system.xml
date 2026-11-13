@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_system_interrupted">Balasan sebelumnya terputus. Riwayat chat telah disimpan dan Anda dapat melanjutkan percakapan. Tugas yang ada dapat dilihat di Aktivitas.</string>
+    <string name="personal_system_timeout">Waktu tunggu balasan ini habis. Tugas yang ada tidak akan diulang karena hal ini, dan Anda dapat terus mengirim pesan.</string>
+    <string name="personal_system_reply_failed">Gagal membalas. Silakan coba lagi nanti.</string>
+    <string name="personal_system_task_start_failed">Gagal memulai tugas</string>
+    <string name="personal_system_task_cancelled">Tugas dibatalkan</string>
+    <string name="personal_system_task_completed">Tugas selesai</string>
+    <string name="personal_system_task_failed">Tugas gagal</string>
+    <string name="personal_system_task_running">Tugas sedang berlangsung</string>
+    <string name="personal_system_task_queued">Tugas dalam antrean</string>
+    <string name="personal_system_no_model">Pilih model utama di Pengaturan terlebih dahulu, lalu kembali untuk melanjutkan percakapan.</string>
+    <string name="personal_system_context_long">Pesan ini melebihi batas konteks model saat ini. Kirim dalam beberapa bagian.</string>
+    <string name="personal_system_empty_reply">Model tidak memberikan balasan yang dapat ditampilkan. Silakan coba lagi.</string>
+    <string name="personal_system_too_many_actions">Terlalu banyak tindakan dalam putaran ini, sehingga pemrosesan dihentikan. Tugas yang sudah dibuat tetap tersedia di Aktivitas.</string>
+    <string name="personal_system_message_long">Pesan ini terlalu panjang. Kirim dalam beberapa bagian.</string>
+    <string name="personal_system_task_done_detail">Tugas telah berakhir. Buka tugas untuk melihat hasilnya.</string>
+    <string name="personal_system_task_stopped_detail">Tugas telah dihentikan. Kemajuan saat ini disimpan dalam catatan tugas.</string>
+    <string name="personal_system_task_failed_detail">Tugas tidak dapat diselesaikan. Buka tugas untuk melihat penyebabnya.</string>
+    <string name="personal_system_history_unreadable">Riwayat belum dapat dibaca. Cadangan file asli telah disimpan. Anda dapat melanjutkan percakapan; simpan cadangan untuk pemulihan.</string>
+    <string name="personal_system_task_interrupted">Proses sebelumnya terhenti. Catatan percakapan dan tugas telah disimpan, dan Anda dapat menjelaskan permintaan ini lagi.</string>
+    <string name="personal_system_wait_confirmation">Konfirmasi Anda diperlukan. Buka tugas untuk menanganinya.</string>
+    <string name="personal_system_saving">Menyimpan hasil</string>
+    <string name="personal_system_waiting">Menunggu untuk dimulai</string>
+    <string name="personal_system_stop_not_ready">Tugas belum siap atau sudah berakhir. Buka tugas untuk melihat detailnya.</string>
+    <string name="personal_system_stop_failed">Gagal menghentikan tugas. Buka tugas dan coba lagi.</string>
+    <string name="personal_system_task_amendment">Instruksi tambahan: %1$s</string>
+</resources>

@@ -299,6 +299,11 @@ class SettingsScreenTest {
         compose.setContent { CapsuleScreen(mode, onMode = { picked += it; mode = it }, onBack = {}) }
         compose.awaitOne("有任务时显示").assertIsDisplayed()
         compose.onNodeWithText("关闭").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("贴边自动隐藏").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("全屏时隐藏胶囊").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("允许添加到快捷设置").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("几秒没碰后的显示程度", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("前台应用铺满屏幕", substring = true).assertDoesNotExist()
         // 脚注在三个选项下面,矮屏或大字号时要滚一下才看得到
         compose.onNodeWithText("无障碍服务", substring = true).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("一直显示").performScrollTo().performClick()

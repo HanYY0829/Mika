@@ -92,6 +92,7 @@ fun editedTrigger(
     newId: String,
     newThreadId: String,
     nowMs: Long,
+    source: TriggerSource = TriggerSource.User,
 ): TriggerDefinition {
     val content = draft.content.trim()
     if (content.isEmpty()) invalid(PlanValidation.MissingContent)
@@ -151,7 +152,7 @@ fun editedTrigger(
         minutes * 60_000
     } else null
     val reminderText = content.takeIf { draft.reminder }
-    val base = original ?: TriggerDefinition(newId, newThreadId, content, nextAt)
+    val base = original ?: TriggerDefinition(newId, newThreadId, content, nextAt, source = source)
     val updated = base.copy(
         goal = content,
         nextAtMs = nextAt,

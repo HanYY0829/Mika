@@ -189,6 +189,45 @@ class DeskHistoryTest(unittest.TestCase):
             expect(page.locator(".trace-entry")).to_contain_text("archived-0")
             self.assertEqual([], mutations(phone))
 
+    def test_archived_conversation_from_later_page_is_marked_and_readable(self):
+        fixture = HistoryPhone()
+        fixture.tasks = []
+        archived = True
+        def respond(method, url, body):
+            parsed = urlsplit(url)
+            if parsed.path == "/api/v1/history/conversations":
+                offset = int(parse_qs(parsed.query).get("offset", ["0"])[0])
+                if offset == 0:
+                    return 200, {"conversations": [{"id": "active", "title": "Active", "updated_at_ms": 20, "archived": False}], "next_offset": 1}, {}
+                return 200, {"conversations": [{"id": "phone-only", "title": "Old chat", "updated_at_ms": 10, "archived": archived}], "next_offset": None}, {}
+            return fixture.respond(method, url, body)
+        with browser_desk(respond) as (page, phone):
+            expect(page.locator('button[data-group="chat:active"] .archive-mark')).to_have_count(0)
+            page.get_by_role("button", name="加载更多对话").click()
+            old = page.locator('button[data-group="chat:phone-only"]')
+            expect(old.locator(".archive-mark")).to_have_text("已归档")
+            old.click()
+            expect(page.locator(".turn")).to_have_count(2)
+            expect(page.locator(".turn").last).to_contain_text("Phone-only result")
+            self.assertEqual([], mutations(phone))
+
+    def test_archive_mark_updates_and_coexists_with_task_status(self):
+        fixture = HistoryPhone()
+        archived = True
+        def respond(method, url, body):
+            if urlsplit(url).path == "/api/v1/history/conversations":
+                return 200, {"conversations": [{"id": "mcp-session", "title": "远程对话", "updated_at_ms": 30, "archived": archived}], "next_offset": None}, {}
+            return fixture.respond(method, url, body)
+        with browser_desk(respond) as (page, phone):
+            row = page.locator('button[data-group="chat:mcp-session"]')
+            expect(row.locator(".archive-mark")).to_have_text("已归档")
+            expect(row.locator("small")).to_have_count(2)
+            archived = False
+            page.locator("#refresh").dispatch_event("click")
+            expect(row.locator(".archive-mark")).to_have_count(0)
+            expect(row.locator("small")).to_have_count(1)
+            self.assertEqual([], mutations(phone))
+
     def test_new_conversations_after_the_initially_complete_list_are_reachable(self):
         fixture = HistoryPhone()
         fixture.tasks = []

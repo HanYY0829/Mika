@@ -3,6 +3,7 @@ package com.wangzan101.mika.ui.theme
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import com.wangzan101.mika.settings.ThemeAccent
 
 /**
  * 界面用到的全部颜色。页面一律从 [MikaTheme.colors] 取,不写死色值。
@@ -60,7 +61,17 @@ class MikaColors(
     /** 图表的网格线。 */
     val grid: Color,
     val isDark: Boolean,
-)
+) {
+    /** 换一种强调色,其余不变;淡底的透明度和原来一样(浅色 10%、深色 16%)。 */
+    fun withAccent(accent: Color, onAccent: Color) = MikaColors(
+        bg = bg, surface = surface, fill = fill, ink = ink, ink2 = ink2, ink3 = ink3, hair = hair, edge = edge,
+        accent = accent, accentSoft = accent.copy(alpha = if (isDark) 0x29 / 255f else 0x1A / 255f), onAccent = onAccent,
+        ok = ok, okSoft = okSoft, warn = warn, warnSolid = warnSolid, warnSoft = warnSoft, bad = bad, badSoft = badSoft,
+        neutralSoft = neutralSoft, answer = answer, greySoft = greySoft, glass = glass, glassEdge = glassEdge,
+        cardShadow = cardShadow, floatShadow = floatShadow, thumb = thumb, series = series, seriesOther = seriesOther,
+        grid = grid, isDark = isDark,
+    )
+}
 
 val LightColors = MikaColors(
     bg = Color(0xFFF7F7F8),
@@ -127,6 +138,28 @@ val DarkColors = MikaColors(
     grid = Color(0x12FFFFFF),
     isDark = true,
 )
+
+/** 按深浅色和强调色取整套颜色。蓝色就是 [LightColors] / [DarkColors] 本身;别的颜色只换强调色那三项。 */
+fun palette(dark: Boolean, accent: ThemeAccent): MikaColors {
+    val base = if (dark) DarkColors else LightColors
+    if (accent == ThemeAccent.Blue) return base
+    val (color, on) = accentTone(accent, dark)
+    return base.withAccent(color, on)
+}
+
+/**
+ * 强调色在浅色 / 深色下的取值,和它上面的文字、图标色。
+ * 文字的对比度不低于默认蓝色,和页面背景的对比度不低于 3:1(见 `AccentPaletteTest`)。
+ */
+fun accentTone(accent: ThemeAccent, dark: Boolean): Pair<Color, Color> = when (accent) {
+    ThemeAccent.Blue -> (if (dark) DarkColors else LightColors).let { it.accent to it.onAccent }
+    ThemeAccent.Indigo -> Color(if (dark) 0xFF7D7AFF else 0xFF5856D6) to Color.White
+    ThemeAccent.Purple -> Color(if (dark) 0xFFBF5AF2 else 0xFF9B3FD9) to Color.White
+    ThemeAccent.Pink -> Color(if (dark) 0xFFFF4F80 else 0xFFE0306A) to Color.White
+    ThemeAccent.Teal -> Color(if (dark) 0xFF1E9E97 else 0xFF0A8F8A) to Color.White
+    // 深色下的石墨是浅灰,上面配深色字
+    ThemeAccent.Graphite -> if (dark) Color(0xFFE5E5EA) to Color(0xFF1C1C1E) else Color(0xFF3A3A3C) to Color.White
+}
 
 /** 没有包在 [MikaTheme] 里时(比如界面测试)按浅色。 */
 val LocalMikaColors = staticCompositionLocalOf { LightColors }

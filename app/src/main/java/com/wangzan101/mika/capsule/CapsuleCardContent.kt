@@ -53,6 +53,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,6 +92,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -120,7 +122,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 private val CardShape = RoundedCornerShape(22.dp)
 private val ScreenShape = RoundedCornerShape(14.dp)
 private val BubbleShape = RoundedCornerShape(16.dp, 16.dp, 5.dp, 16.dp)
-private val CardWidth = 322.dp
 private val ScreenWidth = 104.dp
 private val ZoomWidth = 300.dp
 private val Title = TextStyle(fontSize = 14.5.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold)
@@ -520,8 +521,14 @@ private val KeySize = 34.dp
 
 private const val TITLE_MAX = 12
 
+/** 卡片此刻的缩放档位:由 [CapsuleController] 随设置流装进(缩放本身靠换 [LocalDensity],见 [Density.zoomed])。 */
+val LocalCapsuleCardScale = staticCompositionLocalOf { CapsuleCardScale.DEFAULT }
+
+/** 卡片缩放:dp 与 sp 等比放大(哪个分量起作用以 CapsuleCardScaleDensityTest 的实测为准)。 */
+internal fun Density.zoomed(factor: Float): Density = Density(density * factor, fontScale * factor)
+
 @Composable
-private fun cardWidth() = minOf(CardWidth, (LocalConfiguration.current.screenWidthDp - 24).coerceAtLeast(240).dp)
+private fun cardWidth() = LocalCapsuleCardScale.current.width(LocalConfiguration.current.screenWidthDp)
 
 /** 卡片的底:[fixed] 时就是 [height] 高(对话卡片),否则按内容高、最多 [height](任务卡片)。 */
 @Composable

@@ -21,6 +21,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -28,6 +29,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import com.wangzan101.mika.settings.FeatureFlags
+import com.wangzan101.mika.settings.ThemeAccent
 import com.wangzan101.mika.settings.ThemeMode
 
 /** 动效:时长和曲线。系统关了动画时([MikaTheme.reduceMotion])直接到位。 */
@@ -71,6 +73,15 @@ fun appearanceDark(): Boolean {
     }
 }
 
+/** 设置里的强调色(见 [ThemeAccent]);和外观一样,改了当场换、不重建界面。 */
+@Composable
+fun appearanceAccent(): ThemeAccent {
+    val context = LocalContext.current
+    val flags = remember(context) { FeatureFlags.get(context) }
+    val accent by remember(flags) { flags.themeAccentChanges() }.collectAsState(flags.themeAccent())
+    return accent
+}
+
 /** 状态栏、导航栏的图标深浅跟界面一致:界面强制浅色而系统是深色时,图标也得是深色的才看得见。 */
 fun ComponentActivity.systemBarsFor(dark: Boolean) {
     val transparent = android.graphics.Color.TRANSPARENT
@@ -83,11 +94,24 @@ fun ComponentActivity.systemBarsFor(dark: Boolean) {
     )
 }
 
-/** 深浅色按设置里的外观([appearanceDark]);同时把 Material 组件(弹窗、输入框、底部面板)的颜色对上。 */
+/**
+ * 深浅色按设置里的外观([appearanceDark]),强调色按设置里的强调色([appearanceAccent],背景图片要求跟随图片时用图上的主色);
+ * 同时把 Material 组件(弹窗、输入框、底部面板)的颜色对上。
+ */
 @Composable
-fun MikaTheme(dark: Boolean = appearanceDark(), reduceMotion: Boolean = false, content: @Composable () -> Unit) {
-    val colors = if (dark) DarkColors else LightColors
-    val scheme = if (dark) DarkScheme else LightScheme
+fun MikaTheme(
+    dark: Boolean = appearanceDark(),
+    accent: ThemeAccent = appearanceAccent(),
+    reduceMotion: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    // 背景图片设了「强调色跟随图片」时,用图上的主色代替设置里选的强调色
+    val imageHue = appearanceSkin().accentHue
+    val colors = remember(dark, accent, imageHue) {
+        val base = palette(dark, accent)
+        if (imageHue == null) base else SkinAccent.tone(imageHue, dark).let { (color, on) -> base.withAccent(color, on) }
+    }
+    val materialColors = remember(colors) { scheme(colors) }
     val layoutDirection = if (LocalContext.current.resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL) {
         LayoutDirection.Rtl
     } else {
@@ -98,7 +122,7 @@ fun MikaTheme(dark: Boolean = appearanceDark(), reduceMotion: Boolean = false, c
         LocalMikaColors provides colors,
         LocalReduceMotion provides reduceMotion,
     ) {
-        MaterialTheme(colorScheme = scheme) {
+        MaterialTheme(colorScheme = materialColors) {
             CompositionLocalProvider(LocalContentColor provides colors.ink, content = content)
         }
     }
@@ -114,9 +138,7 @@ private fun scheme(c: MikaColors): ColorScheme {
         surfaceContainerLowest = c.surface, surfaceContainerLow = c.surface, surfaceContainer = c.surface,
         surfaceContainerHigh = c.surface, surfaceContainerHighest = c.surface, surfaceTint = c.surface,
         outline = c.ink3, outlineVariant = c.hair,
-        error = c.bad, onError = c.onAccent,
+        // 出错色上的字不跟着强调色变(深色石墨的强调色上是深色字)
+        error = c.bad, onError = Color.White,
     )
 }
-
-private val LightScheme = scheme(LightColors)
-private val DarkScheme = scheme(DarkColors)

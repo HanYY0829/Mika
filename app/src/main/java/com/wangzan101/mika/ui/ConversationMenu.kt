@@ -72,7 +72,8 @@ internal fun placeMenu(rowTop: Float, rowHeight: Float, menuHeight: Float, gap: 
 }
 
 /**
- * 侧栏里长按一条对话后的菜单(见 [LongPressMenu]):那一行抬起成一张白卡,菜单里是置顶 / 取消置顶、改名、红字删除。
+ * 侧栏里长按一条对话后的菜单(见 [LongPressMenu]):那一行抬起成一张白卡,菜单里是置顶 / 取消置顶、
+ * 归档 / 取消归档、改名、红字删除。归档了的对话不在主列表里,没有置顶可谈;还没存过的草稿和正在跑任务的不能归档。
  * [bounds] 是那一行在窗口里的位置和大小。
  */
 @Composable
@@ -81,6 +82,8 @@ internal fun ConversationMenu(
     bounds: Rect,
     progress: () -> Float,
     onPin: () -> Unit,
+    onArchive: () -> Unit,
+    onUnarchive: () -> Unit,
     onRename: () -> Unit,
     onTerminal: () -> Unit,
     onDelete: () -> Unit,
@@ -89,8 +92,13 @@ internal fun ConversationMenu(
     val c = MikaTheme.colors
     LongPressMenu(
         bounds, progress, pane = stringResource(R.string.drawer_actions), tag = "drawer-menu",
-        entries = listOf(
-            MenuEntry(stringResource(if (item.pinned) R.string.unpin else R.string.pin), MikaIcons.Pin, "drawer-menu-pin", onClick = onPin),
+        entries = listOfNotNull(
+            if (item.archived) null else MenuEntry(stringResource(if (item.pinned) R.string.unpin else R.string.pin), MikaIcons.Pin, "drawer-menu-pin", onClick = onPin),
+            when {
+                item.archived -> MenuEntry(stringResource(R.string.drawer_unarchive), MikaIcons.Archive, "drawer-menu-unarchive", onClick = onUnarchive)
+                item.saved && !item.running -> MenuEntry(stringResource(R.string.drawer_archive), MikaIcons.Archive, "drawer-menu-archive", onClick = onArchive)
+                else -> null
+            },
             MenuEntry(stringResource(R.string.drawer_rename), MikaIcons.Edit, "drawer-menu-rename", onClick = onRename),
             MenuEntry(stringResource(R.string.terminal_open), MikaIcons.Terminal, "drawer-menu-terminal", onClick = onTerminal),
             MenuEntry(stringResource(R.string.confirm_delete), MikaIcons.Trash, "drawer-menu-delete", c.bad, onDelete),

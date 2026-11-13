@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capsule_edge_reveal">캡슐 표시</string>
+    <string name="capsule_hide_at_edge">화면 가장자리에서 자동 숨기기</string>
+    <string name="capsule_hide_fullscreen">전체 화면에서 캡슐 숨기기</string>
+    <string name="capsule_tile_label">Mika 캡슐</string>
+    <string name="capsule_tile_enabled">빠른 설정에서 사용 가능</string>
+    <string name="capsule_tile_setup">Mika를 열고 휴대전화 제어를 설정한 후 플로팅 캡슐을 사용하세요.</string>
+    <string name="pip_size_smaller">미리보기 축소</string>
+    <string name="pip_size_larger">미리보기 확대</string>
+    <string name="pip_size_reset">크기 초기화</string>
+</resources>

@@ -103,6 +103,31 @@ class McpClientTest {
         assertEquals(listOf("q"), schema["required"]!!.jsonArray.map { it.jsonPrimitive.content })
     }
 
+    @Test fun requiredParameterMissingFromPropertiesStaysCallable() = runBlocking {
+        val endpoint = endpointWithSchema(
+            """{"type":"object","properties":{"q":{"type":"string"}},"required":["missing"]}""",
+        )
+        val tools = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(endpoint)))
+        val schema = parameters(tools)
+        // 缺席的 required 补成空的宽松 schema,Args 的 allowed 才会包含它
+        assertEquals(JsonObject(emptyMap()), schema["properties"]!!.jsonObject["missing"])
+        assertEquals(listOf("missing"), schema["required"]!!.jsonArray.map { it.jsonPrimitive.content })
+        val result = tools.execute(Part.ToolCall("c", "mcp_demo__search", """{"missing":"x"}"""), ActionPass())
+        assertEquals(JsonPrimitive(true), result.content["ok"])
+        assertEquals(1, endpoint.calls)
+    }
+
+    @Test fun blankRequiredNamesAreDropped() = runBlocking {
+        val endpoint = endpointWithSchema(
+            """{"type":"object","properties":{"q":{"type":"string"}},"required":["","  ","q"]}""",
+        )
+        val tools = toolDispatcher(FakeScreen(), mcpServers = listOf(McpConnection(endpoint)))
+        assertEquals(listOf("q"), parameters(tools)["required"]!!.jsonArray.map { it.jsonPrimitive.content })
+        val result = tools.execute(Part.ToolCall("c", "mcp_demo__search", """{"q":"x"}"""), ActionPass())
+        assertEquals(JsonPrimitive(true), result.content["ok"])
+        assertEquals(1, endpoint.calls)
+    }
+
     @Test fun oneServerAssemblyFailureKeepsOtherCapabilitiesAndReportsCause() = runBlocking {
         val broken = object : McpEndpoint {
             override val serverId = "broken"

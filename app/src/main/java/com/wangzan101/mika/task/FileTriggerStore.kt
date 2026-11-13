@@ -4,6 +4,7 @@ import com.wangzan101.mika.core.trigger.ConditionNotify
 import com.wangzan101.mika.core.trigger.MemoryTriggerStore
 import com.wangzan101.mika.core.trigger.TriggerDefinition
 import com.wangzan101.mika.core.trigger.TriggerSnapshot
+import com.wangzan101.mika.core.trigger.TriggerSource
 import com.wangzan101.mika.core.trigger.TriggerStore
 import com.wangzan101.mika.core.trigger.TriggerWindow
 import com.wangzan101.mika.core.trigger.TriggerWindowState
@@ -28,6 +29,7 @@ private data class ConditionPlanState(
     val baselineAtMs: Long? = null,
     val lastFiredAtMs: Long? = null,
     val calendarTimes: List<String> = emptyList(),
+    val source: TriggerSource = TriggerSource.Model,
 )
 
 @Serializable
@@ -52,12 +54,11 @@ private fun ByteArray.sha256(): String =
     MessageDigest.getInstance("SHA-256").digest(this).joinToString("") { "%02x".format(it) }
 
 private fun TriggerDefinition.conditionState() = ConditionPlanState(
-    notifyWhen, cooldownMs, lastValue, baselineValue, baselineAtMs, lastFiredAtMs, calendarTimes,
+    notifyWhen, cooldownMs, lastValue, baselineValue, baselineAtMs, lastFiredAtMs, calendarTimes, source,
 )
 
 private fun TriggerSnapshot.conditionStates(): Map<String, ConditionPlanState> =
-    triggers.filter { it.conditionGoal != null || it.calendarTimes.isNotEmpty() }
-        .associate { it.id to it.conditionState() }
+    triggers.associate { it.id to it.conditionState() }
 
 /** 主文件保持旧版 schema；新增字段只能进 sidecar。 */
 private fun TriggerDefinition.legacy() = copy(
@@ -68,6 +69,7 @@ private fun TriggerDefinition.legacy() = copy(
     baselineAtMs = null,
     lastFiredAtMs = null,
     calendarTimes = emptyList(),
+    source = TriggerSource.Model,
 )
 
 private fun TriggerDefinition.withConditionState(state: ConditionPlanState?): TriggerDefinition {
@@ -75,7 +77,7 @@ private fun TriggerDefinition.withConditionState(state: ConditionPlanState?): Tr
     // 旧版改过首个钟点、或扩展列表损坏时，沿用主文件，不让 sidecar 破坏整份计划。
     val times = state.calendarTimes.takeIf { it.firstOrNull() == calendarTime &&
         runCatching { normalizedCalendarTimes(it) == it }.getOrDefault(false) }.orEmpty()
-    val plan = copy(calendarTimes = times)
+    val plan = copy(source = state.source, calendarTimes = times)
     if (conditionGoal == null) return plan
     return plan.copy(
         notifyWhen = state.notifyWhen,

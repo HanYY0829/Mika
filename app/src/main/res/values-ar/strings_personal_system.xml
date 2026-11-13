@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="personal_system_interrupted">انقطع الرد السابق. تم حفظ سجل المحادثة ويمكنك متابعة الحديث. يمكنك الاطلاع على المهام الحالية في النشاط.</string>
+    <string name="personal_system_timeout">انتهت مهلة هذا الرد. لن تُعاد المهام الحالية بسبب ذلك، ويمكنك متابعة إرسال الرسائل.</string>
+    <string name="personal_system_reply_failed">تعذر الرد، يرجى المحاولة مرة أخرى لاحقًا.</string>
+    <string name="personal_system_task_start_failed">تعذر بدء المهمة</string>
+    <string name="personal_system_task_cancelled">تم إلغاء المهمة</string>
+    <string name="personal_system_task_completed">اكتملت المهمة</string>
+    <string name="personal_system_task_failed">فشلت المهمة</string>
+    <string name="personal_system_task_running">المهمة قيد التنفيذ</string>
+    <string name="personal_system_task_queued">المهمة في قائمة الانتظار</string>
+    <string name="personal_system_no_model">يرجى اختيار النموذج الأساسي في الإعدادات أولاً، ثم العودة لمتابعة المحادثة.</string>
+    <string name="personal_system_context_long">تتجاوز هذه الرسالة حد سياق النموذج الحالي. يرجى إرسالها على عدة أجزاء.</string>
+    <string name="personal_system_empty_reply">لم يُرجع النموذج رداً يمكن عرضه. يرجى المحاولة مرة أخرى.</string>
+    <string name="personal_system_too_many_actions">تضمنت هذه الجولة إجراءات كثيرة، لذا توقفت المعالجة. لا تزال المهام المنشأة متاحة في النشاط.</string>
+    <string name="personal_system_message_long">هذه الرسالة طويلة جداً. يرجى إرسالها على عدة أجزاء.</string>
+    <string name="personal_system_task_done_detail">انتهت المهمة. افتحها لعرض النتيجة.</string>
+    <string name="personal_system_task_stopped_detail">توقفت المهمة. تم الاحتفاظ بالتقدم الحالي في سجل المهمة.</string>
+    <string name="personal_system_task_failed_detail">تعذر إكمال المهمة. افتحها لمعرفة السبب.</string>
+    <string name="personal_system_history_unreadable">يتعذر قراءة السجل حالياً. تم الاحتفاظ بنسخة احتياطية من الملف الأصلي. يمكنك متابعة المحادثة؛ احتفظ بالنسخة لاستعادة البيانات.</string>
+    <string name="personal_system_task_interrupted">انقطع التشغيل السابق. تم الاحتفاظ بسجلات المحادثة والمهام، ويمكنك شرح طلبك من جديد.</string>
+    <string name="personal_system_wait_confirmation">مطلوب تأكيدك. افتح المهمة للمتابعة.</string>
+    <string name="personal_system_saving">جارٍ حفظ النتيجة</string>
+    <string name="personal_system_waiting">في انتظار البدء</string>
+    <string name="personal_system_stop_not_ready">المهمة غير جاهزة بعد أو انتهت بالفعل. افتح المهمة للاطلاع على تفاصيلها.</string>
+    <string name="personal_system_stop_failed">تعذر إيقاف المهمة. افتح المهمة وحاول مرة أخرى.</string>
+    <string name="personal_system_task_amendment">تعليمات إضافية: %1$s</string>
+</resources>

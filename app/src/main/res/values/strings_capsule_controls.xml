@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capsule_edge_reveal">Show capsule</string>
+    <string name="capsule_hide_at_edge">Auto-hide at screen edge</string>
+    <string name="capsule_hide_fullscreen">Hide capsule in fullscreen</string>
+    <string name="capsule_tile_label">Mika capsule</string>
+    <string name="capsule_tile_enabled">Available in Quick Settings</string>
+    <string name="capsule_tile_setup">Open Mika and set up phone control to use the floating capsule.</string>
+    <string name="pip_size_smaller">Smaller preview</string>
+    <string name="pip_size_larger">Larger preview</string>
+    <string name="pip_size_reset">Reset preview size</string>
+</resources>

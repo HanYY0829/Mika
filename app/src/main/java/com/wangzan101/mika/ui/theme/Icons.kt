@@ -192,6 +192,10 @@ object MikaIcons {
     val SelectText = stroke("select-text", "M9 4.5 h6 M9 19.5 h6 M12 4.5 v15")
     /** 图钉:置顶了的对话。 */
     val Pin = stroke("pin", "M9 3.5 h6 M10 3.5 v5.5 l-3 3.5 h10 l-3 -3.5 V3.5", "M12 12.5 V20.5")
+    /** 归档:带盖子的小盒子,盖子下面一道取出的口。 */
+    val Archive = stroke(
+        "archive", "M4 7 h16 v3 h-16 z", "M6 10 v9 a1 1 0 0 0 1 1 h10 a1 1 0 0 0 1 -1 v-9", "M10 14 h4",
+    )
     /** 星:常用网站。 */
     val Star = stroke("star", "M12 4.5 l2.3 4.7 l5.2 0.8 l-3.8 3.6 l0.9 5.1 L12 16.3 l-4.6 2.4 l0.9 -5.1 L4.5 10 l5.2 -0.8 z")
     /** 书签:下面一个 V 形缺口。 */

@@ -85,13 +85,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var monitor: SystemStatusMonitor
     private var requestedConversation by mutableStateOf<String?>(null)
     private var requestedCalls by mutableStateOf(false)
+    private var requestedCallHistoryId by mutableStateOf<String?>(null)
     private var openTeach by mutableStateOf(false)
-    private var requestedSelfScreen by mutableStateOf<com.wangzan101.mika.core.self.SelfScreen?>(null)
-    private var requestedSelfFile by mutableStateOf<com.wangzan101.mika.self.SelfFileRequest?>(null)
-    private var requestedSelfUrl by mutableStateOf<String?>(null)
-    private var requestedSelfNewTab by mutableStateOf(false)
-    private var requestedSelfShow by mutableStateOf(true)
-    private var requestedSelfLoginHost by mutableStateOf<String?>(null)
     private var requestedSharedDraft by mutableStateOf<SharedDraftRequest?>(null)
     private var shareJob: Job? = null
     private var shareSerial = 0L
@@ -117,8 +112,8 @@ class MainActivity : ComponentActivity() {
         }
         requestedConversation = intent.getStringExtra(EXTRA_OPEN_CONVERSATION)
         requestedCalls = intent.getBooleanExtra(EXTRA_OPEN_CALLS, false)
+        requestedCallHistoryId = intent.getStringExtra(EXTRA_CALL_HISTORY_ID)
         takeTeach(intent)
-        readSelfIntent(intent)
         shareInCurrent = savedInstanceState?.getBoolean(STATE_SHARE_IN_CURRENT, false) ?: false
         shareHandled = savedInstanceState?.getBoolean(STATE_SHARE_HANDLED, false) ?: false
         // 已处理完的分享在旋转/重建时不重复触发;真正的冷启动分享或尚未完成的后台分享继续收下。
@@ -136,12 +131,7 @@ class MainActivity : ComponentActivity() {
                 KeyboardDismissArea(Modifier.fillMaxSize()) {
                     MikaRoot(
                         store, monitor, ::perform, requestedConversation, { requestedConversation = null },
-                        requestedCalls, { requestedCalls = false },
-                        requestedSelfScreen, { requestedSelfScreen = null },
-                        requestedSelfFile, { requestedSelfFile = null },
-                        requestedSelfUrl, { requestedSelfUrl = null },
-                        requestedSelfNewTab, requestedSelfShow,
-                        requestedSelfLoginHost, { requestedSelfLoginHost = null },
+                        requestedCalls, requestedCallHistoryId, { requestedCalls = false; requestedCallHistoryId = null },
                         requestedSharedDraft,
                         onSharedDraftOpened = { accepted, draft ->
                             requestedSharedDraft = null
@@ -168,33 +158,17 @@ class MainActivity : ComponentActivity() {
         shareJob?.cancel()
         requestedConversation = intent.getStringExtra(EXTRA_OPEN_CONVERSATION)
         requestedCalls = intent.getBooleanExtra(EXTRA_OPEN_CALLS, false)
+        requestedCallHistoryId = intent.getStringExtra(EXTRA_CALL_HISTORY_ID)
         if (requestedConversation != null || intent.getBooleanExtra(EXTRA_OPEN_TEACH, false)) {
             app.chat.cancelPendingSharedDraft()
         }
         takeTeach(intent)
-        readSelfIntent(intent)
         requestedSharedDraft?.let { app.sharedDrafts.discard(it.draft.image) }
         requestedSharedDraft = null
         // 界面已在后台存活时收到分享:放入当前打开的会话,而不是新建会话。
         shareInCurrent = true
         shareHandled = false
         receiveShare(intent, inCurrentConversation = true)
-    }
-
-    private fun readSelfIntent(intent: Intent) {
-        requestedSelfScreen = intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_SCREEN)
-            ?.let(com.wangzan101.mika.core.self.SelfScreen::of)
-        requestedSelfFile = intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_FILE)?.let { path ->
-            com.wangzan101.mika.self.SelfFileRequest(
-                intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_FILE_CONVERSATION).orEmpty(),
-                path,
-                intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_FILE_NAME),
-            )
-        }
-        requestedSelfUrl = intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_URL)
-        requestedSelfNewTab = intent.getBooleanExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_NEW_TAB, false)
-        requestedSelfShow = intent.getBooleanExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_SHOW, true)
-        requestedSelfLoginHost = intent.getStringExtra(com.wangzan101.mika.self.SelfIntents.EXTRA_LOGIN_HOST)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -270,6 +244,8 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         monitor.refresh()
+        // 回到前台时按最新设置查一次自动归档(启动时也查过,这里照顾长期不退出的进程)
+        (application as MikaApp).autoArchiveNow()
     }
 
     override fun onStop() {
@@ -359,6 +335,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_OPEN_CONVERSATION = "open_conversation"
         const val EXTRA_OPEN_CALLS = "open_calls"
+        const val EXTRA_CALL_HISTORY_ID = "call_history_id"
         const val EXTRA_OPEN_TEACH = "open_teach"
         const val EXTRA_TEACH_GOAL = "teach_goal"
         private const val STATE_SHARE_IN_CURRENT = "share_in_current"
@@ -393,23 +370,15 @@ private fun MikaRoot(
     requestedConversation: String?,
     onConversationOpened: () -> Unit,
     requestedCalls: Boolean,
+    requestedCallHistoryId: String?,
     onCallsOpened: () -> Unit,
-    requestedSelfScreen: com.wangzan101.mika.core.self.SelfScreen?,
-    onSelfScreenOpened: () -> Unit,
-    requestedSelfFile: com.wangzan101.mika.self.SelfFileRequest?,
-    onSelfFileOpened: () -> Unit,
-    requestedSelfUrl: String?,
-    onSelfUrlOpened: () -> Unit,
-    requestedSelfNewTab: Boolean,
-    requestedSelfShow: Boolean,
-    requestedSelfLoginHost: String?,
-    onSelfLoginOpened: () -> Unit,
     sharedDraft: SharedDraftRequest?,
     onSharedDraftOpened: (Boolean, SharedDraft) -> Unit,
     openTeach: Boolean,
     onTeachOpened: () -> Unit,
 ) {
     val context = LocalContext.current
+    var focusedCallHistoryId by remember { mutableStateOf<String?>(null) }
     val personalStart = remember { FeatureFlags.get(context).personalStart() }
     val nav = rememberNavStack(if (personalStart && requestedConversation == null) Route.Personal else Route.Chat)
     var filesFromDrawer by rememberSaveable { mutableStateOf(false) }
@@ -450,8 +419,9 @@ private fun MikaRoot(
             onConversationOpened()
         }
     }
-    LaunchedEffect(requestedCalls) {
+    LaunchedEffect(requestedCalls, requestedCallHistoryId) {
         if (requestedCalls) {
+            focusedCallHistoryId = requestedCallHistoryId
             nav.push(Route.Calls)
             onCallsOpened()
         }
@@ -464,7 +434,7 @@ private fun MikaRoot(
             onSharedDraftOpened(accepted, draft)
         }
     }
-    // 自身操作:任务在服务里发请求,这里在系统里开页/文件;后台来的通知经由 intent extra 走同一段
+    // 消费任务或内部通知入口提交的自身操作请求。
     suspend fun openSelfFile(file: com.wangzan101.mika.self.SelfFileRequest) {
         if (!AttachFiles.openSent(context, file.conversationId, file.path)) {
             Toast.makeText(context, R.string.self_file_failed, Toast.LENGTH_SHORT).show()
@@ -491,26 +461,6 @@ private fun MikaRoot(
             r.screen != null -> nav.push(r.screen.route())
         }
         app.selfUi.consumed(r.id)
-    }
-    LaunchedEffect(requestedSelfScreen) {
-        val s = requestedSelfScreen ?: return@LaunchedEffect
-        nav.push(s.route())
-        onSelfScreenOpened()
-    }
-    LaunchedEffect(requestedSelfFile) {
-        val f = requestedSelfFile ?: return@LaunchedEffect
-        openSelfFile(f)
-        onSelfFileOpened()
-    }
-    LaunchedEffect(requestedSelfUrl) {
-        val url = requestedSelfUrl ?: return@LaunchedEffect
-        openSelfUrl(url, requestedSelfNewTab, requestedSelfShow)
-        onSelfUrlOpened()
-    }
-    LaunchedEffect(requestedSelfLoginHost) {
-        val host = requestedSelfLoginHost ?: return@LaunchedEffect
-        openSelfLogin(host)
-        onSelfLoginOpened()
     }
     val release = remember { Build.VERSION.RELEASE }
     // 结果卡片上点了「看看」:打开技能分段
@@ -582,7 +532,7 @@ private fun MikaRoot(
                 vm = app.chat,
                 check = check,
                 reduceMotion = MikaTheme.reduceMotion,
-                conversations = { ConversationStore.shared(context).list() },
+                conversations = { ConversationStore.shared(context).list(includeArchived = true) },
                 conversationChanges = ConversationStore.shared(context).changes,
                 conversationTitle = { ConversationStore.shared(context).title(it) },
                 search = ConversationStore.shared(context).search,
@@ -617,6 +567,8 @@ private fun MikaRoot(
                             check = check,
                             frames = app.taskState.frames,
                             webOpen = app.tasks.webScreenOpen,
+                            pipInput = app.taskState.pipInput,
+                            pipOperateEnabled = FeatureFlags.get(context).pipOperate(),
                             reduceMotion = MikaTheme.reduceMotion,
                             onOpenDrawer = openDrawer,
                             onOpenFiles = { filesFromDrawer = false; filesConversation = app.chat.ui.value.conversationId; nav.push(Route.Files) },
@@ -701,6 +653,11 @@ private fun MikaRoot(
             val opened = app.chat.ui.value.conversationId == id
             if (opened) nav.reset()
             opened
+        }, onOpenSource = { id, target ->
+            app.chat.openConversationAt(id, target)
+            val opened = app.chat.ui.value.conversationId == id
+            if (opened) nav.reset()
+            opened
         })
         Route.Memory -> {
             val registry = remember { WebSites.registry(context) }
@@ -776,7 +733,7 @@ private fun MikaRoot(
             app.chat.openConversation(it)
             nav.reset()
         })
-        Route.Calls -> CallSettingsScreen(app.calls, onBack = back, standalone = true)
+        Route.Calls -> CallSettingsScreen(app.calls, onBack = back, standalone = true, initialHistoryCallId = focusedCallHistoryId)
     }
 }
 

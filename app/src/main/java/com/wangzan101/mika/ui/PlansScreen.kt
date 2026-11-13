@@ -25,6 +25,7 @@ import com.wangzan101.mika.core.trigger.CONDITION_NOT_MET
 import com.wangzan101.mika.core.trigger.CONDITION_PLAN_EDITED
 import com.wangzan101.mika.core.trigger.ConditionNotify
 import com.wangzan101.mika.core.trigger.TriggerDefinition
+import com.wangzan101.mika.core.trigger.TriggerSource
 import com.wangzan101.mika.core.trigger.TriggerWindow
 import com.wangzan101.mika.core.trigger.TriggerWindowState
 import com.wangzan101.mika.task.ExactAlarmGuide
@@ -187,12 +188,13 @@ private fun PlanRow(plan: TriggerDefinition, last: TriggerWindow?, first: Boolea
     val subtitle = plan.conditionGoal?.let {
         tr(if (plan.notifyWhen == ConditionNotify.EachTimeMet) R.string.plans_condition_each else R.string.plans_condition, it, when_)
     } ?: when_
+    val sourceSubtitle = "${planSourceLabel(plan.source)} · $subtitle"
     val c = MikaTheme.colors
     val delivered = last?.state == TriggerWindowState.Delivered
     // 一次性的任务做完后不能再打开;循环的和从没跑过的可以
     val canToggle = plan.enabled || plan.intervalMs != null || plan.calendarTime != null || last == null
     ListRow(
-        null, plan.reminderText ?: plan.goal, subtitle, first = first,
+        null, plan.reminderText ?: plan.goal, sourceSubtitle, first = first,
         detail = last?.let { lastResult(plan, it) } ?: tr(R.string.plans_never_run),
         detailColor = if (delivered) c.ok else c.ink3,
         onClick = onClick,
@@ -201,6 +203,13 @@ private fun PlanRow(plan: TriggerDefinition, last: TriggerWindow?, first: Boolea
 
 private val PLAN_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 private fun formatPlanTime(ms: Long): String = PLAN_TIME.format(Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()))
+
+/** 计划是谁建的,列表里标出来源好追溯。 */
+private fun planSourceLabel(source: TriggerSource): String = when (source) {
+    TriggerSource.User -> tr(R.string.plans_source_user)
+    TriggerSource.Model -> tr(R.string.plans_source_model)
+    TriggerSource.External -> tr(R.string.plans_source_external)
+}
 /** 上次结果:时间、结果;那次检查记下了值时一起显示(检查失败、结果未知的那一次没有值,不拿更早的充数)。 */
 private fun lastResult(plan: TriggerDefinition, w: TriggerWindow): String {
     val value = plan.lastValue?.takeIf { w.state in setOf(TriggerWindowState.Skipped, TriggerWindowState.ActionDispatched, TriggerWindowState.Delivered) }

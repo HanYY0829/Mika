@@ -14,7 +14,7 @@ class SelfConfigImplTest {
 
     @Test fun offersOnlyPreferencesAvailableToday() {
         val keys = SelfConfigImpl(flags()).options().map { it.key }.toSet()
-        assertEquals(setOf("operating_pace", "mute_apps", "appearance", "capsule", "keep_screen_on"), keys)
+        assertEquals(setOf("operating_pace", "mute_apps", "appearance", "accent_color", "capsule", "keep_screen_on"), keys)
     }
 
     @Test fun modelsKeysAndAnythingThatDeletesDataAreNotOffered() {
@@ -33,6 +33,8 @@ class SelfConfigImplTest {
         assertEquals(false, f.muteTarget())
         assertNull(s.set("appearance", "dark"))
         assertEquals(ThemeMode.Dark, f.themeMode())
+        assertNull(s.set("accent_color", "Purple"))
+        assertEquals(ThemeAccent.Purple, f.themeAccent())
         assertNull(s.set("capsule", "off"))
         assertEquals(CapsuleMode.Off, f.capsuleMode())
         assertNull(s.set("keep_screen_on", "off"))
@@ -43,6 +45,7 @@ class SelfConfigImplTest {
         val s = SelfConfigImpl(flags())
         assertNotNull(s.set("operating_pace", "turbo"))
         assertNotNull(s.set("appearance", "sepia"))
+        assertNotNull(s.set("accent_color", "green"))
         assertNotNull(s.set("mute_apps", "maybe"))
         assertEquals("there is no such setting", s.set("api_key", "sk-123"))
         assertEquals("there is no such setting", s.set("container_network", "on"))

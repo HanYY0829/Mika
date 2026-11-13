@@ -27,6 +27,9 @@
     <string name="memory_auto_sub">تُنظّم من كلماتك بعد كل مهمة</string>
     <string name="memory_learn">التعلّم من المهام السابقة (المهارات وملاحظات التطبيقات)</string>
     <string name="memory_learn_sub">لا يستخدم Mika ما يتعلّمه إلا بعد موافقتك</string>
+    <string name="memory_tasks">تذكّر المهام السابقة</string>
+    <string name="memory_tasks_sub">احتفظ بملخص قصير لكل مهمة منتهية لاسترجاعها لاحقًا</string>
+    <string name="memory_tasks_title">المهام السابقة</string>
     <string name="memory_clear_sub">حذف كل الذاكرة والمهارات المتعلّمة</string>
     <string name="edit_it">تعديل</string>
     <string name="unpin">إلغاء التثبيت</string>

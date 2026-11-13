@@ -151,6 +151,49 @@ class ManifestProvidersTest {
         assertEquals("", a.getAttributeNS(androidNs, "taskAffinity"))
     }
 
+    @Test fun capsuleTileIsBoundOnlyByAndroidQuickSettings() {
+        val doc = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+            .newDocumentBuilder().parse(File("src/main/AndroidManifest.xml"))
+        val services = doc.getElementsByTagName("service")
+        val tile = (0 until services.length).map { services.item(it) as Element }
+            .single { it.getAttributeNS(androidNs, "name") == ".capsule.CapsuleTileService" }
+        assertEquals("false", tile.getAttributeNS(androidNs, "enabled"))
+        assertEquals("true", tile.getAttributeNS(androidNs, "exported"))
+        assertEquals("@string/capsule_tile_label", tile.getAttributeNS(androidNs, "label"))
+        assertEquals("@drawable/ic_notification", tile.getAttributeNS(androidNs, "icon"))
+        assertEquals("android.permission.BIND_QUICK_SETTINGS_TILE", tile.getAttributeNS(androidNs, "permission"))
+        val actions = tile.getElementsByTagName("action")
+        assertEquals(1, actions.length)
+        assertEquals("android.service.quicksettings.action.QS_TILE",
+            (actions.item(0) as Element).getAttributeNS(androidNs, "name"))
+    }
+
+    @Test fun capsuleTileRuntimeKeepsTheSameSystemSafeIcon() {
+        val service = File("src/main/java/com/wangzan101/mika/capsule/CapsuleTileService.kt").readText()
+        assertTrue(service.contains("Icon.createWithResource(this, R.drawable.ic_notification)"))
+        assertTrue(!service.contains("Icon.createWithResource(this, R.mipmap.ic_launcher)"))
+    }
+
+    @Test fun capsuleTileLongPressOpensMikaInsteadOfAppDetails() {
+        val doc = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+            .newDocumentBuilder().parse(File("src/main/AndroidManifest.xml"))
+        val activities = doc.getElementsByTagName("activity")
+        val main = (0 until activities.length).map { activities.item(it) as Element }
+            .single { it.getAttributeNS(androidNs, "name") == ".ui.MainActivity" }
+        val filters = main.getElementsByTagName("intent-filter")
+        val preferences = (0 until filters.length).map { filters.item(it) as Element }.single { filter ->
+            val actions = filter.getElementsByTagName("action")
+            (0 until actions.length).any {
+                (actions.item(it) as Element).getAttributeNS(androidNs, "name") ==
+                    "android.service.quicksettings.action.QS_TILE_PREFERENCES"
+            }
+        }
+        val categories = preferences.getElementsByTagName("category")
+        assertTrue((0 until categories.length).any {
+            (categories.item(it) as Element).getAttributeNS(androidNs, "name") == "android.intent.category.DEFAULT"
+        })
+    }
+
     /** 内置助手进程按这个全名启动。 */
     @Test
     fun helperEntryClassExists() {

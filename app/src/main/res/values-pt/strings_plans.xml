@@ -67,6 +67,9 @@
     <string name="plans_condition">Só executa se: %1$s · %2$s</string>
     <string name="plans_last">Última %1$s · %2$s</string>
     <string name="plans_never_run">Ainda não foi executada</string>
+    <string name="plans_source_user">Manual</string>
+    <string name="plans_source_model">Modelo</string>
+    <string name="plans_source_external">Script</string>
     <string name="plans_delivered">Entregue</string>
     <string name="plans_unchanged">Condição inalterada</string>
     <string name="plans_not_met">Condição não atendida</string>

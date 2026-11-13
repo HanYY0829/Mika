@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
 
 /** 环形缓冲:保留最近 [cap] 字节,UI 重新附着时从这里重建画面。 */
 class TerminalRingBuffer(private val cap: Int) {
@@ -169,8 +170,9 @@ class TerminalSession internal constructor(
 
     private fun releaseShell() {
         if (shellClosed.compareAndSet(false, true)) {
-            runCatching { shell.close() }
-            writer.shutdown()
+            writer.shutdownNow()
+            // Pipe cleanup can block. It must outlive cancellation of the session's coroutine.
+            thread(isDaemon = true, name = "mika-terminal-close") { runCatching { shell.close() } }
         }
     }
 }

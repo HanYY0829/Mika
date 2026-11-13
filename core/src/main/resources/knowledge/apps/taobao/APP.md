@@ -3,6 +3,7 @@ name: taobao
 display: 淘宝
 packages: ["com.taobao.taobao"]
 aliases: ["淘宝", "Taobao", "手机淘宝"]
+sites: ["taobao.com"]
 open: 淘宝
 description: 商品搜索、店铺、购物车、订单与物流的购物 App
 ---

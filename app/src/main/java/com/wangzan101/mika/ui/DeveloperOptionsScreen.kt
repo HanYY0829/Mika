@@ -33,6 +33,7 @@ object DeveloperSwitches {
         DevSwitch("replay", tr(R.string.dev_replay), tr(R.string.dev_replay_sub), flags.replay) { flags.copy(replay = it) },
         DevSwitch("parallel-tasks", tr(R.string.dev_parallel), tr(R.string.dev_parallel_sub), flags.parallelTasks) { flags.copy(parallelTasks = it) },
         DevSwitch("structured-compaction", tr(R.string.dev_compaction), tr(R.string.dev_compaction_sub), flags.structuredCompaction) { flags.copy(structuredCompaction = it) },
+        DevSwitch("tables-at-birth", tr(R.string.dev_screen_tables), tr(R.string.dev_screen_tables_sub), flags.tablesAtBirth) { flags.copy(tablesAtBirth = it) },
     )
 }
 

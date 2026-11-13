@@ -16,6 +16,8 @@ data class CallConfig(
     val audioMode: CallAudioMode = CallAudioMode.DIRECT,
     val audioVerified: Boolean = false,
     val credentialsConfigured: Boolean = false,
+    /** Explicit consent: a post-call transcript will be sent to the currently selected main model. */
+    val summaryEnabled: Boolean = false,
     val greeting: String = CallPolicy.DEFAULT_GREETING,
     val systemPrompt: String = "",
     val speaker: String = "zh_female_vv_jupiter_bigtts",
