@@ -67,7 +67,7 @@ jobs:
       - name: 签发仅限本仓库的短期令牌
         id: app_token
         if: env.SYNC_MODE != 'source'
-        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ vars.MIKA_SYNC_APP_ID }}
           private-key: ${{ secrets.MIKA_SYNC_APP_PRIVATE_KEY }}
