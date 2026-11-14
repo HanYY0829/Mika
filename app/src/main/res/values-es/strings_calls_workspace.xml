@@ -4,7 +4,7 @@
     <string name="calls_device_and_permissions">Dispositivo y permisos</string>
     <string name="calls_edit_rule">Editar</string>
     <string name="calls_nav_receive">Atender</string>
-    <string name="calls_nav_task">Tarea</string>
+    <string name="calls_nav_task">Llamar</string>
     <string name="calls_pause_enable_first">Active la respuesta automática para pausarla temporalmente.</string>
     <string name="calls_rule_delay_summary">Demora de respuesta: %1$d s</string>
     <string name="calls_rule_pause">Pausa temporal</string>

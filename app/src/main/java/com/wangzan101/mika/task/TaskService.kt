@@ -62,6 +62,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.update
 import java.util.concurrent.atomic.AtomicInteger
+import java.time.LocalTime
 import com.wangzan101.mika.core.cap.web.KeptPageClose
 
 /**
@@ -70,6 +71,9 @@ import com.wangzan101.mika.core.cap.web.KeptPageClose
  */
 internal fun Notification.Builder.alertQuietly(): Notification.Builder =
     setGroup(QUIET_GROUP).setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
+
+internal fun Notification.Builder.applyScheduledQuietHours(context: Context): Notification.Builder =
+    if (FeatureFlags.get(context).scheduledQuietHours().isQuietAt(LocalTime.now())) alertQuietly() else this
 
 private const val QUIET_GROUP = "com.wangzan101.mika.quiet"
 
@@ -98,16 +102,19 @@ class TaskService : Service() {
         }
     }
     private val outbox get() = (application as com.wangzan101.mika.MikaApp).outbox
-    private val localChannel by lazy { LocalChannel { _, delivery ->
+    private val localChannel by lazy { localDeliveryChannel(scheduled = false) }
+    private val scheduledLocalChannel by lazy { localDeliveryChannel(scheduled = true) }
+
+    private fun localDeliveryChannel(scheduled: Boolean) = LocalChannel { _, delivery ->
         if (delivery is Delivery.Ask) {
             center.byConversation(delivery.threadId)?.let(::refreshNotifications)
             SendOutcome.Delivered
         } else {
             val resultId = if (delivery is Delivery.Result && center.byConversation(delivery.threadId)?.parallel == false) ID_RESULT
                 else nextResultId()
-            notifyDelivery(this, delivery, resultId)
+            notifyDelivery(this, delivery, resultId, scheduled)
         }
-    } }
+    }
     /** 前台常驻通知属于哪个任务;收尾后留着,直到换成别的任务。 */
     @Volatile private var foreground: TaskRun? = null
     private val notifyLock = Any()
@@ -170,8 +177,8 @@ class TaskService : Service() {
         }.onFailure { center.followUps.add(item) }
     }
 
-    private fun channelFor(peer: ChannelPeer): Channel = when (peer.channelId) {
-        LocalChannel.ID -> localChannel
+    private fun channelFor(peer: ChannelPeer, scheduled: Boolean = false): Channel = when (peer.channelId) {
+        LocalChannel.ID -> if (scheduled) scheduledLocalChannel else localChannel
         else -> checkNotNull((application as com.wangzan101.mika.MikaApp).wechat.channelFor(peer.channelId)) {
             "unknown channel ${peer.channelId}"
         }
@@ -886,7 +893,7 @@ class TaskService : Service() {
     private suspend fun prepareResult(run: TaskRun, end: TaskState, deliveryId: String) {
         val (title, text) = describe(end)
         val peer = run.channelPeer ?: ChannelPeer(LocalChannel.ID, "phone-owner", run.conversationId)
-        ResultDelivery.prepare(outbox, channelFor(peer), peer,
+        ResultDelivery.prepare(outbox, channelFor(peer, run.triggerWindowKey != null), peer,
             Delivery.Result(deliveryId, run.conversationId, text, title = title), run.sharedFiles.value)
     }
 
@@ -895,7 +902,7 @@ class TaskService : Service() {
         val (title, text) = describe(end)
         val peer = run.channelPeer ?: ChannelPeer(LocalChannel.ID, "phone-owner", run.conversationId)
         val started = SystemClock.elapsedRealtime()
-        val delivered = ResultDelivery.send(outbox, channelFor(peer), peer,
+        val delivered = ResultDelivery.send(outbox, channelFor(peer, run.triggerWindowKey != null), peer,
             Delivery.Result(deliveryId, run.conversationId, text, title = title))
         val finished = SystemClock.elapsedRealtime()
         val sinceReady = if (run.resultReadyAtMs > 0) finished - run.resultReadyAtMs else -1
@@ -957,7 +964,7 @@ class TaskService : Service() {
         internal fun nextResultId() = ID_RESULT_FIRST + resultCount.getAndIncrement() % RESULT_IDS
 
         /** 结果与提示发成通知(服务里的与 App 启动时恢复用的共用);[resultId] 是结果通知的编号。 */
-        internal fun notifyDelivery(context: Context, delivery: Delivery, resultId: Int): SendOutcome {
+        internal fun notifyDelivery(context: Context, delivery: Delivery, resultId: Int, scheduled: Boolean = false): SendOutcome {
             val nm = context.getSystemService(NotificationManager::class.java)
             when (delivery) {
                 is Delivery.Result -> nm.notify(resultId, Notification.Builder(context, CHANNEL_RESULT)
@@ -967,10 +974,13 @@ class TaskService : Service() {
                     .setStyle(Notification.BigTextStyle().bigText(delivery.text))
                     .setContentIntent(openApp(context, delivery.threadId))
                     .setAutoCancel(true)
+                    .apply { if (scheduled) applyScheduledQuietHours(context) }
                     .build())
                 is Delivery.Notice -> nm.notify(nextResultId(), Notification.Builder(context, CHANNEL_RESULT)
                     .setSmallIcon(R.drawable.ic_notification).setContentTitle("Mika")
-                    .setContentText(delivery.text).setContentIntent(openApp(context, delivery.threadId)).setAutoCancel(true).build())
+                    .setContentText(delivery.text).setContentIntent(openApp(context, delivery.threadId)).setAutoCancel(true)
+                    .apply { if (scheduled) applyScheduledQuietHours(context) }
+                    .build())
                 is Delivery.Ask, is Delivery.Progress, is Delivery.Image -> {}
             }
             return SendOutcome.Delivered

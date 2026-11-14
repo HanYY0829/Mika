@@ -79,4 +79,6 @@
     <string name="plans_running_now">En ejecución</string>
     <string name="trigger_deleted">Se eliminó la tarea programada</string>
     <string name="trigger_busy">Esta tarea sigue en ejecución</string>
+    <string name="plans_run_history">Historial de ejecuciones</string>
+    <string name="plans_copy">Copiar como nueva tarea</string>
 </resources>

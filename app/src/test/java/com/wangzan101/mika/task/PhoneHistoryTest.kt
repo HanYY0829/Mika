@@ -208,4 +208,15 @@ class PhoneHistoryTest {
         assertFalse(record.getValue("record_available").jsonPrimitive.boolean)
         assertFalse(record.getValue("trace_available").jsonPrimitive.boolean)
     }
+
+    // 通知提醒那一轮列的是别的 App 的通知:经电脑端读历史时不给出这些字
+    @Test fun noticeTurnTextIsNotExported() {
+        val store = conversations()
+        store.append("talk", Turn("", "1. 微信 张三:明天来吗", "succeeded", runId = "notice:n1"))
+        store.append("talk", Turn("帮我回个好的", "已回复", "succeeded"))
+        val turns = history().turns("talk", 0, 20)!!.getValue("turns").jsonArray.map { it.jsonObject }
+        assertEquals(listOf("", "已回复"), turns.map { it.getValue("answer").jsonPrimitive.content })
+        assertEquals(listOf("", "帮我回个好的"), turns.map { it.getValue("goal").jsonPrimitive.content })
+        assertFalse(turns.toString().contains("张三"))
+    }
 }

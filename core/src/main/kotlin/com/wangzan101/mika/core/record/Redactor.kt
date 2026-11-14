@@ -5,6 +5,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import com.wangzan101.mika.core.tool.Verb
 
 /**
@@ -27,6 +28,8 @@ object Redactor {
         if (verb == Verb.MemorySave || verb == Verb.MemoryEdit) return maskFields(argsJson, MEMORY_ARGS)
         if (verb == Verb.Script) return script(argsJson)
         if (verb == Verb.PhoneCommand) return maskFields(argsJson, setOf("command"))
+        // 读通知时筛的那段字多半是通知里的人名、会话名:和读到的原文一样不记
+        if (verb == Verb.NoticesRead) return maskFields(argsJson, setOf("query"))
         if (verb == Verb.PhoneRun) return phoneRun(argsJson)
         if (verb != Verb.TypeText || !secretField) return text(argsJson)
         val o = try {
@@ -67,6 +70,8 @@ object Redactor {
         return text(JsonObject(o + ("code" to JsonPrimitive(masked))).toString())
     }
 
+    private val NOTICE_TEXT_FIELDS = setOf("chat", "sender", "text")
+
     /** 工具结果进运行记录前:记忆的内容、用户交回时写的备注不记(编号、种类照记)。 */
     fun result(verb: Verb?, content: JsonObject): JsonObject = when (verb) {
         Verb.MemorySearch -> (content["memories"] as? JsonArray)?.let { arr ->
@@ -74,10 +79,26 @@ object Redactor {
                 (m as? JsonObject)?.let { if ("content" in it) JsonObject(it + ("content" to JsonPrimitive(MASK))) else it } ?: JsonPrimitive(MASK)
             })))
         } ?: content
+        // 读到的通知原文和照着它写的句子不进运行记录(本机只留两天,不能借记录多留):时间、App、条数照记
+        Verb.NoticesRead -> JsonObject(content.mapValues { (k, v) ->
+            if ((k == "items" || k == "notes") && v is JsonArray) JsonArray(v.map { item ->
+                (item as? JsonObject)?.let { o -> JsonObject(o.mapValues { (f, x) -> if (f in NOTICE_TEXT_FIELDS) JsonPrimitive(MASK) else x }) } ?: JsonPrimitive(MASK)
+            }) else v
+        })
+        // 通知提醒那一轮(history_read 标着 notice)的内容是别的 App 的通知原文:和 notices_read 读到的一样不进运行记录
+        // (第几轮、状态、时间照记)。不遮的话,任务里回头查一下那一轮,通知原文就留在可以导出的记录里了
+        Verb.HistoryRead -> noticeOutcomeMasked(content).let { top ->
+            (top["turns"] as? JsonArray)?.let { arr ->
+                JsonObject(top + ("turns" to JsonArray(arr.map { t -> (t as? JsonObject)?.let(::noticeOutcomeMasked) ?: t })))
+            } ?: top
+        }
         Verb.HandToUser -> if ("userNote" in content) JsonObject(content + ("userNote" to JsonPrimitive(MASK))) else content
         Verb.PhoneCommand -> if ("output" in content) JsonObject(content + ("output" to JsonPrimitive(MASK))) else content
         else -> content
     }
+
+    private fun noticeOutcomeMasked(o: JsonObject): JsonObject =
+        if ((o["notice"] as? JsonPrimitive)?.booleanOrNull == true && "outcome" in o) JsonObject(o + ("outcome" to JsonPrimitive(MASK))) else o
 
     private fun maskFields(argsJson: String, fields: Set<String>): String {
         val o = try {

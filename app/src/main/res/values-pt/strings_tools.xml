@@ -46,6 +46,9 @@
     <string name="tool_list_settings">Ler configurações</string>
     <string name="tool_set_setting">Alterar uma configuração</string>
     <string name="tool_save_skill">Salvar habilidade</string>
+    <string name="tool_memory_search">Pesquisar na memória</string>
+    <string name="tool_memory_save">Gravar na memória</string>
+    <string name="tool_memory_edit">Editar a memória</string>
     <string name="tool_explain_failure">Explicar por que não deu certo</string>
     <string name="tool_ask_user">Fazer uma pergunta a você</string>
     <string name="tool_takeover">Pedir para você assumir</string>

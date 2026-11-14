@@ -25,6 +25,8 @@
     <string name="memory_use_sub">オフにすると、Mika はメモリを読み込みも保存もしません</string>
     <string name="memory_auto">私の言ったことを覚える</string>
     <string name="memory_auto_sub">タスクのあとに、あなた自身の言葉から整理します</string>
+    <string name="memory_infer">Mika 自身のまとめも記憶に残す</string>
+    <string name="memory_infer_sub">覚えるよう頼んだとき、Mika 自身のまとめも保存し、あなたの発言ではないと表示します</string>
     <string name="memory_learn">過去のタスクから学ぶ(スキルとアプリのメモ)</string>
     <string name="memory_learn_sub">Mika が学んだ内容は、あなたが承認してから使われます</string>
     <string name="memory_tasks">過去のタスクを覚える</string>
@@ -59,6 +61,7 @@
     <string name="date_pattern_md">M月d日</string>
     <string name="memory_said_via">%1$s に %2$s で言ったこと: 「%3$s」</string>
     <string name="memory_said">%1$s に言ったこと: 「%2$s」</string>
+    <string name="memory_inferred">%1$s、あなたの依頼で Mika がまとめたもの:「%2$s」</string>
     <string name="verify_returned">確認で差し戻されました</string>
     <string name="skills_drafts">新しいスキルの下書き — 承認後に試します</string>
     <string name="skills_accept_try">承認して試す</string>

@@ -62,10 +62,11 @@ fun PlanEditorDialog(
     newThreadId: String,
     onDismiss: () -> Unit,
     onSave: (TriggerDefinition) -> Unit,
+    initialDraft: PlanDraft? = null,
 ) {
     val newId = remember(original?.id) { original?.id ?: UUID.randomUUID().toString() }
     var draft by remember(original?.id) {
-        mutableStateOf(original?.toPlanDraft() ?: newPlanDraft(System.currentTimeMillis()))
+        mutableStateOf(original?.toPlanDraft() ?: initialDraft ?: newPlanDraft(System.currentTimeMillis()))
     }
     var attempted by remember(original?.id) { mutableStateOf(false) }
     val candidate = runCatching {
@@ -75,7 +76,14 @@ fun PlanEditorDialog(
 
     MikaDialog(
         onDismissRequest = onDismiss,
-        title = { Text(tr(if (original == null) R.string.plans_create_title else R.string.plans_edit_title)) },
+        title = {
+            val title = when {
+                original != null -> R.string.plans_edit_title
+                initialDraft != null -> R.string.plans_copy
+                else -> R.string.plans_create_title
+            }
+            Text(tr(title))
+        },
         text = {
             KeyboardDismissArea {
                 Column(Modifier.verticalScroll(rememberScrollState())) {

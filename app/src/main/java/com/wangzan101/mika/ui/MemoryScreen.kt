@@ -178,6 +178,7 @@ fun MemoryScreen(
         GroupCard {
             SwitchRow(stringResource(R.string.memory_use), stringResource(R.string.memory_use_sub), ui.switches.useMemory, first = true) { on -> vm.setSwitches { it.copy(useMemory = on) } }
             SwitchRow(stringResource(R.string.memory_auto), stringResource(R.string.memory_auto_sub), ui.switches.autoRemember) { on -> vm.setSwitches { it.copy(autoRemember = on) } }
+            SwitchRow(stringResource(R.string.memory_infer), stringResource(R.string.memory_infer_sub), ui.switches.inferMemories) { on -> vm.setSwitches { it.copy(inferMemories = on) } }
             SwitchRow(stringResource(R.string.memory_learn), stringResource(R.string.memory_learn_sub), ui.switches.learnSkills) { on -> vm.setSwitches { it.copy(learnSkills = on) } }
             SwitchRow(stringResource(R.string.memory_tasks), stringResource(R.string.memory_tasks_sub), ui.switches.rememberTasks) { on -> vm.setSwitches { it.copy(rememberTasks = on) } }
         }

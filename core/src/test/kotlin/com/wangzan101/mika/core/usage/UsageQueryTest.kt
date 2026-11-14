@@ -25,6 +25,19 @@ class UsageQueryTest {
 
     private fun snap(vararg rows: UsageRow, names: Map<String, String> = emptyMap()) = UsageSnapshot(rows.toList(), names)
 
+    @Test fun proactiveUsageCountsInProviderTotalsAndCharts() {
+        val now = Instant.parse("2026-10-27T10:20:00Z")
+        val h = hourOf(now)
+        val s = snap(row(h, input = 10), row(h, purpose = UsagePurpose.Proactive, input = 5, output = 1))
+        val r = UsageQuery.report(s, UsageRange.Last24Hours, now, utc, mapOf("p1" to "甲"))
+        assertEquals(16, r.totals.tokens)
+        assertEquals(16, r.series.last().tokens)
+        assertEquals(16L, r.series.last().byProvider["p1"])
+        val p = r.provider("p1")!!
+        assertEquals(16, p.totals.tokens)
+        assertEquals(6, p.models.single().purposes.single { it.purpose == UsagePurpose.Proactive }.totals.tokens)
+    }
+
     @Test fun last24HoursIsRollingAndHourly() {
         val now = Instant.parse("2026-10-27T10:20:00Z")
         val h = hourOf(now)

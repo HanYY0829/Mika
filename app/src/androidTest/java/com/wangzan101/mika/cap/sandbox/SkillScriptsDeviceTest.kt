@@ -22,6 +22,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import java.lang.reflect.Proxy
+import com.wangzan101.mika.core.access.AppAccessPolicy
 import com.wangzan101.mika.core.assembly.toolDispatcher
 
 /**
@@ -34,9 +35,12 @@ class SkillScriptsDeviceTest {
     private val ws = "skill-scripts-device-test"
     private val sb = AndroidSandbox(context, SandboxState.get(context))
 
-    /** run_bundled_script 不碰屏幕;任何屏幕调用都算测试写错了。 */
+    /** run_bundled_script 不碰屏幕;任何屏幕调用都算测试写错了。appAccess 是只读的访问控制配置,不算碰屏幕。 */
     private val noScreen = Proxy.newProxyInstance(ScreenPort::class.java.classLoader, arrayOf(ScreenPort::class.java)) { _, m, _ ->
-        throw AssertionError("screen not expected: ${m.name}")
+        when (m.name) {
+            "getAppAccess" -> AppAccessPolicy.ALLOW
+            else -> throw AssertionError("screen not expected: ${m.name}")
+        }
     } as ScreenPort
     private val tools = toolDispatcher(noScreen, sandbox = sb, workspace = { ws })
 
@@ -90,11 +94,5 @@ class SkillScriptsDeviceTest {
         val meta = runScript("skills/documents", "scripts/extract_pdf.py", "inbox/sample.pdf", "--metadata")
         assertRan(meta)
         assertTrue(meta.toString(), meta.s("output")!!.contains("\"pages\": 2"))
-    }
-
-    @Test fun authScriptIsUnavailable() {
-        val r = runScript("sites/github.com", "scripts/api.mjs", "GET", "/user")
-        assertEquals(r.toString(), "script_unavailable", r.s("error"))
-        assertTrue(r.toString(), r.s("message")!!.contains("需要账号授权,Mika 暂不支持"))
     }
 }

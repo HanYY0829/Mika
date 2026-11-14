@@ -22,6 +22,13 @@ class AndroidPhoneCallPort(private val runtime: CallRuntime) : PhoneCallPort {
         put("notifications_available", state.notificationsAvailable)
         state.audioDetail?.let { put("audio_detail", it) }
         put("credentials_configured", config.credentialsConfigured)
+        put("voice_profile_id", config.activeVoiceProfileId)
+        put("voice_profile_name", runtime.activeVoiceProfile().name)
+        put("voice_connection_tested", runtime.activeVoiceProfile().connectionTested)
+        put("service_ready", state.serviceReady)
+        put("manual_ready", state.manualReady)
+        put("dial_ready", state.dialReady)
+        put("auto_answer_ready", state.autoAnswerReady)
         put("phase", state.phase.name.lowercase())
         put("ai_active", state.aiActive)
         put("auto_answer", config.autoAnswer)

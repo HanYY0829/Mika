@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="task_model_rate_limited">Layanan model membatasi frekuensi permintaan, bahkan setelah dicoba ulang. Coba lagi nanti atau periksa batas permintaan akun Anda.</string>
+</resources>

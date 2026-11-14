@@ -46,6 +46,9 @@
     <string name="tool_list_settings">Baca pengaturan</string>
     <string name="tool_set_setting">Ubah pengaturan</string>
     <string name="tool_save_skill">Simpan keterampilan</string>
+    <string name="tool_memory_search">Cari di memori</string>
+    <string name="tool_memory_save">Tulis ke memori</string>
+    <string name="tool_memory_edit">Ubah memori</string>
     <string name="tool_explain_failure">Jelaskan mengapa tidak berhasil</string>
     <string name="tool_ask_user">Ajukan pertanyaan kepada Anda</string>
     <string name="tool_takeover">Minta Anda mengambil alih</string>

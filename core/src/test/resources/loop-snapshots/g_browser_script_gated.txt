@@ -1,4 +1,4 @@
-outcome: Failed(reason=下单需要用户确认,脚本没有执行, kind=GaveUp)
+outcome: Failed(reason=下单需要用户确认,脚本没有执行, kind=GaveUp, code=null)
 
 ## main #1
 system: len=20172 #aace4d23 | You are Mika, the user's personal assistant on their phone. Your job is to get ⏎…

@@ -2,6 +2,7 @@ package com.wangzan101.mika.ui
 
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
@@ -126,6 +127,25 @@ class FileLibrarySelectTest {
         compose.onNodeWithTag("file-library-select-cancel").performClick()
         compose.onNodeWithTag("file-library-select-bar").assertDoesNotExist()
         compose.onNodeWithTag("file-library-select").assertExists()
+    }
+
+    @Test fun typeFilterLimitsVisibleRowsAndSelectAll() {
+        store.append("a", Turn(
+            AttachmentLines.compose("look", listOf("/workspace/photo.JPG" to "1 B", "/workspace/report.pdf" to "2 B")),
+            "", "succeeded",
+        ))
+        show(fromDrawer = false)
+        compose.onNodeWithTag("file-library-type-filter").performClick()
+        compose.onNodeWithText("图片").performClick()
+        compose.onNodeWithText("photo.JPG").assertIsDisplayed()
+        compose.onNodeWithText("report.pdf").assertDoesNotExist()
+
+        compose.onNodeWithTag("file-library-select").performClick()
+        compose.onNodeWithTag("file-library-select-all").performClick()
+        compose.onNodeWithTag("file-library-selected-count").assertTextEquals("已选 1 个")
+        compose.onNodeWithTag("file-library-share-selected").performClick()
+        compose.waitForIdle()
+        assertEquals(listOf(LibraryFileHandle.Workspace("a", "/workspace/photo.JPG")), shares.single())
     }
 
     @Test fun addingFromConversationUsesInitialConversationWithoutPicker() {

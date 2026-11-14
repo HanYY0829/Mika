@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 
 /** 一次调用是为哪个用途发的。存储里记 [key];认不出的 key(以后的版本写的)读成 [Other]。 */
 enum class UsagePurpose(val key: String) {
-    Main("main"), Vision("vision"), Light("light"), Other("other");
+    Main("main"), Vision("vision"), Light("light"), Other("other"), Proactive("proactive");
 
     companion object {
         fun of(role: ModelRole): UsagePurpose = when (role) {
@@ -44,14 +44,24 @@ fun interface UsageSink {
  * 对调用方透明:名字、能力照旧,异常原样抛出,逐段文字照常回调;原模型支持逐段文字,套上的也支持。
  * 记账本身出错不影响调用。
  */
-fun ChatModel.metered(source: UsageSource, sink: UsageSink, beforeCall: (UsageSource) -> Unit = {}): ChatModel =
-    if (this is StreamingChatModel) MeteredStreamingModel(this, source, sink, beforeCall) else MeteredModel(this, source, sink, beforeCall)
+fun ChatModel.metered(
+    source: UsageSource, sink: UsageSink,
+    /**
+     * 适配器在同一次调用里再发一个请求(兼容重试、刷新令牌后重发)之前调,第二个参数是这次调用已经发出的请求数——
+     * 它们要等这次调用结束才记进账本,按次数设上限的调用方得自己把它们加上。抛出就不再发,这次调用以这个错误结束。
+     */
+    beforeRetry: (UsageSource, Int) -> Unit = { _, _ -> },
+    beforeCall: (UsageSource) -> Unit = {},
+): ChatModel =
+    if (this is StreamingChatModel) MeteredStreamingModel(this, source, sink, beforeCall, beforeRetry)
+    else MeteredModel(this, source, sink, beforeCall, beforeRetry)
 
 private open class MeteredModel(
     private val inner: ChatModel,
     protected val source: UsageSource,
     protected val sink: UsageSink,
     private val beforeCall: (UsageSource) -> Unit,
+    private val beforeRetry: (UsageSource, Int) -> Unit,
 ) : ChatModel {
     override val capabilities get() = inner.capabilities
     override val name: String get() = inner.name
@@ -65,7 +75,7 @@ private open class MeteredModel(
         // 拒绝时不建请求计数、不调用适配器，也不记一笔不存在的逻辑调用。
         tally?.checkBudget()
         beforeCall(source)
-        val attempts = ModelHttpAttempts()
+        val attempts = ModelHttpAttempts { started -> beforeRetry(source, started) }
         val reply = try {
             withContext(attempts) { call() }
         } catch (e: Throwable) {
@@ -87,7 +97,8 @@ private class MeteredStreamingModel(
     source: UsageSource,
     sink: UsageSink,
     beforeCall: (UsageSource) -> Unit,
-) : MeteredModel(inner, source, sink, beforeCall), StreamingChatModel {
+    beforeRetry: (UsageSource, Int) -> Unit,
+) : MeteredModel(inner, source, sink, beforeCall, beforeRetry), StreamingChatModel {
     override suspend fun completeStreaming(
         system: String, messages: List<Message>, tools: List<ToolSpec>, onText: (String) -> Unit,
     ): ModelReply = counted { inner.completeStreaming(system, messages, tools, onText) }

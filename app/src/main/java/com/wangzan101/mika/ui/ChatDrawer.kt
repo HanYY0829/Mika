@@ -369,6 +369,8 @@ fun ChatDrawer(
     /** 长按一条存过的对话:在它原地弹出操作菜单(置顶、改名、删除);带上那一行在窗口里的位置和大小。 */
     onActions: (DrawerConversation, Rect) -> Unit = { _, _ -> },
     onPersonal: () -> Unit = {},
+    /** 个人助手开关关着时不显示入口,整个功能藏起来;开着才在侧栏露出。 */
+    showPersonal: Boolean = true,
     /** 多选模式:每行左边出现勾选框,点一行是勾选;底部换成「已选 N 条 / 全选 / 删除」。 */
     selecting: Boolean = false,
     selected: Set<String> = emptySet(),
@@ -438,7 +440,7 @@ fun ChatDrawer(
         if (searchActive) SearchArchiveFilterRow(searchFilter, onSearchFilterChange)
         // 搜索、多选、归档视图时把几个入口收起来，把高度让给列表;退出后原样回来
         if (!searchActive && !selecting && !archivedView) Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
-            NavEntry(MikaIcons.Message, stringResource(R.string.drawer_personal), onClick = onPersonal)
+            if (showPersonal) NavEntry(MikaIcons.Message, stringResource(R.string.drawer_personal), onClick = onPersonal)
             NavEntry(MikaIcons.New, stringResource(R.string.chat_new), enabled = canSwitch, onClick = onNew)
             NavEntry(MikaIcons.Clock, stringResource(R.string.drawer_plans), onClick = onPlans)
             NavEntry(MikaIcons.Heart, stringResource(R.string.memory_and_skills), onClick = onMemory)
@@ -1043,6 +1045,7 @@ fun ChatWithDrawer(
     reopen: Boolean = false,
     onReopened: () -> Unit = {},
     onPersonal: () -> Unit = {},
+    showPersonal: Boolean = true,
     onRegularChat: () -> Unit = {},
     /** 外部跳回对话页时变化:若之前因返回键留在展开的侧栏,当场收起侧栏。 */
     resetKey: Int = 0,
@@ -1291,6 +1294,7 @@ fun ChatWithDrawer(
                     onSearchFilterChange = { searchFilter = it },
                     onNew = { close { vm.newConversation(); onRegularChat() } },
                     onPersonal = { leave(onPersonal) },
+                    showPersonal = showPersonal,
                     onPlans = { leave(onPlans) },
                     onMemory = { leave(onMemory) },
                     onSettings = { leave(onSettings) },

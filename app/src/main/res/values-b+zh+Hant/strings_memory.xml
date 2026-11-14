@@ -25,6 +25,8 @@
     <string name="memory_use_sub">關掉後不讀也不記</string>
     <string name="memory_auto">自動記住我說過的事</string>
     <string name="memory_auto_sub">任務結束後從你的原話裡整理</string>
+    <string name="memory_infer">讓 Mika 自己歸納著記</string>
+    <string name="memory_infer_sub">你讓它記時,它自己歸納的也存,並標明不是你說的</string>
     <string name="memory_learn">從做過的事裡學(技能和 App 知識)</string>
     <string name="memory_learn_sub">學到的技能和 App 知識要你收下才會用</string>
     <string name="memory_tasks">記住辦過的任務</string>
@@ -59,6 +61,7 @@
     <string name="date_pattern_md">M 月 d 日</string>
     <string name="memory_said_via">你在 %1$s透過%2$s說:『%3$s』</string>
     <string name="memory_said">你在 %1$s說:『%2$s』</string>
+    <string name="memory_inferred">Mika 在 %1$s按你的要求歸納:『%2$s』</string>
     <string name="verify_returned">核查退回</string>
     <string name="skills_drafts">新技能草稿，收下後先試用</string>
     <string name="skills_accept_try">收下試用</string>

@@ -14,6 +14,25 @@ class SkillOutcomesTest {
         assertEquals(SkillStatus.active, SkillOutcomes.record(draft, SkillResult.verified, followed = true).status)
         assertEquals(SkillStatus.suspended, SkillOutcomes.record(draft, SkillResult.verifier_rejected, followed = true).status)
     }
+
+    @Test fun trialSingleFailureStaysTrial() {
+        // 一次失败(可能是任务别处的问题)不停用试用技能,只记下这次结果(#569)
+        val draft = personalSkill("trial-skill", status = SkillStatus.trial)
+        val once = SkillOutcomes.record(draft, SkillResult.failed, followed = false)
+        assertEquals(SkillStatus.trial, once.status)
+        assertEquals(listOf("failed"), once.outcomes)
+        // 照着做被核查退回仍是强信号:一次就停
+        assertEquals(SkillStatus.suspended, SkillOutcomes.record(draft, SkillResult.verifier_rejected, followed = true).status)
+    }
+
+    @Test fun trialTwoBadInThreeSuspends() {
+        // 试用和正式一样:最近几次里多次不灵才停用
+        var cur = personalSkill("trial-skill", status = SkillStatus.trial)
+        cur = SkillOutcomes.record(cur, SkillResult.failed, followed = false)
+        assertEquals(SkillStatus.trial, cur.status)
+        cur = SkillOutcomes.record(cur, SkillResult.failed, followed = false)
+        assertEquals(SkillStatus.suspended, cur.status)
+    }
     private val s = personalSkill("wechat-msg")
 
     @Test fun keepsLast5() {
@@ -53,8 +72,8 @@ class SkillOutcomesTest {
         assertEquals(SkillResult.unreviewed, SkillOutcomes.resultOf(TaskState.Succeeded("ok", verified = true), RunOutcome.Unknown))
         assertEquals(SkillResult.failed, SkillOutcomes.resultOf(TaskState.Failed("找不到", FailKind.GaveUp), RunOutcome.Unknown))
         assertEquals(SkillResult.failed, SkillOutcomes.resultOf(TaskState.Failed("步数用完", FailKind.StepLimit), RunOutcome.Unknown))
-        // 模型出错、运行环境出问题、操作保护停下:说明不了技能或知识灵不灵
-        for (k in listOf(FailKind.Model, FailKind.Environment, FailKind.Guard, FailKind.Interrupted))
+        // 模型出错、运行环境出问题、操作保护停下、Token 预算用完:说明不了技能或知识灵不灵
+        for (k in listOf(FailKind.Model, FailKind.Environment, FailKind.Guard, FailKind.Interrupted, FailKind.TokenLimit))
             assertEquals(k.name, SkillResult.unreviewed, SkillOutcomes.resultOf(TaskState.Failed("x", k), RunOutcome.Unknown))
     }
 }

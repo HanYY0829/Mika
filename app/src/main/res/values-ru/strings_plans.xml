@@ -80,4 +80,6 @@
     <string name="plans_running_now">Выполняется</string>
     <string name="trigger_deleted">Задача по расписанию удалена</string>
     <string name="trigger_busy">Эта задача ещё выполняется</string>
+    <string name="plans_run_history">История запусков</string>
+    <string name="plans_copy">Скопировать как новое расписание</string>
 </resources>

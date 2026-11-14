@@ -11,15 +11,29 @@ import com.wangzan101.mika.capsule.DockSide
 import com.wangzan101.mika.core.agent.SpeedFlags
 import com.wangzan101.mika.core.cap.phone.OperatingPace
 import com.wangzan101.mika.chat.AutoArchive
+import com.wangzan101.mika.core.usage.ProactiveBudget
 import com.wangzan101.mika.core.usage.TokenBudgetLimits
 import com.wangzan101.mika.task.ParallelCapability
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import java.time.LocalTime
 
 /** 功能开关。提速开关存成 [SpeedFlags.describe] 的格式,评测跑器可用参数覆盖。 */
 class FeatureFlags(private val prefs: SharedPreferences) {
+    fun scheduledQuietHours(): ScheduledQuietHours {
+        val parts = prefs.getString(SCHEDULED_QUIET_HOURS, null)?.split(',')
+        if (parts?.size != 3) return ScheduledQuietHours.DEFAULT
+        return runCatching {
+            ScheduledQuietHours(parts[0].toBooleanStrict(), LocalTime.parse(parts[1]), LocalTime.parse(parts[2]))
+        }.getOrDefault(ScheduledQuietHours.DEFAULT)
+    }
+
+    fun setScheduledQuietHours(hours: ScheduledQuietHours) {
+        prefs.edit().putString(SCHEDULED_QUIET_HOURS, "${hours.enabled},${hours.start},${hours.end}").apply()
+    }
+
     fun personalStart(): Boolean = prefs.getBoolean(PERSONAL_START, false)
 
     fun setPersonalStart(on: Boolean) {
@@ -61,6 +75,15 @@ class FeatureFlags(private val prefs: SharedPreferences) {
 
     fun setTaskTokenBudget(limit: Long?) {
         prefs.edit().putLong(TASK_TOKEN_BUDGET, limit?.takeIf(TokenBudgetLimits::valid) ?: 0L).commit()
+    }
+
+    /** 主动能力每天(本地日历日,各服务商合计)允许已报告的 Token;没设或不合法时按默认值,没有「不限制」。 */
+    fun proactiveDailyTokenBudget(): Long =
+        ProactiveBudget.limitOf(prefs.getLong(PROACTIVE_DAILY_TOKEN_BUDGET, 0L))
+
+    /** 不在 [TokenBudgetLimits] 范围内的值(含 null)存成「没设」,读出来就是默认值。 */
+    fun setProactiveDailyTokenBudget(limit: Long?) {
+        prefs.edit().putLong(PROACTIVE_DAILY_TOKEN_BUDGET, limit?.takeIf(TokenBudgetLimits::valid) ?: 0L).commit()
     }
 
     /** 干活时屏幕保持常亮;默认开,用户可以关。 */
@@ -195,6 +218,23 @@ class FeatureFlags(private val prefs: SharedPreferences) {
         prefs.edit().putInt(AUTO_ARCHIVE_DAYS, days.takeIf { it in AutoArchive.DAYS } ?: 0).commit()
     }
 
+    /** 主动能力(实验,见 [com.wangzan101.mika.proactive.ProactiveRuntime]):读所选 App 的通知;默认关。 */
+    fun proactive(): Boolean = prefs.getBoolean(PROACTIVE, false)
+
+    fun setProactive(on: Boolean) {
+        prefs.edit().putBoolean(PROACTIVE, on).commit()
+    }
+
+    /** 主动能力开关的当前值,之后每次改动再发一次(胶囊据此才去取「值得提醒」的条数,关着时不建主动能力)。 */
+    fun proactiveChanges(): Flow<Boolean> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == null || key == PROACTIVE) trySend(proactive())
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        send(proactive())
+        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }.distinctUntilChanged()
+
     /** 悬浮胶囊:关闭、有任务时显示(默认)、一直显示。 */
     fun capsuleMode(): CapsuleMode = CapsuleMode.parse(prefs.getString(CAPSULE_MODE, null))
 
@@ -314,6 +354,7 @@ class FeatureFlags(private val prefs: SharedPreferences) {
 
     companion object {
         const val PREFS = "feature_flags"
+        private const val SCHEDULED_QUIET_HOURS = "scheduled_quiet_hours"
         /** 每个任务步数上限能设的最大值;0/null 表示不限制。 */
         const val MAX_TASK_STEP_LIMIT = 500
         private const val SPEED_FLAGS = "speed_flags"
@@ -328,6 +369,7 @@ class FeatureFlags(private val prefs: SharedPreferences) {
         private const val PARALLEL_MAX = "parallel_max"
         private const val TASK_STEP_LIMIT = "task_step_limit"
         private const val TASK_TOKEN_BUDGET = "task_token_budget"
+        private const val PROACTIVE_DAILY_TOKEN_BUDGET = "proactive_daily_token_budget"
         private const val KEEP_SCREEN_ON = "keep_screen_on"
         private const val MUTE_TARGET = "mute_target"
         private const val OPERATING_PACE = "operating_pace"
@@ -336,6 +378,7 @@ class FeatureFlags(private val prefs: SharedPreferences) {
         private const val SELF_OPERATE = "self_operate"
         private const val PIP_OPERATE = "pip_operate"
         private const val EXTERNAL_SCHEDULE = "external_schedule"
+        private const val PROACTIVE = "proactive"
         private const val THEME_MODE = "theme_mode"
         private const val PERSONAL_START = "personal_start"
         private const val THEME_ACCENT = "theme_accent"

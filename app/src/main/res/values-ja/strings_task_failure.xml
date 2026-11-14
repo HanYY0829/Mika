@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="task_model_rate_limited">モデルサービスのリクエスト制限に達しました。再試行後も頻度が高すぎます。しばらくしてから再試行するか、アカウントの制限を確認してください。</string>
+</resources>

@@ -52,20 +52,23 @@ fun CallSettingsScreen(runtime: CallRuntime, onInstructions: (() -> Unit)? = nul
     initialHistoryCallId: String? = null,
     updateAvailable: Boolean = false, focusRequest: Int = 0) {
     var instructionsOpen by rememberSaveable { mutableStateOf(false) }
+    var voiceProfilesOpen by rememberSaveable { mutableStateOf(false) }
     var handledFocusRequest by rememberSaveable { mutableIntStateOf(0) }
     val workspaceState = rememberSaveableStateHolder()
     val taskDraft = rememberSaveable(saver = CallTaskDraft.Saver) { CallTaskDraft() }
     LaunchedEffect(focusRequest) {
         if (focusRequest > 0 && focusRequest != handledFocusRequest) {
             instructionsOpen = false
+            voiceProfilesOpen = false
             handledFocusRequest = focusRequest
         }
     }
     when {
+        voiceProfilesOpen -> CallVoiceProfilesScreen(runtime) { voiceProfilesOpen = false }
         instructionsOpen -> CallInstructionsScreen(runtime) { instructionsOpen = false }
         else -> workspaceState.SaveableStateProvider("call-workspace") {
             CallSettingsWorkspace(runtime, taskDraft, onBack, onInstructions ?: { instructionsOpen = true },
-                standalone, onHelperSetup, onAbout, updateAvailable, focusRequest, initialHistoryCallId)
+                { voiceProfilesOpen = true }, standalone, onHelperSetup, onAbout, updateAvailable, focusRequest, initialHistoryCallId)
         }
     }
 }
@@ -73,7 +76,7 @@ fun CallSettingsScreen(runtime: CallRuntime, onInstructions: (() -> Unit)? = nul
 @Composable
 private fun CallSettingsWorkspace(
     runtime: CallRuntime, taskDraft: CallTaskDraft,
-    onBack: () -> Unit, onInstructions: () -> Unit,
+    onBack: () -> Unit, onInstructions: () -> Unit, onVoiceProfiles: () -> Unit,
     standalone: Boolean, onHelperSetup: () -> Unit, onAbout: () -> Unit, updateAvailable: Boolean,
     focusRequest: Int,
     initialHistoryCallId: String?,
@@ -107,9 +110,8 @@ private fun CallSettingsWorkspace(
     val failureText = stringResource(R.string.calls_action_failed)
     val settingsErrorText = stringResource(R.string.calls_device_system_settings_failed)
     val device = rememberCallDeviceControls(runtime) { feedback = CallActionResult(false, settingsErrorText) }
-    val ready = config.enabled && state.prepared && state.shellConnected && device.readiness.phoneAllowed &&
-        device.readiness.callNotificationsAllowed && state.notificationsAvailable && config.credentialsConfigured && state.audioReady
-    val canStartStandby = ready && config.audioVerified && config.autoAnswer && idle && pendingLockedDial == null &&
+    val ready = state.manualReady && device.readiness.phoneAllowed && device.readiness.callNotificationsAllowed
+    val canStartStandby = state.autoAnswerReady && config.autoAnswer && idle && pendingLockedDial == null &&
         device.readiness.standbyNotificationsAllowed && !busy && !controlBusy && !settingsBusy
 
     LaunchedEffect(focusRequest) {
@@ -271,6 +273,7 @@ private fun CallSettingsWorkspace(
                             editable = pendingLockedDial == null && !busy && !controlBusy,
                             canDial = idle && pendingLockedDial == null && !busy && !controlBusy,
                             feedback = visibleFeedback, onSetup = ::openDeviceSettings,
+                            voiceProfile = runtime.activeVoiceProfile(), onVoiceProfiles = onVoiceProfiles,
                             onConfirm = { submission ->
                                 perform {
                                     runtime.dial(submission.number, simId = submission.simId, task = submission.brief)
@@ -282,25 +285,31 @@ private fun CallSettingsWorkspace(
                                 }
                             },
                         )
-                        CallWorkspaceTab.History -> CallHistorySection(
-                            history, state.historyWriteFailed, onMark = runtime::setHistoryHandled, onDelete = runtime::deleteHistory,
-                            onRetrySummary = runtime::retrySummary,
-                            focusRecordId = initialHistoryCallId,
-                            onClear = runtime::clearHistory,
-                            onReuseTask = if (pendingLockedDial != null || busy || controlBusy) null else { number, brief ->
-                                if (taskDraft.hasContent) pendingReuse = number to brief else reuse(number, brief)
-                            },
-                        )
+                        CallWorkspaceTab.History -> {
+                            TextButton(onClick = { tab = CallWorkspaceTab.Settings }, modifier = Modifier.fillMaxWidth()) {
+                                Text(stringResource(R.string.calls_back_settings))
+                            }
+                            CallHistorySection(
+                                history, state.historyWriteFailed, onMark = runtime::setHistoryHandled, onDelete = runtime::deleteHistory,
+                                onRetrySummary = runtime::retrySummary,
+                                focusRecordId = initialHistoryCallId,
+                                onClear = runtime::clearHistory,
+                                onReuseTask = if (pendingLockedDial != null || busy || controlBusy) null else { number, brief ->
+                                    if (taskDraft.hasContent) pendingReuse = number to brief else reuse(number, brief)
+                                },
+                            )
+                        }
                         CallWorkspaceTab.Settings -> CallPreferencesPage(
                             config, state, ready, deviceNavigation,
+                            profile = runtime.activeVoiceProfile(),
                             canConfigure = idle && pendingLockedDial == null && !busy && !controlBusy && !settingsBusy,
                             stopBusy = controlBusy || settingsBusy, device = device, canStartStandby = canStartStandby,
                             onPrepare = prepare, onStop = { perform(priority = true) { runtime.stop() } },
                             onHelperSetup = onHelperSetup, onStartStandby = startStandby,
-                            onCredentials = { dialog = CallDialog.Credentials }, onProfile = { dialog = CallDialog.Profile },
-                            onVerifyAudio = { verified ->
-                                scope.launch { save { it.copy(audioVerified = verified, autoAnswer = verified && it.autoAnswer) } }
-                            },
+                            onCredentials = onVoiceProfiles, onProfile = { dialog = CallDialog.Profile },
+                            onVoiceProfiles = onVoiceProfiles,
+                            onRecords = { tab = CallWorkspaceTab.History },
+                            onVerifyAudio = { verified -> perform { runtime.setAudioVerified(verified) } },
                             onDefaultSim = { id -> scope.launch { save { it.copy(defaultOutgoingSimId = id) } } },
                             onSummaryEnabled = { enabled -> scope.launch { save { it.copy(summaryEnabled = enabled) } } },
                         )
@@ -336,11 +345,12 @@ private fun CallSettingsWorkspace(
             feedback = CallActionResult(true, it)
         }
         CallDialog.Profile -> CallProfileDialog(config, onDismiss = { dialog = null }, onSave = { edits ->
-            save { latest ->
+            val saved = save { latest ->
                 require(canEditCallSpeaker(edits.speaker, latest.speaker))
                 latest.copy(greeting = edits.greeting, systemPrompt = edits.systemPrompt,
                     speaker = edits.speaker, audioMode = edits.audioMode, maxCallSeconds = edits.maxCallSeconds)
             }
+            if (saved) runtime.saveVoiceProfile(runtime.activeVoiceProfile().copy(speaker = edits.speaker)).ok else false
         })
         null -> Unit
     }
@@ -350,17 +360,20 @@ private enum class CallDialog { Rules, Bypass, Credentials, Profile }
 
 private enum class CallWorkspaceTab(val label: Int) {
     Receive(R.string.calls_nav_receive), Task(R.string.calls_nav_task),
-    History(R.string.calls_tab_history), Settings(R.string.calls_tab_settings),
+    Settings(R.string.calls_tab_settings), History(R.string.calls_tab_history),
 }
 
 @Composable
 private fun CallWorkspaceTabs(selected: CallWorkspaceTab, onSelect: (CallWorkspaceTab) -> Unit) {
     // 页面底有背景图片时标签栏透出它,不留一条纯色
     val tabBg = if (LocalSkinBackdrop.current != null) Color.Transparent else MikaTheme.colors.bg
-    TabRow(selectedTabIndex = selected.ordinal, containerColor = tabBg, contentColor = MikaTheme.colors.accent) {
-        CallWorkspaceTab.entries.forEach { tab ->
+    val visibleTabs = CallWorkspaceTab.entries.filterNot { it == CallWorkspaceTab.History }
+    TabRow(selectedTabIndex = if (selected == CallWorkspaceTab.History) visibleTabs.indexOf(CallWorkspaceTab.Settings) else selected.ordinal,
+        containerColor = tabBg, contentColor = MikaTheme.colors.accent) {
+        visibleTabs.forEach { tab ->
             Tab(
-                selected = tab == selected, onClick = { onSelect(tab) },
+                selected = tab == selected || selected == CallWorkspaceTab.History && tab == CallWorkspaceTab.Settings,
+                onClick = { onSelect(tab) },
                 modifier = Modifier.heightIn(min = 48.dp).testTag("call-tab-" + tab.name.lowercase()),
             ) {
                 Text(stringResource(tab.label), Modifier.padding(horizontal = 3.dp, vertical = 6.dp),
@@ -585,15 +598,17 @@ private fun CallReceivePage(
 @Composable
 private fun CallPreferencesPage(
     config: CallConfig, state: CallRuntimeState, ready: Boolean, openDeviceRequest: Int,
+    profile: CallVoiceProfile,
     canConfigure: Boolean, stopBusy: Boolean, device: CallDeviceControls, canStartStandby: Boolean,
     onPrepare: () -> Unit, onStop: () -> Unit, onCredentials: () -> Unit, onProfile: () -> Unit,
+    onVoiceProfiles: () -> Unit, onRecords: () -> Unit,
     onVerifyAudio: (Boolean) -> Unit, onDefaultSim: (String?) -> Unit,
     onSummaryEnabled: (Boolean) -> Unit,
     onHelperSetup: () -> Unit, onStartStandby: () -> Unit,
 ) {
     var deviceOpen by rememberSaveable { mutableStateOf(!ready || !config.audioVerified) }
     var backgroundOpen by rememberSaveable { mutableStateOf(false) }
-    var voiceOpen by rememberSaveable { mutableStateOf(false) }
+    var advancedOpen by rememberSaveable { mutableStateOf(false) }
     var simOpen by rememberSaveable { mutableStateOf(false) }
     var lastDeviceRequest by rememberSaveable { mutableIntStateOf(0) }
     LaunchedEffect(openDeviceRequest) {
@@ -603,11 +618,32 @@ private fun CallPreferencesPage(
         }
     }
     GroupCard {
+        ListRow(MikaIcons.Phone, stringResource(R.string.calls_enable),
+            stringResource(if (config.enabled) R.string.calls_enabled_summary else R.string.calls_system_default), first = true) {
+            MikaSwitch(config.enabled, { checked -> if (checked) onPrepare() else onStop() },
+                enabled = canConfigure || config.enabled, modifier = Modifier.testTag("call-enabled"))
+        }
+    }
+
+    GroupLabel(stringResource(R.string.calls_settings_voice_group))
+    GroupCard {
+        ListRow(MikaIcons.Mic, stringResource(R.string.calls_voice_service),
+            "${profile.name} · " + stringResource(when {
+                !profile.credentialsConfigured -> R.string.calls_key_missing
+                !profile.connectionTested -> R.string.calls_voice_status_untested
+                else -> R.string.calls_voice_status_tested
+            }), first = true, onClick = onVoiceProfiles.takeIf { canConfigure }) { RowChevron() }
+        ListRow(MikaIcons.Message, stringResource(R.string.calls_profile),
+            stringResource(R.string.calls_model_label, profile.model), onClick = onProfile.takeIf { canConfigure }) { RowChevron() }
+    }
+
+    GroupLabel(stringResource(R.string.calls_settings_device_group))
+    GroupCard {
         CallFoldRow(MikaIcons.Gear, stringResource(R.string.calls_device_and_permissions), deviceOpen, "call-settings-device",
             subtitle = stringResource(readinessSummary(config, ready))) { deviceOpen = !deviceOpen }
         if (deviceOpen) {
             CallPermissionRows(device, state.shellConnected, canConfigure, onHelperSetup)
-            CallReadinessActions(config, state, ready, canConfigure, stopBusy, device.readiness,
+            CallReadinessActions(config, state, ready, profile, canConfigure, stopBusy, device.readiness,
                 onPrepare, onStop, onCredentials)
             val canVerify = canConfigure && (ready || config.audioVerified)
             Row(
@@ -663,21 +699,6 @@ private fun CallPreferencesPage(
     }
 
     GroupCard {
-        CallFoldRow(MikaIcons.Mic, stringResource(R.string.calls_voice_settings), voiceOpen, "call-settings-voice",
-            subtitle = stringResource(R.string.calls_provider)) { voiceOpen = !voiceOpen }
-        if (voiceOpen) {
-            HorizontalDivider()
-            ListRow(
-                MikaIcons.Key, stringResource(R.string.calls_credentials),
-                stringResource(if (config.credentialsConfigured) R.string.calls_key_saved else R.string.calls_key_missing),
-                first = true, onClick = onCredentials.takeIf { canConfigure },
-            ) { RowChevron() }
-            ListRow(MikaIcons.Message, stringResource(R.string.calls_profile),
-                stringResource(R.string.calls_model_label, config.model), onClick = onProfile.takeIf { canConfigure }) { RowChevron() }
-        }
-    }
-
-    GroupCard {
         val preferred = config.defaultOutgoingSimId
         val selected = state.simOptions.firstOrNull { it.id == preferred }
         val summary = when {
@@ -697,11 +718,28 @@ private fun CallPreferencesPage(
             }
         }
     }
+
+    GroupCard {
+        CallFoldRow(MikaIcons.Gear, stringResource(R.string.calls_advanced), advancedOpen, "call-settings-advanced",
+            subtitle = stringResource(R.string.calls_advanced_summary)) { advancedOpen = !advancedOpen }
+        if (advancedOpen) {
+            ListRow(MikaIcons.Mic, stringResource(R.string.calls_audio_route),
+                stringResource(if (config.audioMode == CallAudioMode.DIRECT) R.string.calls_audio_direct else R.string.calls_audio_redirect),
+                first = true, onClick = onProfile.takeIf { canConfigure }) { RowChevron() }
+            FooterNote(stringResource(R.string.calls_advanced_note))
+        }
+    }
+
+    GroupLabel(stringResource(R.string.calls_settings_data_group))
+    GroupCard {
+        ListRow(MikaIcons.Clock, stringResource(R.string.calls_tab_history),
+            stringResource(R.string.calls_history_entry_summary), first = true, onClick = onRecords) { RowChevron() }
+    }
 }
 
 @Composable
 private fun CallReadinessActions(
-    config: CallConfig, state: CallRuntimeState, ready: Boolean, enabled: Boolean, stopBusy: Boolean,
+    config: CallConfig, state: CallRuntimeState, ready: Boolean, profile: CallVoiceProfile, enabled: Boolean, stopBusy: Boolean,
     device: CallDeviceReadiness,
     onPrepare: () -> Unit, onStop: () -> Unit, onCredentials: () -> Unit,
 ) {
@@ -716,8 +754,8 @@ private fun CallReadinessActions(
             },
             style = MaterialTheme.typography.bodySmall, color = MikaTheme.colors.ink3,
         )
-        if (canPrepare && state.prepared && !config.credentialsConfigured) {
-            CallPrimaryButton(stringResource(R.string.calls_credentials), enabled, onCredentials)
+        if (canPrepare && state.prepared && (!profile.credentialsConfigured || !profile.connectionTested)) {
+            CallPrimaryButton(stringResource(R.string.calls_voice_setup), enabled, onCredentials)
         } else if (canPrepare && !ready) {
             CallPrimaryButton(stringResource(if (config.enabled) R.string.calls_prepare else R.string.calls_enable),
                 enabled, onPrepare, Modifier.testTag("call-enable"))
@@ -744,7 +782,11 @@ private fun readinessSummary(config: CallConfig, ready: Boolean): Int = when {
 
 @Composable
 private fun autoAnswerSummary(config: CallConfig, state: CallRuntimeState): String = when (state.autoAnswerStage) {
-    CallAutoAnswerStage.OFF -> stringResource(if (config.enabled) R.string.calls_auto_off else R.string.calls_system_default)
+    CallAutoAnswerStage.OFF -> stringResource(when {
+        !config.enabled -> R.string.calls_system_default
+        !state.manualReady -> R.string.calls_needs_setup
+        else -> R.string.calls_auto_off
+    })
     CallAutoAnswerStage.BLOCKED -> state.autoAnswerBlockedReason ?: stringResource(R.string.calls_needs_setup)
     CallAutoAnswerStage.STANDBY -> stringResource(R.string.calls_auto_standby, config.autoAnswerDelaySeconds)
     CallAutoAnswerStage.BUSY -> stringResource(R.string.calls_auto_busy)

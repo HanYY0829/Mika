@@ -78,4 +78,6 @@
     <string name="plans_running_now">در حال اجرا</string>
     <string name="trigger_deleted">کار زمان‌بندی‌شده حذف شد</string>
     <string name="trigger_busy">این کار همچنان در حال اجراست</string>
+    <string name="plans_run_history">تاریخچه اجرا</string>
+    <string name="plans_copy">کپی به‌عنوان برنامهٔ جدید</string>
 </resources>

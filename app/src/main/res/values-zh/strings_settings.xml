@@ -208,4 +208,9 @@
     <plurals name="settings_auto_archive_days">
         <item quantity="other">%1$d 天</item>
     </plurals>
+    <string name="settings_scheduled_quiet">定时任务免打扰</string>
+    <string name="settings_scheduled_quiet_detail">定时任务的结果和提醒会静默显示在通知栏。</string>
+    <string name="settings_scheduled_quiet_start">开始时间</string>
+    <string name="settings_scheduled_quiet_end">结束时间</string>
+    <string name="settings_scheduled_quiet_equal">开始和结束时间设为不同时间后，通知才会静音。</string>
 </resources>

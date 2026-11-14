@@ -182,6 +182,10 @@
     <string name="step_viewed">Se miró %1$s</string>
     <string name="step_viewed_part">Se miró %2$s en %1$s</string>
     <string name="step_failed">Falló</string>
+    <string name="step_declined_not_said">No se guardó: no son tus propias palabras</string>
+    <string name="step_declined_sensitive">No se guardó: información sensible</string>
+    <string name="step_declined_not_asked">Sin cambios: no lo pediste</string>
+    <string name="step_declined_not_requested">No se guardó: este mensaje no pedía recordarlo</string>
     <string name="step_number">Paso %1$d</string>
     <string name="source_label">Origen</string>
     <plurals name="screenshots">
@@ -260,6 +264,7 @@
     <string name="chat_withdraw_message">Retirar mensaje</string>
     <string name="pip_close">Cerrar la vista pequeña de esta tarea</string>
     <string name="pip_unmute">Volver al sonido</string>
+    <string name="pip_mute">Silenciar</string>
     <string name="pip_back">Atrás en la pantalla virtual</string>
     <string name="pip_reopen">Mostrar pantalla</string>
     <string name="pip_closed_needs_you">Te necesita</string>

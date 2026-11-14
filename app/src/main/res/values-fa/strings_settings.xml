@@ -224,4 +224,9 @@
         <item quantity="one">%1$d روز</item>
         <item quantity="other">%1$d روز</item>
     </plurals>
+    <string name="settings_scheduled_quiet">ساعات سکوت کارهای زمان‌بندی‌شده</string>
+    <string name="settings_scheduled_quiet_detail">نتیجه‌ها و یادآوری‌های زمان‌بندی‌شده بی‌صدا در پنل اعلان‌ها نمایش داده می‌شوند.</string>
+    <string name="settings_scheduled_quiet_start">زمان شروع</string>
+    <string name="settings_scheduled_quiet_end">زمان پایان</string>
+    <string name="settings_scheduled_quiet_equal">برای بی‌صدا کردن اعلان‌ها، زمان شروع و پایان متفاوتی انتخاب کنید.</string>
 </resources>

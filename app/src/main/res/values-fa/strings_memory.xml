@@ -25,6 +25,8 @@
     <string name="memory_use_sub">در حالت خاموش، میکا حافظه را نه می‌خواند و نه ذخیره می‌کند</string>
     <string name="memory_auto">آنچه می‌گویم به خاطر بسپار</string>
     <string name="memory_auto_sub">پس از هر کار از گفته‌های خود شما سازمان‌دهی می‌شود</string>
+    <string name="memory_infer">اجازه به Mika برای ذخیرهٔ برداشت‌های خودش</string>
+    <string name="memory_infer_sub">وقتی می‌خواهید به خاطر بسپارد، برداشت‌های خودش هم ذخیره می‌شود و مشخص می‌شود گفتهٔ شما نیست</string>
     <string name="memory_learn">یادگیری از کارهای گذشته (مهارت‌ها و یادداشت‌های برنامه)</string>
     <string name="memory_learn_sub">آموخته‌های میکا فقط پس از پذیرش شما استفاده می‌شوند</string>
     <string name="memory_tasks">به خاطر سپردن کارهای گذشته</string>
@@ -59,6 +61,7 @@
     <string name="date_pattern_md">MMM d</string>
     <string name="memory_said_via">شما در %1$s از طریق %2$s گفتید: «%3$s»</string>
     <string name="memory_said">شما در %1$s گفتید: «%2$s»</string>
+    <string name="memory_inferred">برداشت Mika در %1$s به درخواست شما: «%2$s»</string>
     <string name="verify_returned">بازگردانده‌شده توسط بررسی</string>
     <string name="skills_drafts">پیش‌نویس‌های مهارت جدید؛ پس از پذیرش شما آزمایش می‌شوند</string>
     <string name="skills_accept_try">پذیرش و آزمون</string>

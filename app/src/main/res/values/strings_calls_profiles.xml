@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_voice_service">Realtime voice service</string>
+    <string name="calls_voice_profiles_intro">Save multiple realtime voice configurations. Incoming and outgoing calls use the default; one outgoing call can use another. Connection testing and on-device call-audio verification are separate.</string>
+    <string name="calls_voice_profile_subtitle">%1$s · %2$s</string>
+    <string name="calls_voice_audio_verified">Phone audio verified</string>
+    <string name="calls_voice_audio_unverified">Phone audio not verified</string>
+    <string name="calls_voice_selected">Default configuration</string>
+    <string name="calls_voice_status_untested">Connection test required</string>
+    <string name="calls_voice_status_tested">Connection tested</string>
+    <string name="calls_voice_select">Use as default</string>
+    <string name="calls_voice_delete">Delete configuration</string>
+    <string name="calls_voice_delete_confirm">Delete %1$s and its locally stored credentials? Existing call records are not deleted.</string>
+    <string name="calls_voice_test">Test connection</string>
+    <string name="calls_voice_testing">Testing…</string>
+    <string name="calls_voice_add">Add realtime voice configuration</string>
+    <string name="calls_voice_edit">Edit realtime voice configuration</string>
+    <string name="calls_voice_test_note">A successful connection test does not verify two-way carrier-call audio. Complete a real test call before enabling automatic answer.</string>
+    <string name="calls_voice_name">Configuration name</string>
+    <string name="calls_voice_endpoint">Endpoint (wss)</string>
+    <string name="calls_voice_model">Realtime dialogue model</string>
+    <string name="calls_voice_default_name">Default realtime voice</string>
+    <string name="calls_voice_protocol">Integrated realtime voice: recognition, dialogue and speech are handled by one service.</string>
+    <string name="calls_voice_credentials_keep">Leave blank to keep the saved credentials; entering new credentials replaces them and requires another connection test.</string>
+    <string name="calls_back_settings">Back to settings</string>
+    <string name="calls_enabled_summary">AI answer and dial are enabled; automatic answer has its own switch.</string>
+    <string name="calls_settings_voice_group">Voice and models</string>
+    <string name="calls_settings_device_group">Device and runtime</string>
+    <string name="calls_settings_data_group">Data</string>
+    <string name="calls_history_entry_summary">Summaries, follow-ups and original transcripts</string>
+    <string name="calls_advanced_summary">Audio route and diagnostics</string>
+    <string name="calls_advanced_note">Changing the audio route resets two-way audio verification. Run another real test call before enabling automatic answer.</string>
+    <string name="calls_voice_setup">Configure and test voice service</string>
+</resources>

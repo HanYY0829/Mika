@@ -4,7 +4,7 @@
     <string name="calls_device_and_permissions">端末と権限</string>
     <string name="calls_edit_rule">編集</string>
     <string name="calls_nav_receive">着信</string>
-    <string name="calls_nav_task">電話タスク</string>
+    <string name="calls_nav_task">発信</string>
     <string name="calls_pause_enable_first">自動応答を有効にすると一時停止できます。</string>
     <string name="calls_rule_delay_summary">応答までの待機時間：%1$d 秒</string>
     <string name="calls_rule_pause">一時停止</string>

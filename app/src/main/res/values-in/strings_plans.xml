@@ -77,4 +77,6 @@
     <string name="plans_running_now">Berjalan</string>
     <string name="trigger_deleted">Tugas terjadwal sudah dihapus</string>
     <string name="trigger_busy">Tugas ini masih berjalan</string>
+    <string name="plans_run_history">Riwayat eksekusi</string>
+    <string name="plans_copy">Salin sebagai jadwal baru</string>
 </resources>

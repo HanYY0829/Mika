@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="task_model_rate_limited">تحد خدمة النموذج من معدل الطلبات، ولا تزال الطلبات متكررة للغاية بعد إعادة المحاولة. حاول مجددًا لاحقًا أو تحقق من حدود معدل الطلبات في حسابك.</string>
+</resources>

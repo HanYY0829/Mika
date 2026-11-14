@@ -1,5 +1,9 @@
 package com.wangzan101.mika.calls
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -105,6 +109,41 @@ class CallHistoryTest {
         ))
         assertEquals(original, Json.decodeFromString<CallRecord>(Json.encodeToString(original)))
         assertEquals(CallFollowUp.Status.UNKNOWN, CallFollowUp("待确认").status)
+    }
+
+    @Test fun cancelledSummaryRetryRestoresFailedStatus() = runBlocking {
+        val original = record(1).copy(summaryStatus = SummaryStatus.FAILED)
+        val storage = MemoryStorage(listOf(original))
+        val history = CallHistory(storage)
+        val entered = CompletableDeferred<Unit>()
+        val retry = launch {
+            history.retryFailedSummary(original.id) {
+                entered.complete(Unit)
+                awaitCancellation()
+            }
+        }
+        entered.await()
+        assertEquals(SummaryStatus.PENDING, history.state.value.single().summaryStatus)
+        retry.cancelAndJoin()
+        assertEquals(original, history.state.value.single())
+        assertEquals(listOf(original), storage.records)
+    }
+
+    @Test fun cancellationDoesNotReplaceAnAlreadySavedSummary() = runBlocking {
+        val original = record(1).copy(summaryStatus = SummaryStatus.FAILED)
+        val history = CallHistory(MemoryStorage(listOf(original)))
+        val summary = CallSummary(purpose = "询问营业时间")
+        val entered = CompletableDeferred<Unit>()
+        val retry = launch {
+            history.retryFailedSummary(original.id) {
+                history.setSummary(original.id, summary, SummaryStatus.READY)
+                entered.complete(Unit)
+                awaitCancellation()
+            }
+        }
+        entered.await()
+        retry.cancelAndJoin()
+        assertEquals(original.copy(summary = summary, summaryStatus = SummaryStatus.READY), history.state.value.single())
     }
 
     @Test fun outgoingTaskRoundTripsWithoutClaimingCompletionOrReusingItOnTheNextCall() = runBlocking {

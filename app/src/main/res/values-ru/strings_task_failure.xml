@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="task_model_rate_limited">Сервис модели ограничивает частоту запросов даже после повторной попытки. Попробуйте позже или проверьте лимиты запросов в своей учётной записи.</string>
+</resources>

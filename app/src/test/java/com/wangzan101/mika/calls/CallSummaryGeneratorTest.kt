@@ -25,6 +25,12 @@ class CallSummaryGeneratorTest {
         assertTrue(model.received.contains("请周五联系我"))
     }
 
+    @Test fun outgoingSummaryNamesTheOtherPartyAsRecipient() = runBlocking {
+        val model = FakeModel("{}")
+        CallSummaryGenerator.generate(model, listOf(CallTranscriptLine("caller", "你好")), CallDirection.OUTGOING)
+        assertTrue(model.received.startsWith("接听方:"))
+    }
+
     @Test fun malformedReplyFailsWithoutInventingFields() = runBlocking {
         assertNull(CallSummaryGenerator.generate(FakeModel("这通电话很好。"), listOf(CallTranscriptLine("caller", "你好"))))
     }
@@ -33,5 +39,17 @@ class CallSummaryGeneratorTest {
         val model = FakeModel("{}")
         assertNull(CallSummaryGenerator.generate(model, emptyList()))
         assertTrue(model.received.isEmpty())
+    }
+
+    @Test fun currentConsentIsRequiredBeforeSubmittingTranscript() = runBlocking {
+        val model = FakeModel("""{"purpose":"维修"}""")
+        val transcript = listOf(CallTranscriptLine("caller", "请安排维修"))
+        var enabled = false
+        assertNull(CallSummaryGenerator.generate(model, transcript, canSend = { enabled }))
+        assertTrue(model.received.isEmpty())
+
+        enabled = true
+        assertEquals("维修", CallSummaryGenerator.generate(model, transcript, canSend = { enabled })?.purpose)
+        assertTrue(model.received.contains("请安排维修"))
     }
 }

@@ -17,9 +17,10 @@ import org.junit.Test
 class LockStateTest {
     private var interactive = false
     private var keyguardLocked = true
+    private var deviceLocked = true
     private var reads = 0
 
-    private fun TestScope.lockState() = LockState({ reads++; LockState.Reading(interactive, keyguardLocked) }, backgroundScope)
+    private fun TestScope.lockState() = LockState({ reads++; LockState.Reading(interactive, keyguardLocked, deviceLocked) }, backgroundScope)
 
     private fun TestScope.tick() {
         advanceTimeBy(DeviceStateWatcher.POLL_MS)
@@ -45,7 +46,7 @@ class LockStateTest {
         lock.refresh() // SCREEN_ON 或 USER_PRESENT:亮了,锁屏界面还在
         tick()
         assertFalse(passed)
-        keyguardLocked = false // 锁屏界面退下,没有广播
+        deviceLocked = false // 设备真正解锁(锁屏界面退下),没有广播
         tick()
         assertTrue(passed)
         assertEquals(null, reported.last())

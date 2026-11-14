@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_voice_service">سرویس صدای بلادرنگ</string>
+    <string name="calls_voice_profiles_intro">می‌توانید چند پیکربندی صدای بلادرنگ ذخیره کنید. تماس‌های ورودی و خروجی از پیکربندی پیش‌فرض استفاده می‌کنند، اما هر تماس خروجی می‌تواند پیکربندی دیگری داشته باشد. آزمایش اتصال و تأیید صدای دوطرفه گوشی دو فرایند جدا هستند.</string>
+    <string name="calls_voice_profile_subtitle">%1$s · %2$s</string>
+    <string name="calls_voice_audio_verified">صدای گوشی تأیید شده</string>
+    <string name="calls_voice_audio_unverified">صدای گوشی تأیید نشده</string>
+    <string name="calls_voice_selected">پیکربندی پیش‌فرض فعلی</string>
+    <string name="calls_voice_status_untested">آزمایش اتصال لازم است</string>
+    <string name="calls_voice_status_tested">اتصال آزمایش شده</string>
+    <string name="calls_voice_select">تنظیم به‌عنوان پیش‌فرض</string>
+    <string name="calls_voice_delete">حذف پیکربندی</string>
+    <string name="calls_voice_delete_confirm">%1$s و اطلاعات اعتبار ذخیره‌شده روی دستگاه حذف شود؟ سوابق تماس حذف نمی‌شوند.</string>
+    <string name="calls_voice_test">آزمایش اتصال</string>
+    <string name="calls_voice_testing">در حال آزمایش…</string>
+    <string name="calls_voice_add">افزودن پیکربندی صدای بلادرنگ</string>
+    <string name="calls_voice_edit">ویرایش پیکربندی صدای بلادرنگ</string>
+    <string name="calls_voice_test_note">اتصال موفق، صدای دوطرفه را در تماس تلفنی تضمین نمی‌کند. پیش از فعال‌کردن پاسخ خودکار، یک تماس آزمایشی واقعی انجام دهید.</string>
+    <string name="calls_voice_name">نام پیکربندی</string>
+    <string name="calls_voice_endpoint">نشانی نقطه پایانی (wss)</string>
+    <string name="calls_voice_model">مدل گفت‌وگوی بلادرنگ</string>
+    <string name="calls_voice_default_name">صدای بلادرنگ پیش‌فرض</string>
+    <string name="calls_voice_protocol">صدای بلادرنگ یکپارچه: تشخیص، گفت‌وگو و تولید صدا توسط یک سرویس انجام می‌شود.</string>
+    <string name="calls_voice_credentials_keep">برای حفظ اطلاعات اعتبار ذخیره‌شده، این بخش را خالی بگذارید. اطلاعات جدید جایگزین قبلی می‌شود و آزمایش دوباره لازم است.</string>
+    <string name="calls_back_settings">بازگشت به تنظیمات</string>
+    <string name="calls_enabled_summary">پاسخ و تماس با هوش مصنوعی فعال است؛ پاسخ خودکار کلید مستقل دارد.</string>
+    <string name="calls_settings_voice_group">صدا و مدل‌ها</string>
+    <string name="calls_settings_device_group">دستگاه و اجرا</string>
+    <string name="calls_settings_data_group">داده‌ها</string>
+    <string name="calls_history_entry_summary">خلاصه‌ها، پیگیری‌ها و متن اصلی</string>
+    <string name="calls_advanced_summary">کانال صوتی و تشخیص</string>
+    <string name="calls_advanced_note">تغییر کانال صوتی، تأیید صدای دوطرفه را بازنشانی می‌کند. پیش از فعال‌کردن پاسخ خودکار، دوباره یک تماس آزمایشی واقعی انجام دهید.</string>
+    <string name="calls_voice_setup">پیکربندی و آزمایش سرویس صدا</string>
+</resources>

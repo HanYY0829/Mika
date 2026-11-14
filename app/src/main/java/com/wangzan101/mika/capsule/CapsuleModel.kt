@@ -94,6 +94,8 @@ data class CapsuleInputs(
     val cardOpen: Boolean = false,
     val kept: KeptPage? = null,
     val fullscreen: Boolean = false,
+    /** 主动能力判为值得提醒、用户还没在提醒列表里看过的条数(只要个数,不带通知里的任何字)。 */
+    val notices: Int = 0,
 )
 
 /** 胶囊的状态,按优先级从高到低排([ordinal] 小的先显示);[Idle] 是「一直显示」时没任务的图标。 */
@@ -104,13 +106,15 @@ enum class CapsuleKind {
     Held, Running, Done, Failed, Cancelled,
     /** 没有任务在跑,任务结束后留下的那一页在后台运行(「后台网页运行中」,绿点)。 */
     KeptPage,
+    /** 没有别的事时,有判为值得提醒、还没看过的通知:空闲图标角上一个数,点开是提醒列表。不展开、不写字。 */
+    Notice,
     Idle;
 
     /** 要你处理(胶囊变橙)。App 已经交到你手上([HandedOver])是顶部那一条,不算在内。 */
     val needsYou: Boolean get() = this == NeedTakeover || this == NeedConfirm || this == NeedAnswer || this == NeedStep
 
-    /** 还没结束(在跑、等你、等条件);[KeptPage]、[Idle] 不算。 */
-    val active: Boolean get() = this != Done && this != Failed && this != Cancelled && this != KeptPage && this != Idle
+    /** 还没结束(在跑、等你、等条件);[KeptPage]、[Notice]、[Idle] 不算。 */
+    val active: Boolean get() = this != Done && this != Failed && this != Cancelled && this != KeptPage && this != Notice && this != Idle
 }
 
 sealed interface CapsuleView {
@@ -118,7 +122,7 @@ sealed interface CapsuleView {
 
     /**
      * 显示胶囊(或「你在处理」那一条):[text] 是那一行字(已拼好「共 N 件」),[detail] 只在 [CapsuleKind.HandedOver] 时有,
-     * 是那条下面的小字。[count] 是进行中的任务数,[needCount] 是其中要你处理的件数。
+     * 是那条下面的小字。[count] 是进行中的任务数([CapsuleKind.Notice] 时是还没看的提醒条数),[needCount] 是其中要你处理的件数。
      * [runKey]/[conversationId] 是胶囊说的那件事。平时是一颗 Mika 图标(状态画在圈和角标上),
      * [pill] 时展开成带这一行字的胶囊(有要你处理的、刚办完时)。[widthEpoch] 不变时胶囊只变宽不变窄,
      * 变了(换了状态或换了一件事)重新定宽。
@@ -148,6 +152,7 @@ sealed interface CapsuleView {
  *   停完消失的不再回来(调用方之后还列着它也不算);对话删掉了([forget])时它已结束的任务马上消失;
  * - 没有任务、结果也停完了,而任务结束后留下的那一页还在后台运行时,展开成「后台网页运行中」一直停着(开关是「从不显示」时照样不显示,
  *   只靠通知);
+ * - 再没有别的事、开关是「一直显示」时,有判为值得提醒、还没看过的通知就在图标角上写个数([CapsuleKind.Notice]),不展开、不计时;
  * - 同一件事、同一个状态里换句时每句至少停 [MIN_SENTENCE_MS],这期间来的只留最后一句;换了状态或换了一件事马上换。
  * 卡片按什么先后挑那一件见 [cardRuns]。
  * [reasonLabel] 把接管原因(login 等)换成给人看的名字,认不出为 null。时间由调用方给,测试里用假时钟。
@@ -211,7 +216,7 @@ class CapsuleModel(private val reasonLabel: (String) -> String? = { null }) {
             shownText = null
             return CapsuleView.Hidden
         }
-        val candidate = activeView(inputs.runs) ?: endedView(now) ?: keptView(inputs.kept) ?: idleView(inputs.mode) ?: run {
+        val candidate = activeView(inputs.runs) ?: endedView(now) ?: keptView(inputs.kept) ?: noticeView(inputs) ?: idleView(inputs.mode) ?: run {
             shownIdentity = null
             shownText = null
             return CapsuleView.Hidden
@@ -321,6 +326,13 @@ class CapsuleModel(private val reasonLabel: (String) -> String? = { null }) {
     /** 留在后台运行的那一页:展开成胶囊,说的是它来自的那个对话。 */
     private fun keptView(kept: KeptPage?): CapsuleView.Shown? =
         kept?.let { CapsuleView.Shown(CapsuleKind.KeptPage, KEPT, conversationId = it.conversationId, pill = true) }
+
+    /**
+     * 值得提醒的条数:和空闲图标一样只在「一直显示」时有(「有任务时显示」只管任务;那时从主动能力页进提醒列表)。
+     * 只是一颗图标角上的数,不展开、不写字:通知里的字(谁都能发)不上胶囊。
+     */
+    private fun noticeView(inputs: CapsuleInputs): CapsuleView.Shown? =
+        if (inputs.mode == CapsuleMode.Always && inputs.notices > 0) CapsuleView.Shown(CapsuleKind.Notice, "", count = inputs.notices) else null
 
     private fun idleView(mode: CapsuleMode): CapsuleView.Shown? =
         if (mode == CapsuleMode.Always) CapsuleView.Shown(CapsuleKind.Idle, "") else null

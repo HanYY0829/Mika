@@ -77,4 +77,6 @@
     <string name="plans_running_now">実行中</string>
     <string name="trigger_deleted">スケジュールされたタスクを削除しました</string>
     <string name="trigger_busy">このタスクはまだ実行中です</string>
+    <string name="plans_run_history">実行履歴</string>
+    <string name="plans_copy">新しい予定として複製</string>
 </resources>

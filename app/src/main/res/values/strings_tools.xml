@@ -46,6 +46,9 @@
     <string name="tool_list_settings">Read settings</string>
     <string name="tool_set_setting">Change a setting</string>
     <string name="tool_save_skill">Save skill</string>
+    <string name="tool_memory_search">Search memory</string>
+    <string name="tool_memory_save">Write to memory</string>
+    <string name="tool_memory_edit">Edit memory</string>
     <string name="tool_explain_failure">Explain why it didn’t work</string>
     <string name="tool_ask_user">Ask you a question</string>
     <string name="tool_takeover">Ask you to take over</string>

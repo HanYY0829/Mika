@@ -233,4 +233,9 @@
         <item quantity="many">%1$d يومًا</item>
         <item quantity="other">%1$d يوم</item>
     </plurals>
+    <string name="settings_scheduled_quiet">ساعات الهدوء للمهام المجدولة</string>
+    <string name="settings_scheduled_quiet_detail">تظهر نتائج المهام المجدولة وتذكيراتها بصمت في لوحة الإشعارات.</string>
+    <string name="settings_scheduled_quiet_start">وقت البدء</string>
+    <string name="settings_scheduled_quiet_end">وقت الانتهاء</string>
+    <string name="settings_scheduled_quiet_equal">اختر وقتَي بدء وانتهاء مختلفين لكتم الإشعارات.</string>
 </resources>

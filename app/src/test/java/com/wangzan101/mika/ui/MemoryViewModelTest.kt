@@ -42,6 +42,18 @@ class MemoryViewModelTest {
         return MemoryViewModel(store, MemorySettings(settingsFile), null, backgroundScope, broken, wipe = { wiped++ }).also { runCurrent() }
     }
 
+    // Mika 自己归纳出来的那条:来历写明是它归纳的,引的是用户提要求的那句,不写成「你说的」
+    @Test fun inferredMemoryShowsItWasMikasConclusion() = runTest {
+        store.add(MemoryKind.fact, "用户常在张江路一带活动", emptyList(), said.copy(type = com.wangzan101.mika.core.memory.MemoryContext.INFERRED, quote = "你自己总结几条写进记忆")).getOrThrow()
+        val vm = vm()
+        assertEquals("Mika 在 10 月 23 日按你的要求归纳:『你自己总结几条写进记忆』", vm.ui.value.rows.first { it.content == "用户常在张江路一带活动" }.source)
+        // 开关默认关,打开后存得住
+        assertFalse(vm.ui.value.switches.inferMemories)
+        vm.setSwitches { it.copy(inferMemories = true) }
+        runCurrent()
+        assertTrue(MemorySettings(settingsFile).switches.value.inferMemories)
+    }
+
     @Test fun memoriesListAllKindsWithKind() = runTest {
         val vm = vm()
         assertEquals(

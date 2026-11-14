@@ -25,9 +25,9 @@ import okhttp3.WebSocketListener
 import okio.ByteString
 
 class VolcRealtimeCredentials(apiKey: String = "", appId: String = "", accessKey: String = "") {
-    private val apiKey = apiKey.trim()
-    private val appId = appId.trim()
-    private val accessKey = accessKey.trim()
+    internal val apiKey = apiKey.trim()
+    internal val appId = appId.trim()
+    internal val accessKey = accessKey.trim()
     private val usesApiKey = this.apiKey.isNotEmpty()
 
     val valid: Boolean get() = if (usesApiKey) isHeaderValue(apiKey) else isHeaderValue(appId) && isHeaderValue(accessKey)
@@ -86,6 +86,7 @@ class VolcRealtimeClient internal constructor(
     private val closeTimeoutMs: Long = 3_000,
 ) {
     constructor() : this(defaultHttp, VolcRealtimeProtocol.ENDPOINT)
+    constructor(endpoint: String) : this(defaultHttp, endpoint)
 
     private val client = http.newBuilder().followRedirects(false).followSslRedirects(false)
         .retryOnConnectionFailure(false).build()
@@ -126,7 +127,7 @@ class VolcRealtimeClient internal constructor(
 class VolcRealtimeSession internal constructor(
     private val config: VolcRealtimeConfig,
     private val closeTimeoutMs: Long,
-) : AutoCloseable {
+) : CallRealtimeSession {
     private enum class Phase { CONNECTING, CREATING, ACTIVE, ENDING_SESSION, ENDING_SOCKET, ENDED }
     private var phase = Phase.CONNECTING
     private var socket: WebSocket? = null
@@ -147,7 +148,7 @@ class VolcRealtimeSession internal constructor(
     private var terminal: VolcRealtimeEvent = VolcRealtimeEvent.Closed
 
     /** Single consumer. Keep the collector responsive; overflowing the buffer ends the session. */
-    val events: Flow<VolcRealtimeEvent> = flow {
+    override val events: Flow<VolcRealtimeEvent> = flow {
         check(collecting.compareAndSet(false, true)) { "Realtime events have one consumer" }
         for (event in output) if (!discardPending) emit(event)
         emit(terminal)
@@ -186,19 +187,19 @@ class VolcRealtimeSession internal constructor(
     }
 
     /** Accepts raw 16 kHz mono PCM16 LE in real time, preferably exactly 640 bytes per 20 ms. */
-    @Synchronized fun sendPcm16(bytes: ByteArray, byteCount: Int = bytes.size): Boolean {
+    @Synchronized override fun sendPcm16(bytes: ByteArray, byteCount: Int): Boolean {
         if (phase != Phase.ACTIVE || muted || byteCount !in 2..VolcRealtimeProtocol.MAX_INPUT_BYTES ||
             byteCount > bytes.size || byteCount % 2 != 0) return false
         return send(VolcRealtimeProtocol.audio(nextId(), bytes, byteCount))
     }
 
     /** Call after phone audio is ready; no greeting is sent by connect(). */
-    @Synchronized fun sendGreeting(text: String): Boolean {
+    @Synchronized override fun sendGreeting(text: String): Boolean {
         if (phase != Phase.ACTIVE || text.isBlank() || text.length > 1024) return false
         return send(VolcRealtimeProtocol.greeting(nextId(), text))
     }
 
-    @Synchronized fun setMuted(muted: Boolean): Boolean {
+    @Synchronized override fun setMuted(muted: Boolean): Boolean {
         if (phase != Phase.ACTIVE) return false
         if (this.muted == muted) return true
         return send(VolcRealtimeProtocol.mute(nextId(), muted)).also { if (it) this.muted = muted }

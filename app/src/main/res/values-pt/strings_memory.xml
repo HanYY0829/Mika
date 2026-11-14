@@ -25,6 +25,8 @@
     <string name="memory_use_sub">Desativado, o Mika não lê nem salva memória</string>
     <string name="memory_auto">Lembrar o que eu disser</string>
     <string name="memory_auto_sub">Organizado a partir das suas próprias palavras após cada tarefa</string>
+    <string name="memory_infer">Deixar o Mika guardar as próprias conclusões</string>
+    <string name="memory_infer_sub">Quando você pedir para lembrar, também guarda as próprias conclusões, marcadas como não suas</string>
     <string name="memory_learn">Aprender com tarefas anteriores (habilidades e notas de apps)</string>
     <string name="memory_learn_sub">O que o Mika aprende só é usado depois que você aceitar</string>
     <string name="memory_tasks">Lembrar tarefas anteriores</string>
@@ -59,6 +61,7 @@
     <string name="date_pattern_md">d MMM</string>
     <string name="memory_said_via">Você disse em %1$s por %2$s: “%3$s”</string>
     <string name="memory_said">Você disse em %1$s: “%2$s”</string>
+    <string name="memory_inferred">Conclusão do Mika em %1$s, a seu pedido: “%2$s”</string>
     <string name="verify_returned">Devolvida pela verificação</string>
     <string name="skills_drafts">Rascunhos de novas habilidades — testados depois que você aceitar</string>
     <string name="skills_accept_try">Aceitar e testar</string>

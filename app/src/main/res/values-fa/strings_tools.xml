@@ -46,6 +46,9 @@
     <string name="tool_list_settings">خواندن تنظیمات</string>
     <string name="tool_set_setting">تغییر تنظیم</string>
     <string name="tool_save_skill">ذخیرهٔ مهارت</string>
+    <string name="tool_memory_search">جست‌وجو در حافظه</string>
+    <string name="tool_memory_save">نوشتن در حافظه</string>
+    <string name="tool_memory_edit">ویرایش حافظه</string>
     <string name="tool_explain_failure">توضیح علت ناموفق بودن</string>
     <string name="tool_ask_user">پرسیدن از شما</string>
     <string name="tool_takeover">درخواست از شما برای به دست گرفتن کار</string>

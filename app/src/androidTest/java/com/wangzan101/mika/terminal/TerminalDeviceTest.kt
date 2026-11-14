@@ -44,7 +44,7 @@ class TerminalDeviceTest {
     }
 
     @Test
-    fun ptyShellBasicsAndCtrlC() = runBlocking {
+    fun ptyShellBasicsAndCtrlC() { runBlocking {
         val sandbox = AndroidSandbox(app, SandboxState.get(app))
         val s = sandbox.openShell("terminal-device-test-${System.currentTimeMillis()}", 80, 24)
         shell = s
@@ -77,9 +77,11 @@ class TerminalDeviceTest {
             await("AFTER_4", 8_000)
             Log.i("TerminalDeviceTest", output.toString())
         } finally {
+            runCatching { s.close() }
             reader.cancel()
         }
     }
+}
 
     private fun send(s: com.wangzan101.mika.core.cap.sandbox.SandboxShell, text: String) {
         s.input.write(text.toByteArray())

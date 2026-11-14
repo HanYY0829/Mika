@@ -50,8 +50,14 @@ object TaskMemoryRecorder {
         )
     }
 
-    /** 一句话结论:先看交出回答后判的结局,没有再退回任务本身的结局。 */
-    private fun conclusion(events: List<RunEvent>): String {
+    /**
+     * 只要结局那个词(「办成」「完成」「失败」…),不带回答或理由的文字。回答里多半转述了别人写的东西的任务用它
+     * (读过通知的,见 [com.wangzan101.mika.core.proactive.NoticeRuns]):摘要会被以后的任务搜到,那段字不留。
+     */
+    fun outcome(events: List<RunEvent>): String = conclusion(events, text = false)
+
+    /** 一句话结论:先看交出回答后判的结局,没有再退回任务本身的结局。[text] 为 false 时只留结局那个词。 */
+    private fun conclusion(events: List<RunEvent>, text: Boolean = true): String {
         events.filterIsInstance<RunEvent.OutcomeJudged>().lastOrNull()?.let { j ->
             val word = when (j.outcome) {
                 "done" -> "办成"
@@ -59,7 +65,7 @@ object TaskMemoryRecorder {
                 "not_possible" -> "没办成"
                 else -> ""
             }
-            return listOf(word, j.reason).filter { it.isNotBlank() }.joinToString("：")
+            return listOf(word, j.reason.takeIf { text }.orEmpty()).filter { it.isNotBlank() }.joinToString("：")
         }
         events.filterIsInstance<RunEvent.TaskEnded>().lastOrNull()?.let { e ->
             val word = when (e.outcome) {
@@ -70,7 +76,7 @@ object TaskMemoryRecorder {
                 "error" -> "出错"
                 else -> ""
             }
-            return listOf(word, e.answerOrReason).filter { it.isNotBlank() }.joinToString("：")
+            return listOf(word, e.answerOrReason.takeIf { text }.orEmpty()).filter { it.isNotBlank() }.joinToString("：")
         }
         return ""
     }

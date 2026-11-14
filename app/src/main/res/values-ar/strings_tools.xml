@@ -46,6 +46,9 @@
     <string name="tool_list_settings">قراءة الإعدادات</string>
     <string name="tool_set_setting">تغيير إعداد</string>
     <string name="tool_save_skill">حفظ مهارة</string>
+    <string name="tool_memory_search">البحث في الذاكرة</string>
+    <string name="tool_memory_save">الكتابة في الذاكرة</string>
+    <string name="tool_memory_edit">تعديل الذاكرة</string>
     <string name="tool_explain_failure">شرح سبب عدم نجاح العملية</string>
     <string name="tool_ask_user">طرح سؤال عليك</string>
     <string name="tool_takeover">مطالبتك بتولّي التحكم</string>

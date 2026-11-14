@@ -46,6 +46,9 @@
     <string name="tool_list_settings">設定を読む</string>
     <string name="tool_set_setting">設定を変更</string>
     <string name="tool_save_skill">スキルを保存</string>
+    <string name="tool_memory_search">記憶を検索</string>
+    <string name="tool_memory_save">記憶に書き込む</string>
+    <string name="tool_memory_edit">記憶を編集</string>
     <string name="tool_explain_failure">うまくいかなかった理由を説明</string>
     <string name="tool_ask_user">質問する</string>
     <string name="tool_takeover">引き継ぎをお願いする</string>

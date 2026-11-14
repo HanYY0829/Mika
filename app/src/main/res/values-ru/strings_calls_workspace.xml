@@ -4,7 +4,7 @@
     <string name="calls_device_and_permissions">Устройство и разрешения</string>
     <string name="calls_edit_rule">Изменить</string>
     <string name="calls_nav_receive">Приём</string>
-    <string name="calls_nav_task">Задача</string>
+    <string name="calls_nav_task">Вызов</string>
     <string name="calls_pause_enable_first">Включите автоответ, чтобы временно его приостанавливать.</string>
     <string name="calls_rule_delay_summary">Задержка ответа: %1$d с</string>
     <string name="calls_rule_pause">Временная пауза</string>

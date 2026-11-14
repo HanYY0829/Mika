@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_voice_service">实时语音服务</string>
+    <string name="calls_voice_profiles_intro">可保存多套实时语音配置。接听和拨打默认使用同一套，单次拨打可另行选择。服务连接测试与手机双向音频实测是两件事。</string>
+    <string name="calls_voice_profile_subtitle">%1$s · %2$s</string>
+    <string name="calls_voice_audio_verified">手机音频已验证</string>
+    <string name="calls_voice_audio_unverified">手机音频未验证</string>
+    <string name="calls_voice_selected">当前默认配置</string>
+    <string name="calls_voice_status_untested">待测试连接</string>
+    <string name="calls_voice_status_tested">连接已测试</string>
+    <string name="calls_voice_select">设为默认</string>
+    <string name="calls_voice_delete">删除配置</string>
+    <string name="calls_voice_delete_confirm">要删除“%1$s”及保存在本机的凭据吗？已有通话记录不会删除。</string>
+    <string name="calls_voice_test">测试连接</string>
+    <string name="calls_voice_testing">正在测试…</string>
+    <string name="calls_voice_add">添加实时语音配置</string>
+    <string name="calls_voice_edit">编辑实时语音配置</string>
+    <string name="calls_voice_test_note">连接成功不代表运营商电话中双方都能听到声音。开启自动接听前，请完成一次真实测试通话。</string>
+    <string name="calls_voice_name">配置名称</string>
+    <string name="calls_voice_endpoint">接口地址（wss）</string>
+    <string name="calls_voice_model">实时对话模型</string>
+    <string name="calls_voice_default_name">默认实时语音</string>
+    <string name="calls_voice_protocol">一体化实时语音：识别、对话和发声由同一服务完成。</string>
+    <string name="calls_voice_credentials_keep">留空则保留已存凭据；填写新凭据会替换原值，并需要重新测试连接。</string>
+    <string name="calls_back_settings">返回设置</string>
+    <string name="calls_enabled_summary">可使用 AI 接听和拨打；自动接听有独立开关。</string>
+    <string name="calls_settings_voice_group">语音与模型</string>
+    <string name="calls_settings_device_group">设备与运行</string>
+    <string name="calls_settings_data_group">数据</string>
+    <string name="calls_history_entry_summary">摘要、待办与原始文字</string>
+    <string name="calls_advanced_summary">音频通道与诊断</string>
+    <string name="calls_advanced_note">切换音频通道会重置双向音频验证。重新完成真实测试通话后，再开启自动接听。</string>
+    <string name="calls_voice_setup">配置并测试语音服务</string>
+</resources>

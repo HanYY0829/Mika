@@ -2,6 +2,7 @@
 <resources>
     <string name="calls_completed_notification_channel">Notifikasi akhir panggilan AI</string>
     <string name="calls_completed_notification_title">AI menjawab panggilan</string>
+    <string name="calls_completed_notification_title_outgoing">Panggilan AI selesai</string>
     <string name="calls_completed_notification_text">Ketuk untuk melihat detail panggilan</string>
     <string name="calls_summary_enable">Buat ringkasan panggilan dan tindak lanjut AI</string>
     <string name="calls_summary_cloud_consent">Jika diaktifkan, transkrip panggilan dikirim ke layanan model AI yang dipilih untuk diringkas. Transkrip asli tetap dienkripsi di perangkat ini. Saat dimatikan, transkrip tidak dikirim.</string>

@@ -41,4 +41,10 @@
     <string name="file_library_preview">Просмотр</string>
     <string name="file_library_open_in_chat">Показать в беседе</string>
     <string name="file_library_open_failed">Не удалось открыть эту беседу</string>
+    <string name="file_library_type_all">Все типы файлов</string>
+    <string name="file_library_type_image">Изображения</string>
+    <string name="file_library_type_pdf">Файлы PDF</string>
+    <string name="file_library_type_audio">Аудио</string>
+    <string name="file_library_type_video">Видео</string>
+    <string name="file_library_type_other">Другие файлы</string>
 </resources>

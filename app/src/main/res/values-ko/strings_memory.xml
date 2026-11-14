@@ -25,6 +25,8 @@
     <string name="memory_use_sub">끄면 Mika가 메모리를 읽지도 저장하지도 않아요</string>
     <string name="memory_auto">내가 한 말 기억하기</string>
     <string name="memory_auto_sub">작업이 끝날 때마다 내가 한 말을 정리해요</string>
+    <string name="memory_infer">Mika가 스스로 정리한 것도 기억</string>
+    <string name="memory_infer_sub">기억하라고 하면 Mika가 정리한 내용도 저장하고, 사용자의 말이 아님을 표시합니다</string>
     <string name="memory_learn">지난 작업에서 배우기 (스킬과 앱 노트)</string>
     <string name="memory_learn_sub">Mika가 배운 내용은 내가 수락한 뒤에만 사용돼요</string>
     <string name="memory_tasks">지난 작업 기억하기</string>
@@ -59,6 +61,7 @@
     <string name="date_pattern_md">M월 d일</string>
     <string name="memory_said_via">%1$s에 %2$s로 말한 내용: “%3$s”</string>
     <string name="memory_said">%1$s에 말한 내용: “%2$s”</string>
+    <string name="memory_inferred">%1$s, 요청에 따라 Mika가 정리함: “%2$s”</string>
     <string name="verify_returned">점검에서 되돌려 보냄</string>
     <string name="skills_drafts">새 스킬 초안 — 수락하면 시험 사용해요</string>
     <string name="skills_accept_try">수락하고 시험하기</string>

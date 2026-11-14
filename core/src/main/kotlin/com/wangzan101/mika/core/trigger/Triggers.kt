@@ -90,7 +90,14 @@ interface TriggerStore {
     fun remove(id: String)
 }
 
-@Serializable data class TriggerSnapshot(val triggers: List<TriggerDefinition>, val windows: List<TriggerWindow>)
+@Serializable
+data class TriggerSnapshot(val triggers: List<TriggerDefinition>, val windows: List<TriggerWindow>) {
+    fun recentWindows(triggerId: String, limit: Int): List<TriggerWindow> = windows.asSequence()
+        .filter { it.triggerId == triggerId }
+        .sortedWith(compareByDescending<TriggerWindow> { it.claimedAtMs }.thenByDescending { it.dueAtMs })
+        .take(limit)
+        .toList()
+}
 
 /** 纯内存实现，文件实现沿用相同的状态转换。 */
 class MemoryTriggerStore(initial: TriggerSnapshot = TriggerSnapshot(emptyList(), emptyList())) : TriggerStore {

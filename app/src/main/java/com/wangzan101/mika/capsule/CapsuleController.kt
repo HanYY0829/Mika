@@ -272,7 +272,9 @@ class CapsuleController(
                 }.combine(fullscreen) { s, full -> s.copy(fullscreen = full) },
                 ticks,
                 keeper.page,
-            ) { s, _, kept -> s.copy(kept = kept) }.collect(::render)
+                // 主动能力判为值得提醒、还没看的条数(只要个数)
+                com.wangzan101.mika.proactive.NoticeHintList.unseenCount(context),
+            ) { s, _, kept, notices -> s.copy(kept = kept, notices = notices) }.collect(::render)
         }
         // 说话面板出来时铺满整屏(压暗背后),收起时显式收掉(见 [syncPanelWindow])
         scope.launch { snapshotFlow { talk.active }.collect { syncPanelWindow() } }
@@ -337,6 +339,7 @@ class CapsuleController(
         /** 任务结束后留在后台运行的那一页。 */
         val kept: KeptPage? = null,
         val opacity: CapsuleIdleOpacity = CapsuleIdleOpacity.DEFAULT,
+        val notices: Int = 0,
         /** 展开卡片的缩放档位,改了当场生效(见 [CardOverlay])。 */
         val cardScale: CapsuleCardScale = CapsuleCardScale.DEFAULT,
         val hideAtEdge: Boolean = false,
@@ -394,6 +397,7 @@ class CapsuleController(
         val inputs = CapsuleInputs(
             s.runs, s.mode, s.mikaInForeground, screenInteractive = !s.locked,
             serviceAvailable = service != null && service !== failedOn, cardOpen = expanded, kept = s.kept, fullscreen = s.fullscreen,
+            notices = s.notices,
         )
         val shown = model.update(inputs, System.currentTimeMillis()) as? CapsuleView.Shown
         schedule(model.nextChangeAt)
@@ -657,7 +661,7 @@ class CapsuleController(
         val v = view ?: return
         if (capturing) return
         scope.launch {
-            if (v.kind == CapsuleKind.Idle) idle = loadIdle()
+            if (v.kind == CapsuleKind.Idle || v.kind == CapsuleKind.Notice) idle = loadIdle()
             val target = CapsuleCards.of(model.cardRuns(), follow, idle)
             val kind = target?.let(CapsuleCards::input)?.kind
             if (target == null || kind == null) {
@@ -1148,7 +1152,7 @@ class CapsuleController(
         resetTaps()
         wake()
         clearNote()
-        val loading = if (v.kind == CapsuleKind.Idle) scope.async { loadIdle() } else null
+        val loading = if (v.kind == CapsuleKind.Idle || v.kind == CapsuleKind.Notice) scope.async { loadIdle() } else null
         when (val b = talk.begin(CapsuleVoice.title(CapsuleCards.of(model.cardRuns(), follow, idle)), byTouch)) {
             CapsuleTalk.Begin.Started -> {
                 talkIdle?.cancel()
@@ -1280,6 +1284,17 @@ class CapsuleController(
     /** 展开卡片(空闲图标是空闲卡片)。每次展开都按用户此刻在哪个对话重读一次空闲卡片,不拿上次那份。 */
     private fun expand() {
         val v = view ?: return
+        // 值得提醒:单击把挑出来的几条通知写进今天的提醒对话(Mika 的一条消息,不调模型),那个对话成为当前对话;
+        // 再和空闲时一样展开卡片,卡片接着的就是它。没写成(出了错)也照常展开。双击发屏幕、长按说话和空闲时一样
+        if (v.kind == CapsuleKind.Notice) {
+            scope.launch {
+                com.wangzan101.mika.proactive.NoticeHintList.openTalk(context)
+                idle = loadIdle()
+                open()
+                refresh()
+            }
+            return
+        }
         if (v.kind == CapsuleKind.Idle) {
             openIdle()
             return
@@ -1480,6 +1495,7 @@ class CapsuleController(
                     tapLabel = when {
                         n?.opensMika == true -> tr(R.string.capsule_voice_open)
                         v.kind == CapsuleKind.Idle -> CapsuleCopy.TALK
+                        v.kind == CapsuleKind.Notice -> tr(R.string.notice_hint_open)
                         else -> CapsuleCopy.EXPAND
                     },
                     onSwapSide = if (v.kind == CapsuleKind.HandedOver) null else ::swapSide,

@@ -56,7 +56,7 @@ class ApprovalStoreTest {
         val c = control()
         c.setAutonomous(true)
         // 电脑经 MCP 交来的任务:开关开着也按询问开工,中途换开关也不跟
-        val remote = c.start(remote = true)
+        val remote = c.start(alwaysAsk = true)
         assertFalse(remote.startedAutonomous)
         assertFalse(remote.autonomous())
         assertNotNull(remote.gate())

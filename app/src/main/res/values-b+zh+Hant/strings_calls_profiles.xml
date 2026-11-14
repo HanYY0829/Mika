@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_voice_service">即時語音服務</string>
+    <string name="calls_voice_profiles_intro">可儲存多套即時語音設定。接聽和撥打預設使用同一套，單次撥打可另行選擇。服務連線測試與手機雙向音訊實測是兩件事。</string>
+    <string name="calls_voice_profile_subtitle">%1$s · %2$s</string>
+    <string name="calls_voice_audio_verified">手機音訊已驗證</string>
+    <string name="calls_voice_audio_unverified">手機音訊未驗證</string>
+    <string name="calls_voice_selected">目前預設設定</string>
+    <string name="calls_voice_status_untested">待測試連線</string>
+    <string name="calls_voice_status_tested">連線已測試</string>
+    <string name="calls_voice_select">設為預設</string>
+    <string name="calls_voice_delete">刪除設定</string>
+    <string name="calls_voice_delete_confirm">要刪除「%1$s」及儲存在本機的憑證嗎？已有通話記錄不會刪除。</string>
+    <string name="calls_voice_test">測試連線</string>
+    <string name="calls_voice_testing">正在測試…</string>
+    <string name="calls_voice_add">新增即時語音設定</string>
+    <string name="calls_voice_edit">編輯即時語音設定</string>
+    <string name="calls_voice_test_note">連線成功不代表電信通話中雙方都能聽到聲音。開啟自動接聽前，請完成一次實際測試通話。</string>
+    <string name="calls_voice_name">設定名稱</string>
+    <string name="calls_voice_endpoint">介面地址（wss）</string>
+    <string name="calls_voice_model">即時對話模型</string>
+    <string name="calls_voice_default_name">預設即時語音</string>
+    <string name="calls_voice_protocol">整合式即時語音：識別、對話和發聲由同一服務完成。</string>
+    <string name="calls_voice_credentials_keep">留空則保留已存憑證；填寫新憑證會取代原值，並需要重新測試連線。</string>
+    <string name="calls_back_settings">返回設定</string>
+    <string name="calls_enabled_summary">可使用 AI 接聽和撥打；自動接聽有獨立開關。</string>
+    <string name="calls_settings_voice_group">語音與模型</string>
+    <string name="calls_settings_device_group">裝置與執行</string>
+    <string name="calls_settings_data_group">資料</string>
+    <string name="calls_history_entry_summary">摘要、待辦與原始文字</string>
+    <string name="calls_advanced_summary">音訊通道與診斷</string>
+    <string name="calls_advanced_note">切換音訊通道會重設雙向音訊驗證。重新完成實際測試通話後，再開啟自動接聽。</string>
+    <string name="calls_voice_setup">設定並測試語音服務</string>
+</resources>

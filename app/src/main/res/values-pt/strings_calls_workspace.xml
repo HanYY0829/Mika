@@ -4,7 +4,7 @@
     <string name="calls_device_and_permissions">Dispositivo e permissões</string>
     <string name="calls_edit_rule">Editar</string>
     <string name="calls_nav_receive">Atender</string>
-    <string name="calls_nav_task">Tarefa</string>
+    <string name="calls_nav_task">Ligar</string>
     <string name="calls_pause_enable_first">Ligue o atendimento automático para pausá-lo temporariamente.</string>
     <string name="calls_rule_delay_summary">Espera para atender: %1$d s</string>
     <string name="calls_rule_pause">Pausa temporária</string>

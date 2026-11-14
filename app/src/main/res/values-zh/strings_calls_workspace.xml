@@ -4,7 +4,7 @@
     <string name="calls_device_and_permissions">设备与权限</string>
     <string name="calls_edit_rule">编辑</string>
     <string name="calls_nav_receive">接听</string>
-    <string name="calls_nav_task">电话任务</string>
+    <string name="calls_nav_task">拨打</string>
     <string name="calls_pause_enable_first">启用自动接听后可临时暂停。</string>
     <string name="calls_rule_delay_summary">接听等待：%1$d 秒</string>
     <string name="calls_rule_pause">临时暂停</string>

@@ -110,4 +110,7 @@ class TaskCenterState {
     /** 显示中任务的小窗输入口:只有建了虚拟屏、开着「直接操作」开关时才有,屏释放后回到 null。 */
     val _pipInput = MutableStateFlow<com.wangzan101.mika.cap.phone.display.PipInput?>(null)
     val pipInput: StateFlow<com.wangzan101.mika.cap.phone.display.PipInput?> = _pipInput.asStateFlow()
+    /** 显示中任务的小窗目标声音是否被用户恢复过:按钮据此显示「恢复声音」或「静音」。 */
+    val _pipSoundOn = MutableStateFlow(false)
+    val pipSoundOn: StateFlow<Boolean> = _pipSoundOn.asStateFlow()
 }

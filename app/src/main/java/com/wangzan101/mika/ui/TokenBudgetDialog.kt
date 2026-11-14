@@ -20,7 +20,10 @@ import java.text.NumberFormat
 /** 设置与运行记录里都显示完整数字，避免紧凑格式把预算四舍五入成另一个值。 */
 internal fun tokenBudgetNumber(value: Long): String = NumberFormat.getIntegerInstance().format(value)
 
-/** 每任务和每服务商共用的预算选择：不限、预设，或范围内的自定义整数。 */
+/**
+ * 每任务和每服务商共用的预算选择：不限、预设，或范围内的自定义整数。
+ * 主动能力的每日预算没有「不限」([unlimited] 为 false),预设档位另给([presets])。
+ */
 @Composable
 internal fun TokenBudgetDialog(
     title: String,
@@ -31,6 +34,8 @@ internal fun TokenBudgetDialog(
     onPick: (Long?) -> Unit,
     onDismiss: () -> Unit,
     saveError: String? = null,
+    presets: List<Long> = TokenBudgetLimits.PRESETS,
+    unlimited: Boolean = true,
 ) {
     val customValue = custom.toLongOrNull()?.takeIf(TokenBudgetLimits::valid)
     MikaDialog(
@@ -39,12 +44,12 @@ internal fun TokenBudgetDialog(
         text = {
             Column {
                 Text(description, Modifier.padding(bottom = 8.dp))
-                RadioRow(
+                if (unlimited) RadioRow(
                     stringResource(R.string.settings_token_budget_unlimited),
                     selected = current == null, onClick = { onPick(null) }, first = true,
                 )
-                TokenBudgetLimits.PRESETS.forEach { n ->
-                    RadioRow(tokenBudgetNumber(n), selected = current == n, onClick = { onPick(n) })
+                presets.forEachIndexed { i, n ->
+                    RadioRow(tokenBudgetNumber(n), selected = current == n, onClick = { onPick(n) }, first = !unlimited && i == 0)
                 }
                 OutlinedTextField(
                     value = custom, onValueChange = onCustom, singleLine = true,

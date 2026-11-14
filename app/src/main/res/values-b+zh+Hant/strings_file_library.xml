@@ -41,4 +41,10 @@
     <string name="file_library_preview">預覽</string>
     <string name="file_library_open_in_chat">在對話中檢視</string>
     <string name="file_library_open_failed">暫時無法開啟這個對話</string>
+    <string name="file_library_type_all">所有檔案類型</string>
+    <string name="file_library_type_image">圖片</string>
+    <string name="file_library_type_pdf">PDF 檔案</string>
+    <string name="file_library_type_audio">音訊</string>
+    <string name="file_library_type_video">影片</string>
+    <string name="file_library_type_other">其他檔案</string>
 </resources>

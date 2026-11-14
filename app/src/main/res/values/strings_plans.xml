@@ -78,4 +78,6 @@
     <string name="plans_running_now">Running</string>
     <string name="trigger_deleted">The scheduled task was deleted</string>
     <string name="trigger_busy">This task is still running</string>
+    <string name="plans_run_history">Run history</string>
+    <string name="plans_copy">Copy as new plan</string>
 </resources>

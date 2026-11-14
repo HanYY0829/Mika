@@ -11,10 +11,12 @@ import kotlinx.serialization.json.putJsonObject
 data class VolcRealtimeConfig(
     val systemPrompt: String = "",
     val speaker: String = DEFAULT_SPEAKER,
+    val model: String = MODEL,
 ) {
     init {
         require(systemPrompt.length <= MAX_PROMPT_CHARS) { "Realtime system prompt is too long" }
         require(speaker.isNotBlank() && speaker.length <= 128) { "Invalid realtime speaker" }
+        require(model.isNotBlank() && model.length <= 128 && model.all { it.code in 33..126 }) { "Invalid realtime model" }
     }
 
     companion object {
@@ -53,7 +55,7 @@ internal object VolcRealtimeProtocol {
 
     fun create(eventId: String, config: VolcRealtimeConfig): String = message("session.create", eventId) {
         putJsonObject("session") {
-            put("model", VolcRealtimeConfig.MODEL)
+            put("model", config.model)
             if (config.systemPrompt.isNotBlank()) put("instructions", config.systemPrompt)
             putJsonObject("audio") {
                 putJsonObject("input") {

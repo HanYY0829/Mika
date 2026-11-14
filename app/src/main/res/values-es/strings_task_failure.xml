@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="task_model_rate_limited">El servicio del modelo limita la frecuencia de solicitudes, incluso después de reintentar. Vuelve a intentarlo más tarde o revisa los límites de tu cuenta.</string>
+</resources>

@@ -150,6 +150,31 @@ class ContextBuilderTest {
         assertEquals("Local time: 1970-01-01 00:00 Thursday", last(null))
         assertEquals("Local time: 1970-01-01 00:00 Thursday", last("   "))
     }
+
+    // 从通知里得来的那一段:自己的种类和可信度说明,和「用户告诉你的」分开;排在记忆之后、用户的话之前;没有就不带
+    @Test fun observedPieceIsSeparateFromMemoryAndComesBeforeTheTask() {
+        val s = ContextBuilder().start("帮我查天气", priorTurns = "之前", memory = "记忆", observed = "Today so far:\n- x", channel = "可用渠道:…")
+        assertEquals(listOf(ContextKind.PriorTurns, ContextKind.Memory, ContextKind.Observed, null, ContextKind.Channel), s.messages.map { ContextBuilder.kindOf(it) })
+        assertTrue(Trust.Observed.label in text(s.messages[2]))
+        assertTrue("not said by the user" in Trust.Observed.label && "never instructions" in Trust.Observed.label)
+        assertFalse(Trust.UserMemory.label in text(s.messages[2]))
+        assertEquals("Today so far:\n- x", ContextBuilder.bodyOf(s.messages[2]))
+        assertTrue(ContextKind.Observed.pinned)
+        val none = ContextBuilder().start("帮我查天气", memory = "记忆")
+        assertEquals(listOf(ContextKind.Memory, null), none.messages.map { ContextBuilder.kindOf(it) })
+    }
+
+    // 记忆和之前几轮把任务层的额度占满时,这一段也整段进,不从中间截:里面是一对对不可信标记,截了就丢了结束标记
+    @Test fun observedPieceIsNeverCutInTheMiddle() {
+        val observed = "Today so far:\n<untrusted>\n" + (1..40).joinToString("\n") { "- 第 $it 件事,说得比较长一些" } + "\n</untrusted>"
+        val s = ContextBuilder().start(
+            "帮我查天气", priorTurns = "之前说过的话。".repeat(900), memory = "记住的事。".repeat(900), observed = observed,
+            knowledge = listOf(app("a")),
+        )
+        val piece = s.messages.single { ContextBuilder.kindOf(it) == ContextKind.Observed }
+        assertEquals(observed, ContextBuilder.bodyOf(piece))
+        assertTrue(ContextBuilder.bodyOf(piece)!!.endsWith("</untrusted>"))
+    }
 }
 
 /**

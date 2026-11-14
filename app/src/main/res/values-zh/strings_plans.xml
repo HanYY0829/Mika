@@ -77,4 +77,6 @@
     <string name="plans_running_now">执行中</string>
     <string name="trigger_deleted">定时任务已删除</string>
     <string name="trigger_busy">这条任务仍在执行</string>
+    <string name="plans_run_history">执行记录</string>
+    <string name="plans_copy">复制为新计划</string>
 </resources>

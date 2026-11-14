@@ -77,4 +77,6 @@
     <string name="plans_running_now">執行中</string>
     <string name="trigger_deleted">定時任務已刪除</string>
     <string name="trigger_busy">這條任務仍在執行</string>
+    <string name="plans_run_history">執行記錄</string>
+    <string name="plans_copy">複製為新計畫</string>
 </resources>

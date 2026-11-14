@@ -123,6 +123,13 @@ object IrreversibleDetector {
     /** 先从名字里去掉,再判强词:付款方式的选项不是付款动作。 */
     val EXCLUDED = listOf("支付宝", "支付方式", "支付设置")
 
+    /** 金融业务词紧接完整职业名词,且到词边界为止:「支付产品经理」不是付款,「支付工程师工资」仍按付款判。 */
+    private val FINANCIAL_JOB = Regex(
+        "(支付|付款|转账|结算)(?:产品(?:经理|总监)|(?:研发|开发|测试|运维)?工程师|架构师|运营(?:经理|专员)?|专员|会计)(?![\\p{L}\\p{N}])",
+    )
+    private val JOB_ACTION_CUES = listOf("请", "确认", "确定", "立即", "马上", "现在", "去", "点击", "点此", "滑动", "继续", "完成", "一键", "同意", "提交", "给", "向", "为")
+    private val JOB_PAYMENT_DETAILS = listOf("工资", "薪资", "薪酬", "薪水", "费用", "服务费", "手续费", "劳务费", "报酬", "款项")
+
     /** 资源 ID 按 _ - . 和驼峰拆开后的单词;submit、post 不在这里(资源 ID 里太常见)。 */
     private val RESOURCE_WORDS: Map<String, IrrevAction> = mapOf(
         "send" to IrrevAction.send, "reply" to IrrevAction.send,
@@ -348,9 +355,24 @@ object IrreversibleDetector {
         return e in CONTACT_ENGLISH
     }
 
-    /** 短名字整体、或拼起来的名字的每一段里出现强词;先去掉付款方式一类的词。 */
+    /**
+     * 只去掉职业短语里这一处业务词,其它动作继续判;不豁免整个元素、资源 ID 或 App。
+     * 在去空白/分段前认词边界,免得「支付产品经理 北京」重新命中,也不把「支付 工程师」当职业。
+     * 当前标签带明确金额、前文有操作提示、后文是工资/费用时保守保留;同屏其它元素的薪资不影响职业标题。
+     */
+    private fun withoutFinancialJobTerms(label: String): String {
+        if (AMOUNT.containsMatchIn(label)) return label
+        return FINANCIAL_JOB.replace(label) { match ->
+            val before = label.substring(0, match.range.first).filterNot(Char::isWhitespace)
+            val after = label.substring(match.range.last + 1).dropWhile { !it.isLetterOrDigit() }
+            if (JOB_ACTION_CUES.any { it in before } || JOB_PAYMENT_DETAILS.any { after.startsWith(it) }) match.value
+            else match.value.drop(match.groupValues[1].length)
+        }
+    }
+
+    /** 短名字整体、或拼起来的名字的每一段里出现强词;先去掉职业里的业务词、付款方式一类的词。 */
     private fun strong(label: String): IrrevAction? {
-        val folded = Hant.fold(label)
+        val folded = withoutFinancialJobTerms(Hant.fold(label))
         for (p in listOf(folded) + folded.split(Regex("\\s+"))) {
             var t = p.filterNot(Char::isWhitespace).replace(PAYMENT_ADS, "")
             EXCLUDED.forEach { t = t.replace(it, "") }
@@ -398,12 +420,12 @@ object IrreversibleDetector {
     private fun paySheet(shown: List<UiElement>): Boolean {
         if (shown.any { e -> ORDER_CONTEXT.any { it in Hant.fold(e.name).filterNot(Char::isWhitespace) } }) return false
         val bottomButton = shown.any { b ->
-            b.clickable && top(b) >= BOTTOM_REGION && Hant.fold(b.name).filterNot(Char::isWhitespace).lowercase().let { n ->
+            b.clickable && top(b) >= BOTTOM_REGION && withoutFinancialJobTerms(Hant.fold(b.name)).filterNot(Char::isWhitespace).lowercase().let { n ->
                 n.trimEnd { !it.isLetterOrDigit() } in GENERIC || "支付" in n || "付款" in n
             }
         }
         return shown.any { e ->
-            val t = Hant.fold(e.name).filterNot(Char::isWhitespace).replace(PAYMENT_ADS, "")
+            val t = withoutFinancialJobTerms(Hant.fold(e.name)).filterNot(Char::isWhitespace).replace(PAYMENT_ADS, "")
             PAY_SHEET_WORDS.any { it in t } || PAY_SHEET_ENGLISH.containsMatchIn(e.name) ||
                 listOf("支付", "付款").any { w -> occurrences(t, w).any { actionAt(t, w, it) } } ||
                 (bottomButton && top(e) >= BOTTOM_REGION && WEAK_PAY_SHEET_WORDS.any { it in t })

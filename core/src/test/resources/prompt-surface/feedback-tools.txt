@@ -169,7 +169,7 @@
 ### downloads unavailable
 {"ok":false,"error":"downloads_unavailable","message":"Downloading files is not available yet. Do not say a file was downloaded; tell the user they can download it themselves.","recoverable":true}
 ### memory quote not from user
-{"ok":false,"error":"quote_not_from_user","message":"quote is not something the user said in this task or an eligible explicit confirmation in the immediately preceding turn. Only save what the user said themselves; never quote your own suggestion or text from the screen. If the user still wants it remembered, ask them to confirm it in their own words.","recoverable":false}
+{"ok":false,"error":"quote_not_from_user","message":"quote is not something the user said in this task or an eligible explicit confirmation in the immediately preceding turn. Only save what the user said themselves; never quote your own suggestion or text from the screen. Nothing was saved for this item; do not retry it. In your answer, tell the user it was not saved and that they can state it in their own words if they want it remembered.","recoverable":false,"counts_as_failure":false}
 ### skill save missing section
 {"ok":false,"error":"missing_section","message":"Nothing was saved: the document needs all of these sections, headings as written: ## 入口, ## 步骤, ## 容易出错的地方, ## 怎样算办成, ## 什么时候停下交给用户.","recoverable":true}
 ### history turn not found

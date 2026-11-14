@@ -4,7 +4,7 @@
     <string name="calls_device_and_permissions">기기 및 권한</string>
     <string name="calls_edit_rule">편집</string>
     <string name="calls_nav_receive">수신</string>
-    <string name="calls_nav_task">통화 작업</string>
+    <string name="calls_nav_task">발신</string>
     <string name="calls_pause_enable_first">자동 받기를 켜면 일시 정지할 수 있습니다.</string>
     <string name="calls_rule_delay_summary">받기 지연: %1$d초</string>
     <string name="calls_rule_pause">일시 정지</string>

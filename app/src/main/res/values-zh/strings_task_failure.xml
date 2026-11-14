@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="task_model_rate_limited">模型服务限流，重试后仍然请求太频繁。请稍后再试，或检查账户的调用频率限制。</string>
+</resources>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_voice_service">Служба голоса в реальном времени</string>
+    <string name="calls_voice_profiles_intro">Сохраняйте несколько конфигураций голоса в реальном времени. Для входящих и исходящих вызовов используется конфигурация по умолчанию, но для отдельного вызова можно выбрать другую. Проверка соединения и проверка двустороннего аудио на телефоне — разные операции.</string>
+    <string name="calls_voice_profile_subtitle">%1$s · %2$s</string>
+    <string name="calls_voice_audio_verified">Аудио телефона проверено</string>
+    <string name="calls_voice_audio_unverified">Аудио телефона не проверено</string>
+    <string name="calls_voice_selected">Текущая конфигурация по умолчанию</string>
+    <string name="calls_voice_status_untested">Требуется проверка соединения</string>
+    <string name="calls_voice_status_tested">Соединение проверено</string>
+    <string name="calls_voice_select">Сделать конфигурацией по умолчанию</string>
+    <string name="calls_voice_delete">Удалить конфигурацию</string>
+    <string name="calls_voice_delete_confirm">Удалить %1$s и сохранённые на устройстве учётные данные? Записи вызовов останутся.</string>
+    <string name="calls_voice_test">Проверить соединение</string>
+    <string name="calls_voice_testing">Проверка…</string>
+    <string name="calls_voice_add">Добавить конфигурацию голоса</string>
+    <string name="calls_voice_edit">Изменить конфигурацию голоса</string>
+    <string name="calls_voice_test_note">Успешное соединение не подтверждает двусторонний звук в телефонном вызове. Перед автоматическим ответом выполните реальный тестовый вызов.</string>
+    <string name="calls_voice_name">Название конфигурации</string>
+    <string name="calls_voice_endpoint">Адрес endpoint (wss)</string>
+    <string name="calls_voice_model">Диалоговая модель реального времени</string>
+    <string name="calls_voice_default_name">Голос по умолчанию</string>
+    <string name="calls_voice_protocol">Интегрированный голосовой сервис: распознавание, диалог и синтез речи выполняются одной службой.</string>
+    <string name="calls_voice_credentials_keep">Оставьте пустым, чтобы сохранить учётные данные. Новые учётные данные заменят прежние и потребуют повторной проверки.</string>
+    <string name="calls_back_settings">Назад к настройкам</string>
+    <string name="calls_enabled_summary">ИИ может отвечать и звонить; автоматический ответ включается отдельно.</string>
+    <string name="calls_settings_voice_group">Голос и модели</string>
+    <string name="calls_settings_device_group">Устройство и работа</string>
+    <string name="calls_settings_data_group">Данные</string>
+    <string name="calls_history_entry_summary">Сводки, задачи и исходный текст</string>
+    <string name="calls_advanced_summary">Аудиоканал и диагностика</string>
+    <string name="calls_advanced_note">Смена аудиоканала сбрасывает проверку двустороннего звука. Перед автоматическим ответом снова выполните реальный тестовый вызов.</string>
+    <string name="calls_voice_setup">Настроить и проверить голосовую службу</string>
+</resources>

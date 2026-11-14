@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="task_model_rate_limited">모델 서비스의 요청 횟수가 제한되었습니다. 다시 시도한 후에도 요청이 너무 잦습니다. 나중에 다시 시도하거나 계정의 요청 제한을 확인하세요.</string>
+</resources>

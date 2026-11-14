@@ -71,7 +71,7 @@ sealed interface TaskState {
         val doubtful: Boolean get() = reviewed && !verified
     }
     /** [kind] 由产生失败的代码自己给出,不从 [reason] 文字里猜。 */
-    data class Failed(val reason: String, val kind: FailKind) : Terminal
+    data class Failed(val reason: String, val kind: FailKind, val code: FailureCode? = null) : Terminal
     data object Cancelled : Terminal
 }
 
@@ -91,6 +91,9 @@ data class GateReason(val code: String, val why: String = "", val resumable: Boo
         fun queued(why: String) = GateReason(QUEUED, why)
     }
 }
+
+/** 程序生成的失败原因，供界面选择对应的本地化文案。 */
+enum class FailureCode { ModelRateLimited }
 
 /** 任务失败的来源。 */
 enum class FailKind {

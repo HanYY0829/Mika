@@ -42,4 +42,10 @@
     <string name="file_library_preview">پیش‌نمایش</string>
     <string name="file_library_open_in_chat">نمایش در گفتگو</string>
     <string name="file_library_open_failed">امکان باز کردن این گفتگو نیست</string>
+    <string name="file_library_type_all">همهٔ انواع فایل</string>
+    <string name="file_library_type_image">تصاویر</string>
+    <string name="file_library_type_pdf">فایل‌های PDF</string>
+    <string name="file_library_type_audio">صوت</string>
+    <string name="file_library_type_video">ویدیو</string>
+    <string name="file_library_type_other">فایل‌های دیگر</string>
 </resources>

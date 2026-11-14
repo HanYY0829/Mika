@@ -1,4 +1,4 @@
-outcome: Failed(reason=查过首页和菜单,没找到, kind=GaveUp)
+outcome: Failed(reason=查过首页和菜单,没找到, kind=GaveUp, code=null)
 
 ## main #1
 system: len=17983 #a1c79085 | You are Mika, the user's personal assistant on their phone. Your job is to get ⏎…

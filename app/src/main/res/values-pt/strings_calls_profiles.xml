@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_voice_service">Serviço de voz em tempo real</string>
+    <string name="calls_voice_profiles_intro">Guarde várias configurações de voz em tempo real. Chamadas recebidas e efetuadas usam a configuração padrão, mas cada chamada efetuada pode usar outra. O teste de conexão e a verificação de áudio do telefone são separados.</string>
+    <string name="calls_voice_profile_subtitle">%1$s · %2$s</string>
+    <string name="calls_voice_audio_verified">Áudio do telefone verificado</string>
+    <string name="calls_voice_audio_unverified">Áudio do telefone não verificado</string>
+    <string name="calls_voice_selected">Configuração padrão atual</string>
+    <string name="calls_voice_status_untested">Teste de conexão necessário</string>
+    <string name="calls_voice_status_tested">Conexão testada</string>
+    <string name="calls_voice_select">Definir como padrão</string>
+    <string name="calls_voice_delete">Excluir configuração</string>
+    <string name="calls_voice_delete_confirm">Excluir %1$s e as credenciais armazenadas neste dispositivo? Os registros de chamadas não serão excluídos.</string>
+    <string name="calls_voice_test">Testar conexão</string>
+    <string name="calls_voice_testing">Testando…</string>
+    <string name="calls_voice_add">Adicionar configuração de voz em tempo real</string>
+    <string name="calls_voice_edit">Editar configuração de voz em tempo real</string>
+    <string name="calls_voice_test_note">Uma conexão bem-sucedida não comprova o áudio bidirecional em chamadas. Faça uma chamada de teste real antes de ativar o atendimento automático.</string>
+    <string name="calls_voice_name">Nome da configuração</string>
+    <string name="calls_voice_endpoint">Endereço do endpoint (wss)</string>
+    <string name="calls_voice_model">Modelo de diálogo em tempo real</string>
+    <string name="calls_voice_default_name">Voz em tempo real padrão</string>
+    <string name="calls_voice_protocol">Voz integrada em tempo real: reconhecimento, diálogo e fala são processados pelo mesmo serviço.</string>
+    <string name="calls_voice_credentials_keep">Deixe em branco para manter as credenciais salvas. Novas credenciais substituirão as anteriores e exigirão outro teste.</string>
+    <string name="calls_back_settings">Voltar às configurações</string>
+    <string name="calls_enabled_summary">Atende e faz chamadas com IA; o atendimento automático tem um interruptor separado.</string>
+    <string name="calls_settings_voice_group">Voz e modelos</string>
+    <string name="calls_settings_device_group">Dispositivo e execução</string>
+    <string name="calls_settings_data_group">Dados</string>
+    <string name="calls_history_entry_summary">Resumos, pendências e transcrições originais</string>
+    <string name="calls_advanced_summary">Canal de áudio e diagnóstico</string>
+    <string name="calls_advanced_note">Alterar o canal de áudio redefine a verificação bidirecional. Faça outra chamada real antes de ativar o atendimento automático.</string>
+    <string name="calls_voice_setup">Configurar e testar o serviço de voz</string>
+</resources>

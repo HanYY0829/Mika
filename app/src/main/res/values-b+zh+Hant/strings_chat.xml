@@ -162,6 +162,10 @@
     <string name="step_viewed">看了%1$s</string>
     <string name="step_viewed_part">看了%1$s的%2$s</string>
     <string name="step_failed">沒成功</string>
+    <string name="step_declined_not_said">不是你親口說的,沒有寫入</string>
+    <string name="step_declined_sensitive">含敏感資訊,沒有寫入</string>
+    <string name="step_declined_not_asked">你沒明確要改或刪,沒有改動</string>
+    <string name="step_declined_not_requested">這句話沒讓它記,沒有寫入</string>
     <string name="step_number">第 %1$d 步</string>
     <string name="source_label">來源</string>
     <plurals name="screenshots">
@@ -236,6 +240,7 @@
     <string name="chat_withdraw_message">收回訊息</string>
     <string name="pip_close">這個任務不再顯示小畫面</string>
     <string name="pip_unmute">恢復聲音</string>
+    <string name="pip_mute">靜音</string>
     <string name="pip_back">在虛擬螢幕上返回</string>
     <string name="pip_reopen">顯示畫面</string>
     <string name="pip_closed_needs_you">等你處理</string>

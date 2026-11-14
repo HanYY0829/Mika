@@ -208,4 +208,9 @@
     <plurals name="settings_auto_archive_days">
         <item quantity="other">%1$d 日</item>
     </plurals>
+    <string name="settings_scheduled_quiet">定期タスクの通知を静かにする時間帯</string>
+    <string name="settings_scheduled_quiet_detail">予定したタスクの結果やリマインダーは、通知欄に静かに表示されます。</string>
+    <string name="settings_scheduled_quiet_start">開始時刻</string>
+    <string name="settings_scheduled_quiet_end">終了時刻</string>
+    <string name="settings_scheduled_quiet_equal">通知を静かにするには、開始時刻と終了時刻を別々に設定してください。</string>
 </resources>

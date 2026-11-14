@@ -25,6 +25,8 @@
     <string name="memory_use_sub">عند إيقافه، لا يقرأ Mika الذاكرة ولا يحفظ فيها</string>
     <string name="memory_auto">تذكّر ما أقوله</string>
     <string name="memory_auto_sub">تُنظّم من كلماتك بعد كل مهمة</string>
+    <string name="memory_infer">السماح لـ Mika بحفظ استنتاجاته</string>
+    <string name="memory_infer_sub">عندما تطلب منه التذكّر، تُحفظ استنتاجاته أيضًا مع الإشارة إلى أنها ليست كلامك</string>
     <string name="memory_learn">التعلّم من المهام السابقة (المهارات وملاحظات التطبيقات)</string>
     <string name="memory_learn_sub">لا يستخدم Mika ما يتعلّمه إلا بعد موافقتك</string>
     <string name="memory_tasks">تذكّر المهام السابقة</string>
@@ -59,6 +61,7 @@
     <string name="date_pattern_md">MMM d</string>
     <string name="memory_said_via">قلت في %1$s عبر %2$s: «%3$s»</string>
     <string name="memory_said">قلت في %1$s: «%2$s»</string>
+    <string name="memory_inferred">استنتاج Mika في %1$s بطلب منك: «%2$s»</string>
     <string name="verify_returned">أعادها التحقق</string>
     <string name="skills_drafts">مسودات مهارات جديدة — تُجرّب بعد موافقتك</string>
     <string name="skills_accept_try">قبول وتجربة</string>

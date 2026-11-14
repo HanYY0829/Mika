@@ -208,4 +208,9 @@
     <plurals name="settings_auto_archive_days">
         <item quantity="other">%1$d hari</item>
     </plurals>
+    <string name="settings_scheduled_quiet">Jam hening tugas terjadwal</string>
+    <string name="settings_scheduled_quiet_detail">Hasil dan pengingat terjadwal muncul tanpa suara di panel notifikasi.</string>
+    <string name="settings_scheduled_quiet_start">Waktu mulai</string>
+    <string name="settings_scheduled_quiet_end">Waktu selesai</string>
+    <string name="settings_scheduled_quiet_equal">Pilih waktu mulai dan selesai yang berbeda untuk membisukan notifikasi.</string>
 </resources>

@@ -279,7 +279,7 @@ object TriggerRuntime {
             runCatching { notifications.notify(key.hashCode(), Notification.Builder(context, TaskService.CHANNEL_RESULT)
                 .setSmallIcon(R.drawable.ic_notification).setContentTitle(title)
                 .setContentText(text).setStyle(Notification.BigTextStyle().bigText(text))
-                .setContentIntent(open).setAutoCancel(true).build()) }
+                .setContentIntent(open).setAutoCancel(true).applyScheduledQuietHours(context).build()) }
                 .onFailure { Log.w("MikaTrigger", "reminder notification failed", it) }
         }
     }

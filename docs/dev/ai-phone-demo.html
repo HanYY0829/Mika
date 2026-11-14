@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mika AI 电话 · 高保真交互原型</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f3;
+      --card: #fff;
+      --ink: #202124;
+      --ink2: #73767b;
+      --ink3: #9a9da2;
+      --line: #ececef;
+      --accent: #3478f6;
+      --accent-soft: #eaf1ff;
+      --green: #259665;
+      --green-soft: #e9f6ef;
+      --orange: #aa6c12;
+      --orange-soft: #fff4df;
+      --red: #c94d4d;
+      --shadow: 0 4px 18px rgba(25, 28, 35, .045);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e9e9e6;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid rgba(52,120,246,.2); outline-offset: 2px; }
+    .prototype { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 52px; padding: 28px; }
+    .notes { width: 320px; }
+    .eyebrow { color: var(--accent); font-size: 11px; font-weight: 750; letter-spacing: .13em; text-transform: uppercase; }
+    .notes h1 { margin: 14px 0 12px; font-size: 36px; letter-spacing: -.04em; }
+    .notes > p { margin: 0 0 22px; color: var(--ink2); font-size: 14px; line-height: 1.75; }
+    .note { display: flex; gap: 12px; margin: 17px 0; }
+    .note-num { flex: 0 0 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; background: #fff; color: var(--accent); font-size: 12px; font-weight: 700; box-shadow: var(--shadow); }
+    .note strong { display: block; margin-bottom: 5px; font-size: 14px; }
+    .note p { margin: 0; color: var(--ink2); font-size: 12px; line-height: 1.65; }
+    .scenario-label { margin: 25px 0 9px; color: var(--ink2); font-size: 11px; font-weight: 600; }
+    .scenarios { display: grid; gap: 7px; }
+    .scenario {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 12px;
+      background: rgba(255,255,255,.55);
+      color: var(--ink2);
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .scenario.active { border-color: var(--accent); background: #fff; color: var(--accent); font-weight: 650; }
+    .scenario span:last-child { font-size: 10px; font-weight: 400; }
+    .phone {
+      position: relative;
+      width: 430px;
+      height: min(900px, calc(100vh - 56px));
+      min-height: 700px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,.07);
+      border-radius: 34px;
+      background: var(--bg);
+      box-shadow: 0 24px 70px rgba(25,28,35,.16);
+    }
+    .statusbar { flex: 0 0 35px; display: flex; align-items: center; justify-content: space-between; padding: 9px 23px 0; font-size: 12px; font-weight: 650; }
+    .status-icons { color: var(--ink2); letter-spacing: 3px; font-size: 11px; }
+    .root { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .root[hidden] { display: none; }
+    .app-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px 17px; }
+    .app-header h2 { margin: 0; font-size: 27px; letter-spacing: -.03em; }
+    .app-header p { margin: 5px 0 0; color: var(--ink2); font-size: 12px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 7px 10px; background: var(--green-soft); color: var(--green); font-size: 11px; font-weight: 650; white-space: nowrap; }
+    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .badge.off { background: #ececea; color: var(--ink2); }
+    .badge.warn { background: var(--orange-soft); color: var(--orange); }
+    .tabs { flex: 0 0 50px; display: grid; grid-template-columns: repeat(3,1fr); border-bottom: 1px solid var(--line); }
+    .tab { position: relative; border: 0; background: transparent; color: var(--ink2); font-size: 14px; font-weight: 600; cursor: pointer; }
+    .tab.active { color: var(--accent); }
+    .tab.active::after { content: ""; position: absolute; right: 24px; bottom: -1px; left: 24px; height: 3px; border-radius: 3px 3px 0 0; background: var(--accent); }
+    .viewport { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 16px 32px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .section-title { margin: 20px 6px 9px; color: var(--ink2); font-size: 12px; font-weight: 500; }
+    .section-title:first-child { margin-top: 0; }
+    .card { overflow: hidden; margin-bottom: 13px; border: 1px solid rgba(25,28,35,.025); border-radius: 18px; background: var(--card); box-shadow: var(--shadow); }
+    .card-pad { padding: 18px; }
+    .hero-row { display: flex; align-items: center; gap: 13px; }
+    .hero-row .grow, .row-main { flex: 1; min-width: 0; }
+    .icon { flex: 0 0 40px; height: 40px; display: grid; place-items: center; border-radius: 13px; background: #f1f1ef; color: #62666c; font-size: 19px; }
+    .icon.blue { background: var(--accent-soft); color: var(--accent); }
+    .icon.green { background: var(--green-soft); color: var(--green); }
+    .icon.warn { background: var(--orange-soft); color: var(--orange); }
+    .hero-title { margin: 0; font-size: 17px; font-weight: 650; }
+    .hero-sub { margin: 5px 0 0; color: var(--ink2); font-size: 12px; line-height: 1.55; }
+    .switch { position: relative; flex: 0 0 46px; width: 46px; height: 28px; padding: 0; border: 0; border-radius: 999px; background: #d9dade; cursor: pointer; transition: background .18s ease; }
+    .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.18); transition: transform .18s ease; }
+    .switch.on { background: var(--accent); }
+    .switch.on::after { transform: translateX(18px); }
+    .switch:disabled { opacity: .45; cursor: default; }
+    .row { width: 100%; min-height: 66px; display: flex; align-items: center; gap: 12px; padding: 13px 15px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; }
+    .row:last-child { border-bottom: 0; }
+    button.row { cursor: pointer; }
+    button.row:hover { background: #fafafa; }
+    .row-title { display: block; font-size: 14px; font-weight: 550; }
+    .row-sub { display: block; margin-top: 5px; color: var(--ink2); font-size: 11px; line-height: 1.45; }
+    .chevron { color: var(--ink3); font-size: 22px; font-weight: 300; }
+    .value { color: var(--ink2); font-size: 12px; text-align: right; }
+    .value.ok { color: var(--green); }
+    .value.warn { color: var(--orange); }
+    .fine-print { margin: 13px 8px; color: var(--ink2); font-size: 11px; line-height: 1.7; }
+    .primary, .secondary, .text-button, .danger-button { border: 0; cursor: pointer; }
+    .primary { width: 100%; min-height: 49px; padding: 13px 18px; border-radius: 15px; background: var(--accent); color: #fff; font-weight: 650; }
+    .primary:disabled { background: #d8d9dc; color: #999ca2; cursor: default; }
+    .secondary { min-height: 42px; padding: 10px 14px; border-radius: 13px; background: #f0f0ee; color: var(--ink); font-size: 13px; font-weight: 550; }
+    .secondary:disabled { opacity: .45; cursor: default; }
+    .text-button { padding: 9px; background: transparent; color: var(--accent); font-size: 12px; }
+    .danger-button { padding: 10px; background: transparent; color: var(--red); font-size: 13px; }
+    .button-row { display: flex; gap: 9px; margin-top: 15px; }
+    .button-row > * { flex: 1; }
+    .intro { margin: 3px 5px 20px; }
+    .intro h3 { margin: 0 0 8px; font-size: 23px; letter-spacing: -.025em; }
+    .intro p { margin: 0; color: var(--ink2); font-size: 13px; line-height: 1.65; }
+    .field { display: block; margin-bottom: 14px; }
+    .field-label { display: block; margin: 0 0 8px 3px; font-size: 12px; font-weight: 600; }
+    .field input, .field textarea, .detail-field input, .detail-field textarea { width: 100%; border: 1px solid #dedfe3; border-radius: 14px; background: #fff; color: var(--ink); padding: 14px 15px; font-size: 14px; }
+    .field textarea { min-height: 118px; resize: vertical; line-height: 1.6; }
+    .field input::placeholder, .field textarea::placeholder { color: #a0a2a7; }
+    details { margin: 13px 0; }
+    summary { padding: 12px 4px; color: var(--ink2); font-size: 13px; cursor: pointer; }
+    details .field textarea { min-height: 78px; }
+    .sticky-action { margin-top: 18px; }
+    .setup-banner { margin-bottom: 13px; padding: 15px; border: 1px solid #f0dfbc; border-radius: 17px; background: #fffaf0; }
+    .setup-banner[hidden] { display: none; }
+    .setup-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 650; }
+    .setup-title::before { content: "!"; width: 19px; height: 19px; display: grid; place-items: center; border-radius: 50%; background: var(--orange); color: #fff; font-size: 11px; }
+    .setup-text { margin: 7px 0 11px; color: #7d6b4c; font-size: 11px; line-height: 1.55; }
+    .setup-banner .secondary { background: #f4e8d1; color: #78551b; }
+    .live-card { margin-bottom: 15px; padding: 18px; border-radius: 20px; background: #20252e; color: #fff; box-shadow: 0 10px 30px rgba(25,28,35,.18); }
+    .live-card[hidden] { display: none; }
+    .live-label { color: #aeb8ca; font-size: 11px; }
+    .live-number { margin: 8px 0 5px; font-size: 23px; font-weight: 650; }
+    .live-state { color: #c5cede; font-size: 12px; }
+    .live-card .primary { margin-top: 16px; }
+    .live-card .secondary { background: #343b48; color: #fff; }
+    .transcript { margin-top: 15px; padding-top: 12px; border-top: 1px solid #3a414e; }
+    .transcript p { margin: 8px 0; color: #e2e6ed; font-size: 12px; line-height: 1.55; }
+    .transcript span { display: block; color: #919cad; font-size: 10px; }
+    .subpage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .subpage[hidden] { display: none; }
+    .sub-header { flex: 0 0 70px; display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-bottom: 1px solid var(--line); }
+    .back { width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; font-size: 25px; cursor: pointer; }
+    .back:hover { background: #ececea; }
+    .sub-header h2 { margin: 0; font-size: 18px; }
+    .sub-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 16px 30px; }
+    .radio-card { position: relative; }
+    .radio-card.selected { border: 1.5px solid var(--accent); background: #fbfdff; }
+    .selected-mark { color: var(--accent); font-size: 18px; }
+    .record-outcome { padding: 15px; }
+    .record-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .record-number { font-size: 14px; font-weight: 650; }
+    .tag { border-radius: 999px; padding: 4px 7px; background: var(--orange-soft); color: var(--orange); font-size: 10px; white-space: nowrap; }
+    .tag.done { background: var(--green-soft); color: var(--green); }
+    .record-text { margin: 9px 0 6px; font-size: 13px; line-height: 1.6; }
+    .record-time { color: var(--ink3); font-size: 10px; }
+    .summary-box { padding: 18px; border-radius: 18px; background: var(--accent-soft); }
+    .summary-box h3 { margin: 0 0 9px; font-size: 16px; }
+    .summary-box p { margin: 0; font-size: 13px; line-height: 1.75; }
+    .state-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; margin-bottom: 15px; }
+    .state-cell { padding: 11px 7px; border-radius: 13px; background: #ececea; color: var(--ink2); text-align: center; font-size: 10px; line-height: 1.45; }
+    .state-cell strong { display: block; margin-bottom: 4px; color: var(--ink); font-size: 12px; }
+    .state-cell.ok { background: var(--green-soft); color: var(--green); }
+    .state-cell.warn { background: var(--orange-soft); color: var(--orange); }
+    .check-row { display: flex; align-items: flex-start; gap: 11px; padding: 14px 15px; cursor: pointer; }
+    .check-box { flex: 0 0 20px; width: 20px; height: 20px; margin-top: 2px; border: 1.5px solid #b7bac0; border-radius: 5px; background: #fff; }
+    .check-box.checked { border-color: var(--accent); background: var(--accent); }
+    .check-box.checked::after { content: "✓"; display: block; color: #fff; font-size: 14px; line-height: 17px; text-align: center; }
+    dialog { width: min(390px,calc(100vw - 30px)); max-height: 85vh; overflow-y: auto; padding: 0; border: 0; border-radius: 22px; background: #fff; color: var(--ink); box-shadow: 0 24px 80px rgba(0,0,0,.25); }
+    dialog::backdrop { background: rgba(20,22,26,.38); backdrop-filter: blur(2px); }
+    .dialog-body { padding: 23px; }
+    .dialog-body h3 { margin: 0 0 17px; font-size: 20px; }
+    .review-line { margin: 13px 0; }
+    .review-line span { display: block; margin-bottom: 4px; color: var(--ink2); font-size: 11px; }
+    .review-line div { font-size: 14px; line-height: 1.55; }
+    .dialog-note { margin: 17px 0; color: var(--ink2); font-size: 11px; line-height: 1.65; }
+    .dialog-warning { margin: 15px 0; padding: 12px; border-radius: 12px; background: var(--orange-soft); color: #78551b; font-size: 11px; line-height: 1.6; }
+    .detail-field { margin-bottom: 13px; }
+    .detail-field label { display: block; margin: 0 0 6px 3px; color: var(--ink2); font-size: 11px; }
+    .toast { position: absolute; z-index: 20; right: 25px; bottom: 24px; left: 25px; padding: 13px 16px; border-radius: 13px; background: rgba(25,28,35,.92); color: #fff; font-size: 12px; line-height: 1.5; text-align: center; transform: translateY(15px); opacity: 0; pointer-events: none; transition: .2s ease; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    @media (max-width: 800px) {
+      body { background: var(--bg); }
+      .prototype { display: block; min-height: 100vh; padding: 0; }
+      .notes { display: none; }
+      .phone { width: 100%; height: 100vh; min-height: 100vh; border: 0; border-radius: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype">
+    <aside class="notes">
+      <div class="eyebrow">Mika · High-fidelity concept</div>
+      <h1>AI 电话</h1>
+      <p>保留接听、拨打、设置三个 Tab，同时呈现真实权限、通知、音频和后台状态。</p>
+      <div class="note"><span class="note-num">1</span><div><strong>接听与拨打</strong><p>核心任务不被设置淹没；不可用时说明具体缺哪一步。</p></div></div>
+      <div class="note"><span class="note-num">2</span><div><strong>设备与运行</strong><p>通知权限、两个通知频道、音频助手、双向音频和 SIM 分开判断。</p></div></div>
+      <div class="note"><span class="note-num">3</span><div><strong>语音服务</strong><p>连接测试与手机音频实测分开；摘要模型独立于实时语音。</p></div></div>
+      <div class="scenario-label">演示场景</div>
+      <div class="scenarios">
+        <button class="scenario active" data-scenario="current">当前未配置<span>凭据 / 音频 / SIM</span></button>
+        <button class="scenario" data-scenario="ready">配置完成<span>自动接听待命</span></button>
+        <button class="scenario" data-scenario="missing">权限缺失<span>通知 / 助手 / 后台</span></button>
+      </div>
+      <p style="margin-top:18px">桌面端可在这里切换；手机打开时默认展示“当前未配置”。</p>
+    </aside>
+
+    <main class="phone" aria-label="AI 电话高保真界面原型">
+      <div class="statusbar"><span>9:41</span><span class="status-icons">● ᴡɪꜰɪ ▰</span></div>
+      <div class="root" id="rootView">
+        <header class="app-header">
+          <div><h2>AI 电话</h2><p id="headerSubtitle">默认实时语音 · 尚未就绪</p></div>
+          <span class="badge warn" id="headerBadge">未就绪</span>
+        </header>
+        <nav class="tabs" aria-label="AI 电话功能">
+          <button class="tab active" data-tab="receive" aria-selected="true">接听</button>
+          <button class="tab" data-tab="dial" aria-selected="false">拨打</button>
+          <button class="tab" data-tab="settings" aria-selected="false">设置</button>
+        </nav>
+        <div class="viewport">
+          <section class="page active" id="page-receive">
+            <div class="setup-banner" id="receiveSetup">
+              <div class="setup-title" id="receiveSetupTitle">完成设置后才能使用 AI 接听</div>
+              <div class="setup-text" id="receiveSetupText"></div>
+              <button class="secondary" data-open="device">查看并完成设置</button>
+            </div>
+            <div class="live-card" id="liveCard" hidden>
+              <div class="live-label" id="liveLabel">来电响铃</div>
+              <div class="live-number" id="liveNumber">10086</div>
+              <div class="live-state" id="liveState">这通电话要交给 Mika 吗？</div>
+              <div id="incomingActions">
+                <button class="primary" id="answerButton">让 AI 接听</button>
+                <div class="button-row"><button class="secondary" id="dismissIncoming">暂不使用 AI</button></div>
+              </div>
+              <div id="activeActions" hidden>
+                <div class="transcript"><p><span>对方</span>你好，请问套餐什么时候生效？</p><p><span>Mika</span>我帮你确认一下，请稍等。</p></div>
+                <div class="button-row"><button class="secondary" id="takeoverButton">人工接管</button><button class="secondary" id="hangupButton">结束演示</button></div>
+              </div>
+            </div>
+            <div class="card card-pad">
+              <div class="hero-row">
+                <span class="icon green">☎</span>
+                <div class="grow"><h3 class="hero-title">自动接听来电</h3><p class="hero-sub" id="autoSummary">已关闭 · 完成设置后可开启</p></div>
+                <button class="switch" id="autoSwitch" role="switch" aria-checked="false" aria-label="自动接听来电"></button>
+              </div>
+            </div>
+            <h3 class="section-title">接听规则</h3>
+            <div class="card">
+              <button class="row" data-open="scope"><span class="icon">▤</span><span class="row-main"><span class="row-title">接听范围</span><span class="row-sub">仅名单内号码 · 3 个号码 · 等待 5 秒</span></span><span class="chevron">›</span></button>
+              <button class="row" data-open="bypass"><span class="icon">♡</span><span class="row-main"><span class="row-title">始终由本人接听</span><span class="row-sub">家人和重要联系人 · 2 个号码</span></span><span class="chevron">›</span></button>
+              <button class="row" data-open="instructions"><span class="icon">≡</span><span class="row-main"><span class="row-title">接听交代</span><span class="row-sub">快递、外卖和业务询问 · 3 条</span></span><span class="chevron">›</span></button>
+            </div>
+            <button class="secondary" id="pauseButton">暂停自动接听 30 分钟</button>
+            <p class="fine-print">自动接听关闭时，来电仍可手动选择“让 AI 接听”。通话中随时可以人工接管。</p>
+            <button class="text-button" id="simulateIncoming">演示：模拟一通来电</button>
+          </section>
+
+          <section class="page" id="page-dial">
+            <div class="intro"><h3>让 AI 打一通电话</h3><p>说清楚打给谁、要办什么。Mika 会在拨打前让你核对。</p></div>
+            <div class="setup-banner" id="dialSetup"><div class="setup-title">当前还不能拨打</div><div class="setup-text" id="dialSetupText"></div><button class="secondary" data-open="device">检查拨打条件</button></div>
+            <label class="field"><span class="field-label">电话号码</span><input id="dialNumber" type="tel" value="10086" placeholder="输入电话号码"></label>
+            <label class="field"><span class="field-label">这通电话要办什么？</span><textarea id="dialGoal" placeholder="例如：确认套餐什么时候生效，不要变更套餐">确认当前套餐什么时候生效，不要变更套餐，也不要开通收费服务。</textarea></label>
+            <details><summary>补充必问事项、背景或授权边界（可选）</summary><label class="field"><span class="field-label">需要问清的问题</span><textarea placeholder="每行一个问题"></textarea></label><label class="field"><span class="field-label">补充情况</span><textarea placeholder="只填写这通电话需要的背景"></textarea></label><label class="field"><span class="field-label">不能承诺什么</span><textarea>不变更套餐，不开通收费服务。</textarea></label></details>
+            <div class="card">
+              <button class="row" data-open="models"><span class="icon blue">✦</span><span class="row-main"><span class="row-title">本次语音服务</span><span class="row-sub model-name">默认实时语音</span></span><span class="chevron">›</span></button>
+              <button class="row" data-open="sim"><span class="icon">▣</span><span class="row-main"><span class="row-title">拨号 SIM</span><span class="row-sub" id="dialSimSummary">无可用 SIM</span></span><span class="chevron">›</span></button>
+            </div>
+            <div class="sticky-action"><button class="primary" id="reviewCall">核对本次任务</button></div>
+            <p class="fine-print">核对时再次确认号码、目标、语音服务和 SIM。锁屏后拨出位于高级拨号方式中。</p>
+          </section>
+
+          <section class="page" id="page-settings">
+            <h3 class="section-title">功能</h3>
+            <div class="card card-pad"><div class="hero-row"><span class="icon blue">☎</span><div class="grow"><h3 class="hero-title">启用 AI 电话</h3><p class="hero-sub" id="enabledSummary">开启后可以使用 AI 接听和拨打</p></div><button class="switch on" id="enabledSwitch" role="switch" aria-checked="true" aria-label="启用 AI 电话"></button></div></div>
+            <h3 class="section-title">语音与模型</h3>
+            <div class="card">
+              <button class="row" data-open="models"><span class="icon blue">✦</span><span class="row-main"><span class="row-title">实时语音服务</span><span class="row-sub" id="modelSettingsSummary">默认实时语音 · 未配置凭据</span></span><span class="chevron">›</span></button>
+              <button class="row" data-open="voice"><span class="icon">♪</span><span class="row-main"><span class="row-title">声音、开场白与通话说明</span><span class="row-sub">默认声音 · AI 最长 120 秒</span></span><span class="chevron">›</span></button>
+              <button class="row" data-open="privacy"><span class="icon">◈</span><span class="row-main"><span class="row-title">隐私与通话摘要</span><span class="row-sub" id="privacySettingsSummary">摘要未开启 · 原文加密保存在本机</span></span><span class="chevron">›</span></button>
+            </div>
+            <h3 class="section-title">设备与运行</h3>
+            <div class="card">
+              <button class="row" data-open="device"><span class="icon warn" id="deviceIcon">⚙</span><span class="row-main"><span class="row-title">设备、权限与音频助手</span><span class="row-sub" id="deviceSettingsSummary">双向音频待验证 · 无可用 SIM</span></span><span class="chevron">›</span></button>
+              <button class="row" data-open="background"><span class="icon">◷</span><span class="row-main"><span class="row-title">后台与锁屏</span><span class="row-sub" id="backgroundSettingsSummary">自动接听已关闭</span></span><span class="chevron">›</span></button>
+              <button class="row" data-open="sim"><span class="icon">▣</span><span class="row-main"><span class="row-title">默认拨号 SIM</span><span class="row-sub" id="simSettingsSummary">无可用 SIM</span></span><span class="chevron">›</span></button>
+              <button class="row" data-open="advanced"><span class="icon">⚙</span><span class="row-main"><span class="row-title">高级诊断</span><span class="row-sub">音频通道、格式与诊断信息</span></span><span class="chevron">›</span></button>
+            </div>
+            <h3 class="section-title">数据</h3>
+            <div class="card"><button class="row" data-open="records"><span class="icon">↺</span><span class="row-main"><span class="row-title">通话记录</span><span class="row-sub">摘要、待办与原始文字</span></span><span class="value" id="recordCount">暂无</span><span class="chevron">›</span></button></div>
+            <p class="fine-print">通话结束后会直接展示结果并发送通知，不需要进入设置才能看到。</p>
+          </section>
+        </div>
+      </div>
+      <section class="subpage" id="subpage" hidden><header class="sub-header"><button class="back" id="subBack" aria-label="返回">‹</button><h2 id="subTitle">设置</h2></header><div class="sub-body" id="subBody"></div></section>
+      <div class="toast" id="toast" role="status"></div>
+    </main>
+  </div>
+
+  <dialog id="reviewDialog"><div class="dialog-body"><h3>核对本次拨打</h3><div class="review-line"><span>电话号码</span><div id="reviewNumber"></div></div><div class="review-line"><span>通话目标</span><div id="reviewGoal"></div></div><div class="review-line"><span>语音服务</span><div class="model-name">默认实时语音</div></div><div class="review-line"><span>拨号 SIM</span><div id="reviewSim"></div></div><div class="dialog-warning" id="reviewBlocked" hidden></div><p class="dialog-note">确认后才会拨号。可能产生运营商和实时语音服务费用。</p><button class="primary" id="confirmCall">确认并拨打</button><button class="text-button" data-close="reviewDialog">返回修改</button></div></dialog>
+
+  <dialog id="configDialog"><form class="dialog-body" id="configForm"><h3>添加实时语音配置</h3><p class="dialog-note">一体化实时语音服务：一次连接完成识别、对话和发声。高级三段模型组合后续单独设计。</p><div class="detail-field"><label for="configName">配置名称</label><input id="configName" required placeholder="例如：我的实时语音"></div><div class="detail-field"><label for="configType">服务类型</label><input id="configType" value="自定义一体化实时语音" readonly></div><div class="detail-field"><label for="configEndpoint">接口地址</label><input id="configEndpoint" required placeholder="wss://example.com/realtime"></div><div class="detail-field"><label for="configModel">实时对话模型</label><input id="configModel" required placeholder="输入模型名称"></div><div class="detail-field"><label for="configVoice">声音</label><input id="configVoice" placeholder="默认声音"></div><button class="primary" type="submit">保存并配置凭据</button><button class="text-button" type="button" data-close="configDialog">取消</button></form></dialog>
+
+  <dialog id="credentialsDialog"><form class="dialog-body" id="credentialsForm"><h3>配置实时语音凭据</h3><p class="dialog-note" id="credentialsNote"></p><div class="detail-field"><label for="credentialKey">API Key</label><input id="credentialKey" type="password" required placeholder="原型不会保存或发送"></div><details><summary>旧版 App ID 与 Access Key</summary><div class="detail-field"><label for="legacyAppId">App ID</label><input id="legacyAppId"></div><div class="detail-field"><label for="legacyAccessKey">Access Key</label><input id="legacyAccessKey" type="password"></div></details><p class="dialog-note">凭据加密保存在本机。保存凭据不代表服务可用，还需要连接测试和真实通话验证。</p><button class="primary" type="submit">加密保存</button><button class="text-button" type="button" data-close="credentialsDialog">取消</button></form></dialog>
+
+  <dialog id="audioTestDialog"><div class="dialog-body"><h3>验证双向通话音频</h3><p class="dialog-note">连接测试只说明实时语音服务可用，不能证明这台手机在运营商通话中双方都能听到声音。请在没有重要通话时测试。</p><div class="card"><div class="row"><span class="row-main"><span class="row-title">1. 准备音频助手</span><span class="row-sub">保持 Mika 内置音频助手连接</span></span></div><div class="row"><span class="row-main"><span class="row-title">2. 手动拨打或接听测试电话</span><span class="row-sub">让 AI 加入一通普通测试电话</span></span></div><div class="row"><span class="row-main"><span class="row-title">3. 确认双方声音</span><span class="row-sub">对方能听见 Mika，Mika 能识别对方</span></span></div></div><button class="check-row" id="audioConfirm" style="width:100%;border:0;background:transparent;text-align:left"><span class="check-box" id="audioCheckBox"></span><span class="row-main"><span class="row-title">我已实测本机通话双方均能听到声音</span><span class="row-sub">只有真实测试后才勾选</span></span></button><button class="primary" id="finishAudioTest" disabled>完成验证</button><button class="text-button" data-close="audioTestDialog">取消</button></div></dialog>
+
+  <script>
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+    const configs = [
+      { name: '默认实时语音', type: '火山一体化实时语音', model: '1.2.6.1', endpoint: 'wss://openspeech.example/realtime', configured: false, tested: false },
+      { name: '低延迟备用', type: '自定义一体化实时语音', model: 'realtime-fast', endpoint: 'wss://backup.example/realtime', configured: true, tested: false }
+    ];
+    const records = [
+      { number: '138 0013 8000', direction: '来电', outcome: '快递已约定今天 18:00 前放前台', time: '昨天 14:32', pending: true, summary: '快递员确认会在今天 18:00 前送达，并按你的交代放在前台。无需再次回电。', todo: '18:00 后确认包裹是否已放在前台。' },
+      { number: '10086', direction: '去电', outcome: '已确认套餐下月 1 日生效，未变更套餐', time: '周一 10:18', pending: false, summary: '客服确认当前套餐将在下月 1 日生效。本通电话只查询生效时间，没有变更套餐或开通收费服务。', todo: '' },
+      { number: '未知号码', direction: '来电', outcome: '对方未留言，通话已结束', time: '周日 18:06', pending: false, summary: '对方没有说明来意，也没有留下需要转告的信息。', todo: '' }
+    ];
+    const state = {
+      scenario: 'current', enabled: true, auto: false, paused: false, live: null,
+      phonePermission: true, appNotifications: true, callChannel: true, standbyChannel: true,
+      helper: true, audioReady: true, audioVerified: false, audioMode: '直连电话音频',
+      sim: false, standby: false, battery: 'managed', summary: false, hasRecords: false,
+      model: '默认实时语音', subpage: null, subBack: null
+    };
+    let toastTimer;
+    function activeConfig() { return configs.find(config => config.name === state.model) || configs[0]; }
+    function baseReady() {
+      const config = activeConfig();
+      return state.enabled && config.configured && config.tested && state.phonePermission && state.appNotifications && state.callChannel && state.helper && state.audioReady && state.audioVerified;
+    }
+    function dialReady() { return baseReady() && state.sim; }
+    function autoReady() { return baseReady() && state.standbyChannel; }
+    function missingBase() {
+      const config = activeConfig();
+      const missing = [];
+      if (!state.enabled) missing.push('启用 AI 电话');
+      if (!config.configured) missing.push('配置实时语音凭据');
+      if (config.configured && !config.tested) missing.push('测试实时语音连接');
+      if (!state.phonePermission) missing.push('允许电话权限');
+      if (!state.appNotifications) missing.push('允许应用通知');
+      else if (!state.callChannel) missing.push('开启 AI 电话通知频道');
+      if (!state.helper) missing.push('连接音频助手');
+      else if (!state.audioReady) missing.push('通过音频预检');
+      if (!state.audioVerified) missing.push('实测双向通话音频');
+      return missing;
+    }
+    function missingDial() { const missing = missingBase(); if (!state.sim) missing.push('选择可用 SIM'); return missing; }
+    function toast(message) {
+      const el = $('#toast');
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+    }
+    function syncStatus() {
+      const config = activeConfig();
+      const base = baseReady();
+      const badge = $('#headerBadge');
+      badge.className = 'badge';
+      if (!state.enabled) { badge.textContent = '功能已停用'; badge.classList.add('off'); }
+      else if (state.live === 'active') badge.textContent = 'AI 通话中';
+      else if (!base) { badge.textContent = '未就绪'; badge.classList.add('warn'); }
+      else if (state.paused) { badge.textContent = '已暂停'; badge.classList.add('warn'); }
+      else if (state.auto && state.standby) badge.textContent = '自动接听中';
+      else if (state.auto) { badge.textContent = '仅前台接听'; badge.classList.add('warn'); }
+      else { badge.textContent = '手动可用'; badge.classList.add('off'); }
+      $('#headerSubtitle').textContent = state.enabled ? `${state.model} · ${base ? '基础功能可用' : '尚未就绪'}` : '所有电话由系统电话处理';
+      $('#autoSwitch').classList.toggle('on', state.auto && state.enabled);
+      $('#autoSwitch').setAttribute('aria-checked', String(state.auto && state.enabled));
+      $('#autoSwitch').disabled = !state.auto && !autoReady();
+      $('#enabledSwitch').classList.toggle('on', state.enabled);
+      $('#enabledSwitch').setAttribute('aria-checked', String(state.enabled));
+      $('#autoSummary').textContent = !state.enabled ? 'AI 电话已停用' : !base ? '已关闭 · 完成基础设置后可开启' : state.paused ? '已暂停 · 30 分钟后自动恢复' : state.auto ? (state.standby ? '后台待命中 · 名单内号码等待 5 秒' : '仅应用可见且解锁时自动接听') : autoReady() ? '已关闭 · 来电时可手动让 AI 接听' : '后台待命通知频道未开启';
+      $('#enabledSummary').textContent = state.enabled ? '开启后可以使用 AI 接听和拨打' : '已停用 · 系统电话不受影响';
+      $('#pauseButton').textContent = state.paused ? '恢复自动接听' : '暂停自动接听 30 分钟';
+      $('#pauseButton').disabled = !state.auto;
+      const baseMissing = missingBase();
+      $('#receiveSetup').hidden = base;
+      $('#receiveSetupText').textContent = baseMissing.join(' · ');
+      const dialMissing = missingDial();
+      $('#dialSetup').hidden = dialReady();
+      $('#dialSetupText').textContent = dialMissing.join(' · ');
+      $('#modelSettingsSummary').textContent = `${state.model} · ${!config.configured ? '未配置凭据' : !config.tested ? '待测试连接' : '连接已测试'}`;
+      $('#privacySettingsSummary').textContent = `${state.summary ? '摘要跟随 Mika 主模型' : '摘要未开启'} · 原文加密保存在本机`;
+      const deviceIssues = [];
+      if (!state.phonePermission) deviceIssues.push('电话权限未允许');
+      if (!state.appNotifications || !state.callChannel) deviceIssues.push('电话通知未就绪');
+      if (!state.helper) deviceIssues.push('音频助手未连接');
+      if (!state.audioVerified) deviceIssues.push('双向音频待验证');
+      if (!state.sim) deviceIssues.push('无可用 SIM');
+      $('#deviceSettingsSummary').textContent = deviceIssues.length ? deviceIssues.join(' · ') : '权限、音频助手与双向音频均正常';
+      $('#deviceIcon').className = `icon ${deviceIssues.length ? 'warn' : 'green'}`;
+      $('#deviceIcon').textContent = deviceIssues.length ? '⚙' : '✓';
+      $('#backgroundSettingsSummary').textContent = !state.auto ? '自动接听已关闭' : state.standby ? '来电后台待命正在运行' : '未运行 · 仅应用可见且解锁时可接听';
+      $('#simSettingsSummary').textContent = state.sim ? 'SIM 1 · 系统默认' : '无可用 SIM';
+      $('#dialSimSummary').textContent = state.sim ? 'SIM 1 · 系统默认' : '无可用 SIM';
+      $('#recordCount').textContent = state.hasRecords ? '3 条' : '暂无';
+      $$('.model-name').forEach(el => el.textContent = state.model);
+      $$('.scenario').forEach(button => button.classList.toggle('active', button.dataset.scenario === state.scenario));
+    }
+    function switchTab(name) {
+      $$('.tab').forEach(tab => { const active = tab.dataset.tab === name; tab.classList.toggle('active', active); tab.setAttribute('aria-selected', String(active)); });
+      $$('.page').forEach(page => page.classList.toggle('active', page.id === `page-${name}`));
+      $('.viewport').scrollTop = 0;
+    }
+    function applyScenario(name) {
+      state.scenario = name;
+      Object.assign(state, { enabled: true, auto: false, paused: false, phonePermission: true, appNotifications: true, callChannel: true, standbyChannel: true, helper: true, audioReady: true, audioVerified: false, sim: false, standby: false, battery: 'managed', summary: false, hasRecords: false });
+      Object.assign(configs[0], { configured: false, tested: false });
+      state.model = configs[0].name;
+      if (name === 'ready') Object.assign(state, { auto: true, audioVerified: true, sim: true, standby: true, summary: true, hasRecords: true });
+      if (name === 'missing') Object.assign(state, { phonePermission: false, appNotifications: false, callChannel: false, standbyChannel: false, helper: false, audioReady: false, sim: true, battery: 'restricted' });
+      if (name !== 'current') Object.assign(configs[0], { configured: true, tested: name === 'ready' });
+      hideLive();
+      closeSubpage();
+      syncStatus();
+    }
+    $$('.scenario').forEach(button => button.addEventListener('click', () => applyScenario(button.dataset.scenario)));
+    $$('.tab').forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
+    $('#autoSwitch').addEventListener('click', () => {
+      if (!autoReady()) return toast(`还差：${missingBase().concat(state.standbyChannel ? [] : ['开启后台待命通知频道']).join('、')}`);
+      state.auto = !state.auto;
+      state.paused = false;
+      if (state.auto) state.standby = true;
+      syncStatus();
+    });
+    $('#enabledSwitch').addEventListener('click', () => {
+      state.enabled = !state.enabled;
+      if (!state.enabled) { state.auto = false; state.standby = false; hideLive(); }
+      syncStatus();
+      toast(state.enabled ? 'AI 电话已启用，仍需检查各项就绪条件' : '已停用 AI 电话，系统电话照常使用');
+    });
+    $('#pauseButton').addEventListener('click', () => { if (!state.auto) return; state.paused = !state.paused; syncStatus(); });
+    function showLive(mode, number = '10086') {
+      state.live = mode;
+      $('#liveCard').hidden = false;
+      $('#liveNumber').textContent = number;
+      const active = mode === 'active';
+      $('#liveLabel').textContent = active ? 'AI 正在通话' : '来电响铃';
+      $('#liveState').textContent = active ? '实时文字 · 你可以随时人工接管' : '这通电话要交给 Mika 吗？';
+      $('#incomingActions').hidden = active;
+      $('#activeActions').hidden = !active;
+      switchTab('receive');
+      syncStatus();
+      $('.viewport').scrollTop = 0;
+    }
+    function hideLive() { state.live = null; $('#liveCard').hidden = true; syncStatus(); }
+    $('#simulateIncoming').addEventListener('click', () => showLive('incoming', '138 0013 8000'));
+    $('#answerButton').addEventListener('click', () => { if (!baseReady()) return toast(`还不能 AI 接听：${missingBase().join('、')}`); showLive('active', $('#liveNumber').textContent); });
+    $('#dismissIncoming').addEventListener('click', hideLive);
+    $('#takeoverButton').addEventListener('click', () => { hideLive(); toast('AI 已退出，通话交给系统电话'); });
+    $('#hangupButton').addEventListener('click', () => { state.hasRecords = true; hideLive(); toast('演示结束，结果已保存到设置 › 通话记录'); });
+    $('#reviewCall').addEventListener('click', () => {
+      const number = $('#dialNumber').value.trim();
+      const goal = $('#dialGoal').value.trim();
+      if (!number || !goal) return toast('请填写电话号码和通话目标');
+      $('#reviewNumber').textContent = number;
+      $('#reviewGoal').textContent = goal;
+      $('#reviewSim').textContent = state.sim ? 'SIM 1 · 系统默认' : '无可用 SIM';
+      const blocked = missingDial();
+      $('#reviewBlocked').hidden = !blocked.length;
+      $('#reviewBlocked').textContent = blocked.length ? `当前不能拨打：${blocked.join('、')}` : '';
+      $('#confirmCall').disabled = blocked.length > 0;
+      syncStatus();
+      $('#reviewDialog').showModal();
+    });
+    $('#confirmCall').addEventListener('click', () => { if (!dialReady()) return; $('#reviewDialog').close(); showLive('active', $('#dialNumber').value.trim()); });
+    $$('[data-close]').forEach(button => button.addEventListener('click', () => $('#' + button.dataset.close).close()));
+    function rows(items) {
+      return `<div class="card">${items.map(item => `<button class="row" data-action="${item.action || ''}" ${item.index !== undefined ? `data-index="${item.index}"` : ''} ${item.disabled ? 'disabled' : ''}><span class="icon ${item.tone || ''}">${item.icon || '•'}</span><span class="row-main"><span class="row-title">${item.title}</span><span class="row-sub">${item.sub || ''}</span></span>${item.value ? `<span class="value ${item.valueTone || ''}">${item.value}</span>` : ''}${item.action ? '<span class="chevron">›</span>' : ''}</button>`).join('')}</div>`;
+    }
+    function openSubpage(title, html, key, back = null) {
+      state.subpage = key;
+      state.subBack = back;
+      $('#subTitle').textContent = title;
+      $('#subBody').innerHTML = html;
+      $('#rootView').hidden = true;
+      $('#subpage').hidden = false;
+      $('.sub-body').scrollTop = 0;
+      $$('[data-action]').forEach(button => button.addEventListener('click', () => handleAction(button.dataset.action, button.dataset.index)));
+    }
+    function closeSubpage() {
+      $('#subpage').hidden = true;
+      $('#rootView').hidden = false;
+      state.subpage = null;
+      state.subBack = null;
+      syncStatus();
+    }
+    $('#subBack').addEventListener('click', () => {
+      if (state.subBack) openKey(state.subBack);
+      else closeSubpage();
+    });
+    function openKey(key) {
+      if (key === 'models') openModels();
+      else if (key === 'records') openRecords();
+      else openSimple(key);
+    }
+    function openModels() {
+      const cards = configs.map((config, index) => `<div class="card card-pad radio-card ${state.model === config.name ? 'selected' : ''}"><button class="row" data-action="selectModel" data-index="${index}" style="padding:0;min-height:54px"><span class="icon blue">✦</span><span class="row-main"><span class="row-title">${config.name}</span><span class="row-sub">${config.type} · ${config.model}<br>${!config.configured ? '未配置凭据' : !config.tested ? '凭据已保存 · 待测试连接' : '连接已测试'}</span></span>${state.model === config.name ? '<span class="selected-mark">✓</span>' : '<span class="chevron">›</span>'}</button></div>`).join('');
+      const config = activeConfig();
+      openSubpage('实时语音服务', `<p class="fine-print" style="margin-top:0">接听和拨打共用默认服务，也可在单次拨打前更换。服务连接测试与手机双向音频实测是两件事。</p>${cards}<div class="card card-pad"><strong>${config.name}</strong><p class="hero-sub">${config.endpoint}<br>模型：${config.model}</p><div class="button-row"><button class="secondary" data-action="modelCredentials">配置凭据</button><button class="secondary" data-action="modelTest">测试连接</button></div></div><button class="primary" data-action="addConfig">添加实时语音配置</button><div class="card" style="margin-top:16px"><div class="row"><span class="row-main"><span class="row-title">当前方案</span><span class="row-sub">一体化实时语音：识别、对话和发声在同一服务中完成</span></span></div><div class="row"><span class="row-main"><span class="row-title">高级方案</span><span class="row-sub">ASR＋对话模型＋TTS 自由组合，后续单独设计</span></span></div></div>`, 'models');
+    }
+    function openRecords() {
+      const list = state.hasRecords ? records.map((record, index) => `<div class="card"><button class="row record-outcome" data-action="record" data-index="${index}"><span class="row-main"><span class="record-top"><span class="record-number">${record.number} · ${record.direction}</span><span class="tag ${record.pending ? '' : 'done'}">${record.pending ? '待处理' : '已完成'}</span></span><span class="record-text">${record.outcome}</span><span class="record-time">${record.time}</span></span><span class="chevron">›</span></button></div>`).join('') : '<div class="card card-pad" style="text-align:center"><div style="font-size:28px">↺</div><h3>暂无 AI 通话记录</h3><p class="hero-sub">完成一通 AI 电话后，结论、待办和原文会保存在这里。</p></div>';
+      openSubpage('通话记录', `${list}<p class="fine-print">默认先展示结论和待办，原始文字收进详情。通话结束通知可直接打开对应记录。</p>`, 'records');
+    }
+    function openRecord(index) {
+      const record = records[index];
+      openSubpage('通话详情', `<div class="summary-box"><h3>${record.outcome}</h3><p>${record.summary}</p></div><h3 class="section-title">待办</h3><div class="card card-pad">${record.todo || '这通电话没有待办事项。'}</div><h3 class="section-title">原始文字</h3><div class="card card-pad"><p class="hero-sub">对方：你好，请问现在方便吗？</p><p class="hero-sub">Mika：我是 Mika AI 电话助手，请问有什么需要转告？</p><p class="hero-sub">对方：……</p></div><button class="secondary">标记为${record.pending ? '已完成' : '待处理'}</button>`, 'record', 'records');
+    }
+    function stateRows() {
+      return `<div class="state-grid"><div class="state-cell ${baseReady() ? 'ok' : 'warn'}"><strong>手动接听</strong>${baseReady() ? '可用' : '未就绪'}</div><div class="state-cell ${dialReady() ? 'ok' : 'warn'}"><strong>AI 拨打</strong>${dialReady() ? '可用' : '未就绪'}</div><div class="state-cell ${state.auto && state.standby ? 'ok' : 'warn'}"><strong>自动接听</strong>${state.auto && state.standby ? '待命中' : '未待命'}</div></div>`;
+    }
+    function openDevice() {
+      const config = activeConfig();
+      openSubpage('设备、权限与音频助手', `${stateRows()}<h3 class="section-title">实时语音服务</h3>${rows([{icon:'✦',title:'服务凭据与连接',sub:`${state.model} · ${!config.configured ? '未配置凭据' : !config.tested ? '待测试连接' : '连接已测试'}`,action:'models',tone:config.tested?'green':'warn'}])}<h3 class="section-title">系统权限与通知</h3>${rows([{icon:'☎',title:'电话权限',sub:'读取通话状态和拨打电话',value:state.phonePermission?'已允许':'未允许',valueTone:state.phonePermission?'ok':'warn',action:state.phonePermission?'':'grantPhone',tone:state.phonePermission?'green':'warn'},{icon:'◉',title:'应用通知权限',sub:'AI 电话和后台待命都需要通知',value:state.appNotifications?'已允许':'未允许',valueTone:state.appNotifications?'ok':'warn',action:state.appNotifications?'':'grantNotifications',tone:state.appNotifications?'green':'warn'},{icon:'☎',title:'AI 电话通知频道',sub:'显示实时状态，提供取消和人工接管',value:state.callChannel?'已开启':'已关闭',valueTone:state.callChannel?'ok':'warn',action:state.callChannel?'':'grantCallChannel',tone:state.callChannel?'green':'warn'},{icon:'◷',title:'后台待命通知频道',sub:'锁屏自动接听所需',value:state.standbyChannel?'已开启':'已关闭',valueTone:state.standbyChannel?'ok':'warn',action:'background',tone:state.standbyChannel?'green':'warn'},{icon:'↺',title:'通话结束通知',sub:'通话完成后展示摘要和待办入口',value:'已开启',valueTone:'ok',tone:'green'}])}<h3 class="section-title">音频助手与双向音频</h3>${rows([{icon:'↗',title:'Mika 音频助手',sub:state.helper?'已连接 · AI 可在电话中听和说':'连接后，AI 才能在电话中听和说',value:state.helper?'已连接':'未连接',valueTone:state.helper?'ok':'warn',action:'helper',tone:state.helper?'green':'warn'},{icon:'⚙',title:'音频预检',sub:`${state.audioMode} · 输入 16kHz / 输出 24kHz`,value:state.audioReady?'具备条件':'不可用',valueTone:state.audioReady?'ok':'warn',tone:state.audioReady?'green':'warn'},{icon:'♪',title:'双向通话实测',sub:state.audioVerified?'已确认本机通话双方均能听到声音':'服务连接正常不代表手机通话音频正常',value:state.audioVerified?'已验证':'未验证',valueTone:state.audioVerified?'ok':'warn',action:'verifyAudio',tone:state.audioVerified?'green':'warn'}])}<button class="primary" data-action="prepare">重新检查并准备</button><p class="fine-print">只有实际完成测试通话后，才应确认双向音频可用。切换音频通道后需要重新验证。</p>`, 'device');
+    }
+    function openBackground() {
+      openSubpage('后台与锁屏', `${stateRows()}<h3 class="section-title">自动接听待命</h3>${rows([{icon:'◷',title:'来电后台待命',sub:state.standby?'正在运行 · 锁屏后也可自动接听':'未运行 · 仅应用可见且解锁时可自动接听',value:state.standby?'运行中':'未运行',valueTone:state.standby?'ok':'warn',action:state.standby?'':'startStandby',tone:state.standby?'green':'warn'},{icon:'◉',title:'后台待命通知频道',sub:'显示待命状态和停止入口',value:state.standbyChannel?'已开启':'已关闭',valueTone:state.standbyChannel?'ok':'warn',action:state.standbyChannel?'':'grantStandbyChannel',tone:state.standbyChannel?'green':'warn'},{icon:'⚙',title:'电池与后台活动',sub:state.battery==='restricted'?'Android 显示后台活动受限':'Android 正在应用电池优化',value:state.battery==='restricted'?'受限':'系统管理',valueTone:state.battery==='restricted'?'warn':'',action:'battery'}])}<p class="fine-print">如需锁屏自动接听，还要允许电话通知在锁屏显示。服务运行中仍需单独验证锁屏接听。</p><h3 class="section-title">锁屏后拨出</h3><div class="card card-pad"><strong>每次单独确认</strong><p class="hero-sub">核对号码、SIM 和任务后，在 45 秒内锁屏才会尝试拨出一次。仅熄屏但手机未真正锁定，不会拨出；可从通知取消。</p></div>`, 'background');
+    }
+    function openHelper() {
+      openSubpage('Mika 音频助手', `${rows([{icon:'↗',title:'音频助手状态',sub:state.helper?'已连接 · 可进入双向音频测试':'未连接 · 普通系统电话不受影响',value:state.helper?'已连接':'未连接',valueTone:state.helper?'ok':'warn',tone:state.helper?'green':'warn'}])}<div class="card card-pad"><strong>为什么需要音频助手？</strong><p class="hero-sub">普通接打电话由系统处理。Mika 的 AI 要在通话中听见对方并说话，需要音频助手。无线调试可以在手机上启动或恢复助手，不必连电脑。</p></div><h3 class="section-title">无线恢复</h3><div class="card"><div class="row"><span class="row-main"><span class="row-title">1. 连接 Wi-Fi</span><span class="row-sub">实时语音也需要联网</span></span></div><div class="row"><span class="row-main"><span class="row-title">2. 打开无线调试</span><span class="row-sub">在开发者选项中允许本机配对</span></span></div><div class="row"><span class="row-main"><span class="row-title">3. 配对并连接</span><span class="row-sub">以后助手停止时可从手机恢复</span></span></div></div><button class="primary" data-action="connectHelper">${state.helper ? '模拟断开助手' : '模拟配对并连接'}</button><button class="text-button" data-action="helperUsb">电脑 USB 备用方式</button><p class="fine-print" id="helperNote">高保真原型仅演示状态变化，不会修改手机开发者选项。</p>`, 'helper', 'device');
+    }
+    function openSim() {
+      openSubpage('默认拨号 SIM', state.sim ? `${rows([{icon:'▣',title:'SIM 1',sub:'系统默认 · 可用于运营商通话',value:'当前选择',valueTone:'ok',tone:'green'},{icon:'▣',title:'SIM 2',sub:'可用 · 每次拨打前也可单独更换',action:'selectSim'}])}<p class="fine-print">单次拨打选择的 SIM 不会改变这里的默认值。</p>` : '<div class="card card-pad" style="text-align:center"><div style="font-size:28px">▣</div><h3>没有可用于运营商通话的 SIM</h3><p class="hero-sub">接听设置仍可配置，但 AI 拨打需要可用 SIM。插入或启用 SIM 后重新检查。</p></div><button class="primary" data-action="simulateSim">演示：启用 SIM 1</button>', 'sim');
+    }
+    function openSimple(key) {
+      if (key === 'device') return openDevice();
+      if (key === 'background') return openBackground();
+      if (key === 'helper') return openHelper();
+      if (key === 'sim') return openSim();
+      const config = activeConfig();
+      const content = {
+        scope: ['接听范围', `${rows([{icon:'▤',title:'仅接听名单内号码',sub:'3 个号码 · 当前选择',tone:'blue'},{icon:'☎',title:'接听所有来电',sub:'包含名单外号码和隐藏号码'}])}<div class="card card-pad"><strong>接听等待时间</strong><p class="hero-sub">响铃 5 秒后由 AI 接听，可在 3–15 秒内调整。重要联系人始终由本人接听。</p></div>`],
+        bypass: ['始终由本人接听', rows([{icon:'♡',title:'家人',sub:'2 个号码'},{icon:'＋',title:'添加号码',sub:'这些号码不会被 AI 自动接听',tone:'blue'}])],
+        instructions: ['接听交代', `${rows([{icon:'▤',title:'快递外卖',sub:'询问配送时间，可以按保存的规则转告放置位置'},{icon:'≡',title:'业务询问',sub:'记录公司、事项和联系方式，不透露私人信息'},{icon:'＋',title:'新增交代',sub:'说明适用场景和希望 Mika 怎么处理',tone:'blue'}])}<p class="fine-print">长期交代只用于对应场景；单次拨打任务不会修改这里。</p>`],
+        voice: ['声音、开场白与通话说明', `${rows([{icon:'♪',title:'声音',sub:`使用${state.model}的默认声音`},{icon:'≡',title:'开场白',sub:'您好，我是 Mika AI 电话助手。请问有什么需要我转告？'}])}<label class="field"><span class="field-label">通用通话说明</span><textarea>简短、自然地沟通，不透露未授权的私人信息。</textarea></label><div class="card card-pad"><strong>AI 最长通话时间</strong><p class="hero-sub">120 秒，可在 15–600 秒之间调整。这里设置的是安全上限，不是每通电话都必须持续到上限。</p></div>`],
+        privacy: ['隐私与通话摘要', `${rows([{icon:'◈',title:'通话原文',sub:'加密保存在本机，最多保留 50 通'},{icon:'✦',title:'实时语音服务',sub:`通话音频发送给${state.model}`},{icon:'☎',title:'摘要模型',sub:'跟随 Mika 主模型 · 只接收通话文字'},{icon:'✓',title:'生成摘要和待办',sub:state.summary?'已授权发送通话文字给摘要模型':'未开启 · 不发送文字给摘要模型',value:state.summary?'已开启':'未开启',valueTone:state.summary?'ok':'warn',action:'summaryToggle',tone:state.summary?'green':'warn'}])}<p class="fine-print">实时通话模型和摘要模型是两套服务。关闭摘要不会删除已经保存在本机的原文。</p>`],
+        advanced: ['高级诊断', `<p class="fine-print" style="margin-top:0">普通使用不需要查看这里。切换音频通道后必须重新进行双向音频实测。</p>${rows([{icon:'⚙',title:'直连电话音频',sub:state.audioMode==='直连电话音频'?'当前使用 · 输入 16kHz / 输出 24kHz':'切换后需要重新验证',value:state.audioMode==='直连电话音频'?'当前':'',valueTone:'ok',action:'audioDirect',tone:state.audioMode==='直连电话音频'?'green':''},{icon:'⚙',title:'重定向电话音频',sub:state.audioMode==='重定向电话音频'?'当前使用 · 兼容性备用通道':'用于直连不可用时排查',value:state.audioMode==='重定向电话音频'?'当前':'',valueTone:'ok',action:'audioRedirect',tone:state.audioMode==='重定向电话音频'?'green':''},{icon:'↗',title:'导出诊断信息',sub:'音频计数、识别失败和连接状态，不包含号码、文字和凭据',action:'diagnostics'}])}<div class="card card-pad"><strong>当前状态</strong><p class="hero-sub">实时语音：${config.model}<br>音频助手：${state.helper?'已连接':'未连接'}<br>音频预检：${state.audioReady?'通过':'未通过'}<br>双向实测：${state.audioVerified?'已验证':'未验证'}</p></div>`]
+      };
+      const selected = content[key];
+      if (selected) openSubpage(selected[0], selected[1], key);
+    }
+    function reopen() { if (state.subpage) openKey(state.subpage); else syncStatus(); }
+    function handleAction(action, index) {
+      const config = activeConfig();
+      if (action === 'selectModel') {
+        state.model = configs[Number(index)].name;
+        state.audioVerified = false;
+        state.auto = false;
+        state.standby = false;
+        toast('已更换语音服务，请重新测试连接和手机双向音频');
+        return reopen();
+      }
+      if (action === 'addConfig') return $('#configDialog').showModal();
+      if (action === 'modelCredentials') {
+        $('#credentialsNote').textContent = `${config.name} · ${config.type} · ${config.model}`;
+        $('#credentialsDialog').showModal();
+        return;
+      }
+      if (action === 'modelTest') {
+        if (!config.configured) return toast('请先配置实时语音凭据');
+        config.tested = true;
+        toast('原型：已完成服务连接测试，仍需实测手机双向音频');
+        return reopen();
+      }
+      if (action === 'models') return openModels();
+      if (action === 'record') return openRecord(Number(index));
+      if (action === 'grantPhone') { state.phonePermission = true; toast('原型：已允许电话权限'); return reopen(); }
+      if (action === 'grantNotifications') { state.appNotifications = true; toast('原型：已允许应用通知'); return reopen(); }
+      if (action === 'grantCallChannel') { state.callChannel = true; toast('原型：已开启 AI 电话通知频道'); return reopen(); }
+      if (action === 'grantStandbyChannel') { state.standbyChannel = true; toast('原型：已开启后台待命通知频道'); return reopen(); }
+      if (action === 'background') return openBackground();
+      if (action === 'helper') return openHelper();
+      if (action === 'connectHelper') { state.helper = !state.helper; state.audioReady = state.helper; if (!state.helper) { state.auto = false; state.standby = false; } return reopen(); }
+      if (action === 'helperUsb') { $('#helperNote').textContent = 'USB 备用方式：连接电脑后运行引导命令，更新或重启后可能需要重新执行。'; return; }
+      if (action === 'verifyAudio') {
+        if (!state.helper || !config.tested) return toast('请先连接音频助手并完成实时语音连接测试');
+        $('#audioConfirm').setAttribute('aria-checked', 'false');
+        $('#audioCheckBox').classList.remove('checked');
+        $('#finishAudioTest').disabled = true;
+        return $('#audioTestDialog').showModal();
+      }
+      if (action === 'prepare') { toast(baseReady() ? '基础功能已就绪' : `还需：${missingBase().join('、')}`); return reopen(); }
+      if (action === 'startStandby') {
+        if (!state.auto) return toast('请先在接听页开启自动接听');
+        if (!state.standbyChannel) return toast('请先开启后台待命通知频道');
+        if (!baseReady()) return toast(`基础条件未完成：${missingBase().join('、')}`);
+        state.standby = true;
+        toast('原型：来电后台待命已启动');
+        return reopen();
+      }
+      if (action === 'battery') { state.battery = 'managed'; toast('原型：这里打开 Android 电池与后台设置'); return reopen(); }
+      if (action === 'selectSim' || action === 'simulateSim') { state.sim = true; toast('已选择 SIM 1'); return reopen(); }
+      if (action === 'summaryToggle') { state.summary = !state.summary; return reopen(); }
+      if (action === 'audioDirect' || action === 'audioRedirect') {
+        state.audioMode = action === 'audioDirect' ? '直连电话音频' : '重定向电话音频';
+        state.audioVerified = false;
+        state.auto = false;
+        state.standby = false;
+        toast('音频通道已切换，双向音频验证已重置');
+        return reopen();
+      }
+      if (action === 'diagnostics') return toast('原型：诊断信息已复制，不包含隐私内容');
+    }
+    $$('[data-open]').forEach(button => button.addEventListener('click', () => openKey(button.dataset.open)));
+    $('#audioConfirm').addEventListener('click', () => {
+      const checked = $('#audioCheckBox').classList.toggle('checked');
+      $('#audioConfirm').setAttribute('aria-checked', String(checked));
+      $('#finishAudioTest').disabled = !checked;
+    });
+    $('#finishAudioTest').addEventListener('click', () => {
+      state.audioVerified = true;
+      $('#audioTestDialog').close();
+      toast('已完成本机双向音频验证');
+      reopen();
+    });
+    $('#configForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const config = { name: $('#configName').value.trim(), type: '自定义一体化实时语音', endpoint: $('#configEndpoint').value.trim(), model: $('#configModel').value.trim(), configured: false, tested: false };
+      if (!config.name || !config.endpoint || !config.model) return;
+      configs.push(config);
+      state.model = config.name;
+      state.audioVerified = false;
+      event.target.reset();
+      $('#configDialog').close();
+      $('#credentialsNote').textContent = `${config.name} · ${config.type} · ${config.model}`;
+      $('#credentialsDialog').showModal();
+      syncStatus();
+    });
+    $('#credentialsForm').addEventListener('submit', event => {
+      event.preventDefault();
+      if (!$('#credentialKey').value.trim() && (!$('#legacyAppId').value.trim() || !$('#legacyAccessKey').value.trim())) return toast('请填写 API Key，或完整的旧版凭据');
+      activeConfig().configured = true;
+      activeConfig().tested = false;
+      event.target.reset();
+      $('#credentialsDialog').close();
+      toast('凭据已加密保存，请继续测试连接');
+      reopen();
+    });
+    syncStatus();
+  </script>
+</body>
+</html>

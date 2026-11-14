@@ -54,7 +54,12 @@ internal class ToolConfig(
     val saveScreenshot: (suspend (String, ByteArray) -> String)? = null,
     /** 跨会话任务摘要;给了才提供 task_memory_search / task_memory_timeline / task_memory_step。 */
     val taskMemory: com.wangzan101.mika.core.memory.TaskMemoryStore? = null,
+    /** 这两天的通知原文和存着的各天、各周、各月的归纳(主动能力攒下的);给了才提供 notices_read。 */
+    val notices: com.wangzan101.mika.core.proactive.NoticeSource? = null,
 )
+
+/** 一个任务里按规矩不收的记忆写入,到这么多条为止不计入连续失败;再多就照常计(见 [ToolContext.noteMemoryRefusal])。 */
+internal const val MAX_QUIET_MEMORY_REFUSALS = 12
 
 /**
  * 工具执行时共用的东西:配置、核查材料、能力放进来的东西([get]),以及跨工具的少量状态(被拒的付款申报、允许打开的链接……)。
@@ -107,6 +112,15 @@ internal class ToolContext(
     @Volatile private var memoryCandidates: List<String>? = null
     fun noteMemorySearch(ids: List<String>) { memoryCandidates = ids }
     fun memorySearchCandidates(): List<String>? = memoryCandidates
+
+    private val memoryRefusals = mutableSetOf<String>()
+    /**
+     * 记一次按规矩不收的记忆写入;返回这一次还算不算「只是答复、不计入连续失败」:头一回不收这一条,
+     * 而且本任务不收的还没超过 [MAX_QUIET_MEMORY_REFUSALS] 条。同一条被原样再提(答复里说了别再试)、或者不收的攒得太多,
+     * 就照常计失败,交给连续失败的守卫去停——手机上默认不限步数,不能指望步数上限兜底。
+     */
+    fun noteMemoryRefusal(key: String): Boolean =
+        synchronized(memoryRefusals) { memoryRefusals.add(key) && memoryRefusals.size <= MAX_QUIET_MEMORY_REFUSALS }
 
     /** 这次调用的工具会由分发器报实际效果(effect):「没变化」由效果来说,这里不另提示。 */
     var reportsEffect = false

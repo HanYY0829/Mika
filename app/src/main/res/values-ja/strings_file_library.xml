@@ -41,4 +41,10 @@
     <string name="file_library_preview">プレビュー</string>
     <string name="file_library_open_in_chat">会話で表示</string>
     <string name="file_library_open_failed">この会話を開けませんでした</string>
+    <string name="file_library_type_all">すべてのファイル形式</string>
+    <string name="file_library_type_image">画像</string>
+    <string name="file_library_type_pdf">PDF ファイル</string>
+    <string name="file_library_type_audio">音声</string>
+    <string name="file_library_type_video">動画</string>
+    <string name="file_library_type_other">その他のファイル</string>
 </resources>

@@ -6,6 +6,7 @@ import java.io.File
 import java.io.FileOutputStream
 import com.wangzan101.mika.settings.KeystoreKeyCipher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -125,6 +126,33 @@ internal class CallHistory(private val storage: Storage) {
 
     suspend fun setSummary(id: String, summary: CallSummary?, status: SummaryStatus): Result =
         edit(id) { records -> records.map { if (it.id == id) it.copy(summary = summary, summaryStatus = status) else it } }
+
+    suspend fun retryFailedSummary(id: String, generate: suspend (CallRecord) -> Boolean): Boolean {
+        var started: CallRecord? = null
+        try {
+            withContext(Dispatchers.IO) {
+                lock.withLock {
+                    if (!readOnce()) return@withLock
+                    val record = mutable.value.firstOrNull {
+                        it.id == id && it.summaryStatus == SummaryStatus.FAILED && it.transcript.isNotEmpty()
+                    } ?: return@withLock
+                    val pending = record.copy(summaryStatus = SummaryStatus.PENDING)
+                    if (persist(mutable.value.map { if (it.id == id) pending else it }) == Result.SAVED) started = pending
+                }
+            }
+            return started?.let { generate(it) } ?: false
+        } finally {
+            // Cancellation can arrive as the IO dispatcher returns the successful PENDING write.
+            if (started != null) withContext(NonCancellable + Dispatchers.IO) {
+                lock.withLock {
+                    val record = mutable.value.firstOrNull { it.id == id && it.summaryStatus == SummaryStatus.PENDING }
+                        ?: return@withLock
+                    val next = mutable.value.map { if (it.id == id) record.copy(summaryStatus = SummaryStatus.FAILED) else it }
+                    if (persist(next) == Result.WRITE_FAILED) mutable.value = next
+                }
+            }
+        }
+    }
 
     suspend fun delete(id: String): Result = edit(id) { records -> records.filterNot { it.id == id } }
 

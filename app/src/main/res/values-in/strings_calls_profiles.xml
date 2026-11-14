@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_voice_service">Layanan suara waktu nyata</string>
+    <string name="calls_voice_profiles_intro">Simpan beberapa konfigurasi suara waktu nyata. Panggilan masuk dan keluar memakai konfigurasi default, tetapi satu panggilan keluar dapat memilih yang lain. Pengujian koneksi dan verifikasi audio telepon adalah hal berbeda.</string>
+    <string name="calls_voice_profile_subtitle">%1$s · %2$s</string>
+    <string name="calls_voice_audio_verified">Audio telepon terverifikasi</string>
+    <string name="calls_voice_audio_unverified">Audio telepon belum diverifikasi</string>
+    <string name="calls_voice_selected">Konfigurasi default</string>
+    <string name="calls_voice_status_untested">Perlu menguji koneksi</string>
+    <string name="calls_voice_status_tested">Koneksi telah diuji</string>
+    <string name="calls_voice_select">Jadikan default</string>
+    <string name="calls_voice_delete">Hapus konfigurasi</string>
+    <string name="calls_voice_delete_confirm">Hapus %1$s dan kredensial yang tersimpan di perangkat? Riwayat panggilan tidak akan dihapus.</string>
+    <string name="calls_voice_test">Uji koneksi</string>
+    <string name="calls_voice_testing">Menguji…</string>
+    <string name="calls_voice_add">Tambah konfigurasi suara waktu nyata</string>
+    <string name="calls_voice_edit">Edit konfigurasi suara waktu nyata</string>
+    <string name="calls_voice_test_note">Koneksi berhasil tidak membuktikan audio dua arah berfungsi dalam panggilan operator. Lakukan panggilan uji sebenarnya sebelum mengaktifkan jawab otomatis.</string>
+    <string name="calls_voice_name">Nama konfigurasi</string>
+    <string name="calls_voice_endpoint">Alamat endpoint (wss)</string>
+    <string name="calls_voice_model">Model dialog waktu nyata</string>
+    <string name="calls_voice_default_name">Suara waktu nyata default</string>
+    <string name="calls_voice_protocol">Suara waktu nyata terpadu: pengenalan, dialog, dan ucapan ditangani oleh satu layanan.</string>
+    <string name="calls_voice_credentials_keep">Kosongkan untuk mempertahankan kredensial tersimpan. Kredensial baru akan menggantikan yang lama dan perlu diuji ulang.</string>
+    <string name="calls_back_settings">Kembali ke pengaturan</string>
+    <string name="calls_enabled_summary">AI dapat menjawab dan menelepon; jawab otomatis memiliki sakelar terpisah.</string>
+    <string name="calls_settings_voice_group">Suara dan model</string>
+    <string name="calls_settings_device_group">Perangkat dan operasi</string>
+    <string name="calls_settings_data_group">Data</string>
+    <string name="calls_history_entry_summary">Ringkasan, tindak lanjut, dan transkrip asli</string>
+    <string name="calls_advanced_summary">Saluran audio dan diagnostik</string>
+    <string name="calls_advanced_note">Mengganti saluran audio akan mengatur ulang verifikasi audio dua arah. Lakukan panggilan uji lagi sebelum mengaktifkan jawab otomatis.</string>
+    <string name="calls_voice_setup">Konfigurasi dan uji layanan suara</string>
+</resources>

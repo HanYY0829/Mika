@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="task_model_rate_limited">模型服務限制了請求頻率，重試後仍然過於頻繁。請稍後再試，或檢查帳戶的呼叫頻率限制。</string>
+</resources>

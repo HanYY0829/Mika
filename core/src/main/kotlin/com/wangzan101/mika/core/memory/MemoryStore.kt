@@ -31,6 +31,11 @@ class MemoryStore(
     val clock: () -> Long,
     private val ids: () -> String,
     val limit: Int = 500,
+    /**
+     * 用户让 Mika 记一件事、而内容里有用户自己没说过的具体值时:false(默认)不收;true 照存,来源记成 `inferred`
+     * (见 [MemorySource])。由「记忆与技能」里的开关定,每次保存时现读。
+     */
+    val inferenceAllowed: () -> Boolean = { false },
 ) {
     private val lock = Any()
     // 读不出(密钥库一时不可用)时先当空的用,但不许写:写了就会用空表盖掉真正的记忆文件

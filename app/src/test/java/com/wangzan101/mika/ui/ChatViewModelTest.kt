@@ -103,7 +103,7 @@ class ChatViewModelTest {
         override fun resumeIn(conversationId: String) { calls += "resume@$conversationId" }
         override fun answerIn(conversationId: String, text: String) { calls += "answer@$conversationId:$text" }
         override fun approveIn(conversationId: String, key: Int) { calls += "approve@$conversationId:$key" }
-        override fun unmuteIn(conversationId: String) { calls += "unmute@$conversationId" }
+        override fun togglePipSoundIn(conversationId: String) { calls += "toggle-sound@$conversationId" }
     }
 
     private val ready = SystemStatus(34, BuiltinShellStatus.Running, AccessibilityState.On, notificationsAllowed = true)
@@ -128,6 +128,30 @@ class ChatViewModelTest {
     private fun TestScope.did(step: Int, kind: String, tool: String, target: String?, effect: String = "completed", title: String? = null, failed: Boolean = false) {
         acts.value = acts.value + RunEvent.Activity(0, step, kind, tool, target, effect, title = title, failed = failed)
         runCurrent()
+    }
+
+    // 通知提醒那一轮(Mika 直接写进对话的,没跑过任务):没有用户气泡,也没有运行记录可看;同一天点开两次就有两轮,各是各的
+    @Test fun noticeTurnsHaveNoUserBubbleAndNoRunToOpen() = runTest {
+        val store = ConversationStore(tmp.newFolder())
+        store.append("talk", Turn("", "我从通知里挑出 1 条", "succeeded", runId = "notice:n1"))
+        store.append("talk", Turn("帮我回一下", "已回复", "succeeded", runId = "run-1"))
+        val vm = ChatViewModel(backgroundScope, MutableStateFlow(TaskState.Idle), stage, actions, store, parallelFlag = { false }, sandboxReady = MutableStateFlow(true))
+        runCurrent()
+        vm.openConversation("talk")
+        runCurrent()
+        val (notice, reply) = vm.ui.value.exchanges
+        assertEquals("", notice.goal)
+        assertEquals("notice:n1", notice.runId)
+        assertNull(notice.recordedRun)
+        assertEquals("我从通知里挑出 1 条", (notice.status as ExchangeStatus.Done).answer)
+        assertEquals("run-1", reply.recordedRun)
+        // 页面上的行数和画出来的对得上:提醒那一轮只有回答那一行,普通的一轮是原话、「查看过程」、回答三行
+        assertEquals(1 + 3, chatItemCount(vm.ui.value.exchanges, kept = null, phoneSetupNeeded = false, hasBlocked = false))
+        // 对话开着的时候又写进一轮提醒:接在后面,前面的不动、不合并
+        store.append("talk", Turn("", "我从通知里挑出 2 条", "succeeded", runId = "notice:n2"))
+        runCurrent()
+        assertEquals(listOf("notice:n1", "run-1", "notice:n2"), vm.ui.value.exchanges.map { it.runId })
+        assertEquals(listOf("我从通知里挑出 1 条", "已回复", "我从通知里挑出 2 条"), vm.ui.value.exchanges.map { (it.status as ExchangeStatus.Done).answer })
     }
 
     @Test fun draftsStayWithTheirConversationInSerialAndParallelModes() = runTest {
@@ -2657,6 +2681,26 @@ class ChatViewModelTest {
         assertFalse(row.toString().contains("ref_expired"))
     }
 
+    // 让它记、它按规矩没收(不是你亲口说的、敏感、没明确要改):不是出了故障,不写「没成功」,说没收和原因;工具用界面上的名字
+    @Test fun declinedMemoryWriteSaysWhyInsteadOfFailed() = runTest {
+        val vm = vm()
+        vm.send("总结几条写进记忆", ok)
+        emit(TaskState.Running(1, "", "memory_save"))
+        did(1, "observe", "memory_save", null, "content_not_from_user", failed = true)
+        did(2, "observe", "memory_save", null, "sensitive", failed = true)
+        did(3, "observe", "memory_edit", null, "edit_not_requested", failed = true)
+        did(4, "observe", "memory_edit", null, "not_found", failed = true)
+        val rows = vm.ui.value.exchanges.single().steps
+        assertEquals(listOf("写入记忆", "写入记忆", "修改记忆", "修改记忆"), rows.map { it.title })
+        assertEquals(listOf("不是你亲口说的,没有写入", "含敏感信息,没有写入", "你没明确要改或删,没有改动", "没成功"), rows.map { it.subtitle })
+        assertFalse(rows.toString().contains("content_not_from_user") || rows.toString().contains("memory_save"))
+        // 点开一步、运行过程页用的是同一份说法
+        assertEquals("不是你亲口说的,没有写入", ChatCopy.effectLabel("quote_not_from_user"))
+        assertEquals("没成功", ChatCopy.effectLabel("memory_full"))
+        // 开着「让 Mika 自己归纳着记」、但这句话没让它记
+        assertEquals("这句话没让它记,没有写入", ChatCopy.effectLabel("inference_not_requested"))
+    }
+
     // 原话的任务还在等服务收尾上一个时插的话:先开始原话的任务,再把插话交给它
     @Test fun steerDuringPendingStartIsSentAfterTheStart() = runTest {
         val busy = MutableStateFlow(true)
@@ -3077,15 +3121,16 @@ class ChatViewModelTest {
         assertFalse("点小按钮再打开", vm.ui.value.pip.closed)
     }
 
-    @Test fun pipUnmuteIsOneShotAndRepeatedClicksDoNotInventToggleState() = runTest {
+    @Test fun pipSoundButtonAlwaysDispatchesRealActionAndDoesNotInventState() = runTest {
         val vm = vm()
         vm.send("打开视频", ok)
         val id = vm.ui.value.conversationId!!
         calls.clear()
         val before = vm.ui.value.pip
-        vm.unmutePip()
-        vm.unmutePip()
-        assertEquals(listOf("unmute@$id", "unmute@$id"), calls)
+        // 方向由任务里的真实音频记录定(恢复/再静上),界面每次只发真实动作,不自己记开关态
+        vm.togglePipSound()
+        vm.togglePipSound()
+        assertEquals(listOf("toggle-sound@$id", "toggle-sound@$id"), calls)
         assertEquals(before, vm.ui.value.pip)
     }
 

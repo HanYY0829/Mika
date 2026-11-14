@@ -163,6 +163,30 @@ class PaymentOnlyAskTest {
         assertTrue(sink.all.none { it is RunEvent.Confirmation })
     }
 
+    @Test fun browsingFinancialJobTitlesDoesNotRequirePaymentConfirmation() = runTest {
+        for (title in listOf("跨境支付产品经理", "付款专员", "转账会计", "结算会计")) {
+            val s = Chat(app = "com.example.jobs", page = applicationPage.map {
+                if (it.ref == "@e1") it.copy(name = title, role = "link") else it
+            })
+            val sink = Events()
+            val m = FakeModel(OBSERVE, tap("@e1"), FINISH)
+            loop(m, s, sink = sink).run("查看岗位详情")
+            assertEquals(title, listOf("@e1"), s.taps)
+            assertEquals("true", m.result(2).s("ok"))
+            assertTrue(sink.all.none { it is RunEvent.Confirmation })
+        }
+    }
+
+    @Test fun financialJobTitleAndSalaryDoNotTurnContactIntoPayment() = runTest {
+        val s = Chat(page = applicationPage.map {
+            if (it.ref == "@e1") it.copy(name = "跨境支付产品经理") else it
+        })
+        val m = FakeModel(OBSERVE, tap("@e3"), FINISH)
+        loop(m, s).run("t")
+        assertEquals(listOf("@e3"), s.taps)
+        assertEquals("true", m.result(2).s("ok"))
+    }
+
     @Test fun donationStillRequiresUserTakeover() = runTest {
         val s = Chat(page = donationPage)
         val m = FakeModel(OBSERVE, tap("@e3"), GIVE_UP)

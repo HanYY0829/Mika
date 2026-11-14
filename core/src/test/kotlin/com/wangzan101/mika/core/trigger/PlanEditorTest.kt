@@ -13,6 +13,53 @@ class PlanEditorTest {
 
     private fun draft() = newPlanDraft(now, java.time.ZoneId.of(zone)).copy(content = "check the weather")
 
+    @Test fun copyingWeeklyPlanKeepsRulesButStartsPausedWithFreshHistory() {
+        val original = TriggerDefinition(
+            "plan", "thread", "goal", now, conditionGoal = "condition", idleOnly = true,
+            calendarTime = "08:00", calendarTimes = listOf("08:00", "20:00"),
+            calendarDays = listOf(1, 5), calendarZone = zone, notifyWhen = ConditionNotify.EachTimeMet,
+            cooldownMs = 300_000, lastConditionMet = true, lastValue = "observed", baselineValue = "base",
+            baselineAtMs = now, lastFiredAtMs = now, source = TriggerSource.External,
+        )
+        val copy = editedTrigger(original.toCopyPlanDraft(now), null, "copy", original.threadId, now)
+
+        assertEquals("copy", copy.id)
+        assertEquals(original.threadId, copy.threadId)
+        assertEquals(original.goal, copy.goal)
+        assertEquals(original.conditionGoal, copy.conditionGoal)
+        assertEquals(original.calendarClocks(), copy.calendarClocks())
+        assertEquals(original.calendarDays, copy.calendarDays)
+        assertEquals(original.calendarZone, copy.calendarZone)
+        assertEquals(original.notifyWhen, copy.notifyWhen)
+        assertEquals(original.cooldownMs, copy.cooldownMs)
+        assertEquals(TriggerSource.User, copy.source)
+        assertTrue(copy.idleOnly)
+        assertFalse(copy.enabled)
+        assertNull(copy.lastConditionMet)
+        assertNull(copy.lastValue)
+        assertNull(copy.baselineValue)
+        assertNull(copy.baselineAtMs)
+        assertNull(copy.lastFiredAtMs)
+    }
+
+    @Test fun copyingAnExpiredReminderSuggestsAFutureTime() {
+        val original = TriggerDefinition("plan", "thread", "remind me", now - 1, reminderText = "remind me")
+        val copy = editedTrigger(original.toCopyPlanDraft(now), null, "copy", original.threadId, now)
+
+        assertTrue(copy.nextAtMs > now)
+        assertEquals(original.reminderText, copy.reminderText)
+        assertFalse(copy.enabled)
+    }
+
+    @Test fun copyingAFutureIntervalKeepsItsFirstTimeAndCadence() {
+        val original = TriggerDefinition("plan", "thread", "goal", now + 180_000, intervalMs = 900_000)
+        val copy = editedTrigger(original.toCopyPlanDraft(now), null, "copy", original.threadId, now)
+
+        assertEquals(original.nextAtMs, copy.nextAtMs)
+        assertEquals(original.intervalMs, copy.intervalMs)
+        assertFalse(copy.enabled)
+    }
+
     @Test fun createsOneShotWithIndependentIdentityAndMatchingPreview() {
         val input = draft().copy(firstAt = "2026-11-07 08:30")
         val plan = editedTrigger(input, null, "new-plan", "new-thread", now)

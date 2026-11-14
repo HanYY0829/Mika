@@ -223,4 +223,9 @@
         <item quantity="many">%1$d дней</item>
         <item quantity="other">%1$d дня</item>
     </plurals>
+    <string name="settings_scheduled_quiet">Тихие часы для запланированных задач</string>
+    <string name="settings_scheduled_quiet_detail">Результаты и напоминания запланированных задач беззвучно появляются в панели уведомлений.</string>
+    <string name="settings_scheduled_quiet_start">Время начала</string>
+    <string name="settings_scheduled_quiet_end">Время окончания</string>
+    <string name="settings_scheduled_quiet_equal">Чтобы отключить звук уведомлений, выберите разное время начала и окончания.</string>
 </resources>

@@ -158,6 +158,54 @@ class AppMuterTest {
         assertEquals("allow", audio.modes["video.app"])
     }
 
+    @Test fun manualMuteAgainRestoresAutomaticMutingAndTaskEndRestore() {
+        audio.modes["video.app"] = "allow"
+        muter.opened("video.app", null)
+        assertTrue(muter.unmute("video.app", null))
+        assertTrue(muter.muteAgain("video.app", null))
+        assertEquals("ignore", audio.modes["video.app"])
+        // 回到自动管理:再冒出来不重复静
+        muter.opened("video.app", null)
+        assertEquals(listOf("video.app", "video.app"), audio.mutes)
+        // 再静上仍走台账,收尾把原模式还回去
+        assertTrue(record.restoreAll())
+        assertEquals("allow", audio.modes["video.app"])
+        assertNull(store.saved)
+    }
+
+    @Test fun manualMuteAgainMutesEvenWhenVisibleOnMainScreen() {
+        audio.modes["maps.app"] = "allow"
+        onMain += "maps.app"
+        muter.opened("maps.app", null)
+        assertTrue(failed.isNotEmpty())
+        assertTrue(muter.unmute("maps.app", null))
+        // 用户显式再静:不受主屏可见性判定拦,与 unmute 的显式优先对称
+        assertTrue(muter.muteAgain("maps.app", null))
+        assertEquals("ignore", audio.modes["maps.app"])
+    }
+
+    @Test fun failedManualMuteAgainKeepsRestoreStateForRetry() {
+        audio.modes["video.app"] = "allow"
+        muter.opened("video.app", null)
+        assertTrue(muter.unmute("video.app", null))
+        audio.failing += "video.app"
+        assertFalse(muter.muteAgain("video.app", null))
+        assertTrue("video.app" in muter.userUnmuted.value)
+        audio.failing -= "video.app"
+        assertTrue(muter.muteAgain("video.app", null))
+        assertTrue(muter.userUnmuted.value.isEmpty())
+    }
+
+    @Test fun userUnmutedFlowTracksManualToggles() {
+        audio.modes["video.app"] = "allow"
+        muter.opened("video.app", null)
+        assertTrue(muter.userUnmuted.value.isEmpty())
+        assertTrue(muter.unmute("video.app", null))
+        assertEquals(setOf("video.app"), muter.userUnmuted.value)
+        assertTrue(muter.muteAgain("video.app", null))
+        assertTrue(muter.userUnmuted.value.isEmpty())
+    }
+
     @Test fun manualUnmuteSurvivesTakeoverCycles() {
         audio.modes["video.app"] = "allow"
         muter.opened("video.app", null)

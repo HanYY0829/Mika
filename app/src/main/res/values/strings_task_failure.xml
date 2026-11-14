@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="task_model_rate_limited">The model service is rate limiting requests, even after retrying. Please try again later or check your account’s rate limits.</string>
+</resources>

@@ -41,4 +41,10 @@
     <string name="file_library_preview">Visualizar</string>
     <string name="file_library_open_in_chat">Ver na conversa</string>
     <string name="file_library_open_failed">Não foi possível abrir esta conversa</string>
+    <string name="file_library_type_all">Todos os tipos de arquivo</string>
+    <string name="file_library_type_image">Imagens</string>
+    <string name="file_library_type_pdf">Arquivos PDF</string>
+    <string name="file_library_type_audio">Áudio</string>
+    <string name="file_library_type_video">Vídeo</string>
+    <string name="file_library_type_other">Outros arquivos</string>
 </resources>

@@ -41,4 +41,10 @@
     <string name="file_library_preview">Preview</string>
     <string name="file_library_open_in_chat">Show in chat</string>
     <string name="file_library_open_failed">Could not open this conversation</string>
+    <string name="file_library_type_all">All file types</string>
+    <string name="file_library_type_image">Images</string>
+    <string name="file_library_type_pdf">PDFs</string>
+    <string name="file_library_type_audio">Audio</string>
+    <string name="file_library_type_video">Video</string>
+    <string name="file_library_type_other">Other files</string>
 </resources>

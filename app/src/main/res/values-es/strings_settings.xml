@@ -218,4 +218,9 @@
         <item quantity="many">%1$d días</item>
         <item quantity="other">%1$d días</item>
     </plurals>
+    <string name="settings_scheduled_quiet">Horas de silencio para tareas programadas</string>
+    <string name="settings_scheduled_quiet_detail">Los resultados y recordatorios programados aparecen en silencio en el panel de notificaciones.</string>
+    <string name="settings_scheduled_quiet_start">Hora de inicio</string>
+    <string name="settings_scheduled_quiet_end">Hora de fin</string>
+    <string name="settings_scheduled_quiet_equal">Elige horas de inicio y fin distintas para silenciar las notificaciones.</string>
 </resources>

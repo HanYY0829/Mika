@@ -132,15 +132,28 @@ class UsageLedger(
         UsageSnapshot(hours.map { (c, n) -> UsageRow(c.hour, c.key, n) }, HashMap(names))
     }
 
-    /** 这家服务商在当前本地日历日的已报告输入加输出。 */
-    fun providerTokensToday(providerId: String): Long {
+    /** 这家服务商在当前本地日历日的已报告输入加输出;主动能力的用量有自己的预算,不算在内。 */
+    fun providerTokensToday(providerId: String): Long =
+        tokensToday { it.providerId == providerId && it.purpose != UsagePurpose.Proactive }
+
+    /** 主动能力在当前本地日历日的已报告输入加输出,各服务商合计。 */
+    fun proactiveTokensToday(): Long = tokensToday { it.purpose == UsagePurpose.Proactive }
+
+    /** 主动能力在当前本地日历日实际发出的请求数,各服务商合计;服务商不报用量时 Token 数是 0,靠它兜底。 */
+    fun proactiveCallsToday(): Long = today({ it.purpose == UsagePurpose.Proactive }) { it.calls }
+
+    /** 当前本地日历日里、[key] 选中的格子的输入加输出。 */
+    private fun tokensToday(key: (UsageKey) -> Boolean): Long = today(key) { it.input + it.output }
+
+    /** 当前本地日历日里、[key] 选中的格子各取 [amount] 再合计。 */
+    private fun today(key: (UsageKey) -> Boolean, amount: (UsageCounts) -> Long): Long {
         val z = zone()
         val today = Instant.ofEpochMilli(now()).atZone(z).toLocalDate()
         val start = today.atStartOfDay(z).toInstant().toEpochMilli()
         val end = today.plusDays(1).atStartOfDay(z).toInstant().toEpochMilli()
         return synchronized(lock) {
             cells.entries.sumOf { (cell, counts) ->
-                if (cell.key.providerId == providerId && cell.startMs in start until end) counts.input + counts.output else 0L
+                if (key(cell.key) && cell.startMs in start until end) amount(counts) else 0L
             }
         }
     }

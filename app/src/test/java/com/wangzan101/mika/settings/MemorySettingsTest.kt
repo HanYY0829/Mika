@@ -25,6 +25,19 @@ class MemorySettingsTest {
         assertFalse(MemorySettings(file).switches.value.learnSkills)
     }
 
+    // 「让 Mika 自己归纳着记」默认关;旧文件里没有这一项也是关;打开后记得住
+    @Test fun inferMemoriesOffByDefaultAndSticks() {
+        val file = File(tmp.root, "memory.json")
+        assertFalse(MemorySettings(file).switches.value.inferMemories)
+        file.writeText("""{"useMemory":true,"autoRemember":true,"learnSkills":true}""")
+        val settings = MemorySettings(file)
+        assertFalse(settings.switches.value.inferMemories)
+        settings.update { it.copy(inferMemories = true) }
+        assertTrue(MemorySettings(file).switches.value.inferMemories)
+        // 别的开关不受影响
+        assertTrue(MemorySettings(file).switches.value.autoRemember)
+    }
+
     @Test fun rememberTasksOnByDefaultAndSticks() {
         val file = File(tmp.root, "memory.json")
         // 没存过 rememberTasks 的旧文件:默认开
@@ -34,5 +47,18 @@ class MemorySettingsTest {
         val settings = MemorySettings(file)
         settings.update { it.copy(rememberTasks = false) }
         assertFalse(MemorySettings(file).switches.value.rememberTasks)
+    }
+
+    @Test fun taskMemoryRequiresBothSwitchesAndKeepsTheStoredPreference() {
+        val file = File(tmp.root, "memory.json")
+        file.writeText("""{"useMemory":false}""")
+        val settings = MemorySettings(file)
+        assertTrue(settings.switches.value.rememberTasks)
+        assertFalse(settings.switches.value.taskMemoryEnabled)
+
+        settings.update { it.copy(useMemory = true) }
+        assertTrue(settings.switches.value.taskMemoryEnabled)
+        settings.update { it.copy(rememberTasks = false) }
+        assertFalse(MemorySettings(file).switches.value.taskMemoryEnabled)
     }
 }

@@ -209,6 +209,32 @@ class BridgeTests(unittest.TestCase):
         self.bridge.poll_once()
         self.assertEqual(len(self.sent), shown)
 
+    def test_inflight_poll_cannot_replace_terminal_status(self):
+        for old_response in (
+                {"task_id": "task_1", "status": "waiting_for_answer", "question": "Old question"},
+                ApiError("http_404", status=404)):
+            with self.subTest(old_response=old_response):
+                peer = "oc_chat:ou_owner"
+                self.store.update(peer, task_id="task_1", notice="", uncertain=0)
+                final = {"task_id": "task_1", "status": "done", "answer": "Final result"}
+                self.sent.clear()
+
+                def finish_during_poll(task_id):
+                    self.assertEqual("task_1", task_id)
+                    with patch.object(self.api, "task", return_value=final):
+                        self.deliver("/status", "status-" + type(old_response).__name__)
+                    if isinstance(old_response, ApiError):
+                        raise old_response
+                    return old_response
+
+                with patch.object(self.api, "task", side_effect=finish_during_poll):
+                    self.bridge.poll_once()
+                self.assertEqual(1, len(self.sent))
+                self.assertIn("Final result", self.sent[0][1])
+                session = self.store.session(peer)
+                self.assertTrue(session["notice"].startswith("terminal:"))
+                self.assertEqual(0, session["uncertain"])
+
     def test_old_poll_failure_does_not_mark_replacement_task_uncertain(self):
         peer = "oc_chat:ou_owner"
         self.store.update(peer, task_id="task_old")

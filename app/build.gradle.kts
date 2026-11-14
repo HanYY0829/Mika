@@ -16,10 +16,10 @@ android {
 
     defaultConfig {
         applicationId = "com.wangzan101.mika"
-        minSdk = 30
+        minSdk = 29
         targetSdk = 35
-        versionCode = 41
-        versionName = "0.1.40"
+        versionCode = 43
+        versionName = "0.1.42"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "GIT_HASH", "\"$gitHash\"")
         // 关于页版本号后的 Beta 标记;出正式版时改成 false

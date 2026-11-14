@@ -162,6 +162,10 @@
     <string name="step_viewed">%1$s 확인함</string>
     <string name="step_viewed_part">%1$s에서 %2$s 확인함</string>
     <string name="step_failed">실패</string>
+    <string name="step_declined_not_said">직접 하신 말이 아니어서 기록하지 않았습니다</string>
+    <string name="step_declined_sensitive">민감한 정보가 있어 기록하지 않았습니다</string>
+    <string name="step_declined_not_asked">수정이나 삭제를 요청하지 않아 바꾸지 않았습니다</string>
+    <string name="step_declined_not_requested">이 메시지에서 기억하라고 하지 않아 기록하지 않았습니다</string>
     <string name="step_number">%1$d단계</string>
     <string name="source_label">출처</string>
     <plurals name="screenshots">
@@ -236,6 +240,7 @@
     <string name="chat_withdraw_message">메시지 회수</string>
     <string name="pip_close">이 작업의 작은 화면 닫기</string>
     <string name="pip_unmute">소리 켜기</string>
+    <string name="pip_mute">소리 끄기</string>
     <string name="pip_back">가상 화면에서 뒤로</string>
     <string name="pip_reopen">화면 표시</string>
     <string name="pip_closed_needs_you">확인 필요</string>

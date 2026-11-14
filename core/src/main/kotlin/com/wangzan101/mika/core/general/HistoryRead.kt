@@ -1,5 +1,6 @@
 package com.wangzan101.mika.core.general
 
+import com.wangzan101.mika.core.agent.NoticeTurn
 import com.wangzan101.mika.core.agent.Turn
 import com.wangzan101.mika.core.observation.ObsKind
 import com.wangzan101.mika.core.observation.Observation
@@ -88,7 +89,8 @@ internal object HistoryRead : AgentTool {
                     put("turn", i + 1)
                     put("said", clip(t.userText, GIST_CHARS))
                     put("status", t.status)
-                    put("outcome", clip(t.outcome, GIST_CHARS))
+                    put("outcome", outcome(t, GIST_CHARS))
+                    if (NoticeTurn.isNotice(t)) put(NOTICE, true)
                     summary?.let { put("time", time(it.startedAtMs, zone)) }
                     put("recorded", summary != null)
                 }
@@ -113,7 +115,8 @@ internal object HistoryRead : AgentTool {
             put("turn", n)
             put("said", t.userText)
             put("status", t.status)
-            put("outcome", clip(t.outcome, OUTCOME_CHARS))
+            put("outcome", outcome(t, OUTCOME_CHARS))
+            if (NoticeTurn.isNotice(t)) put(NOTICE, true)
             if (t.steers.isNotEmpty()) put("userAddedDuringTask", JsonArray(t.steers.map { JsonPrimitive(clip(it, GIST_CHARS)) }))
             summary?.let { put("time", time(it.startedAtMs, ZoneId.systemDefault())) }
             put("recorded", summary != null)
@@ -178,10 +181,18 @@ internal object HistoryRead : AgentTool {
 
     private fun clip(s: String, max: Int) = if (s.length <= max) s else s.take(max - 1) + "…"
 
+    /**
+     * 一轮的结果。通知提醒那一轮([NoticeTurn])列的是别的 App、别人写的字:套上不可信标记再给,并标上 [NOTICE]——
+     * 模型据此知道这一轮不是用户说的;记运行记录时据此不记它的内容([com.wangzan101.mika.core.record.Redactor.result])。
+     */
+    private fun outcome(t: Turn, max: Int): String = clip(t.outcome, max).let { if (NoticeTurn.isNotice(t)) NoticeTurn.untrusted(it) else it }
+
     /** 读记录出错当没有:查不到不影响任务。 */
     private suspend fun <T> safe(fallback: T, read: suspend () -> T): T =
         try { read() } catch (e: CancellationException) { throw e } catch (e: Exception) { fallback }
 
+    /** 结果里标「这一轮是通知提醒」的字段。 */
+    const val NOTICE = "notice"
     private const val NOTE = "note"
     private const val PROGRESS = "progress"
     private const val SOURCE = "history"

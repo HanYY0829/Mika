@@ -4,7 +4,7 @@
     <string name="calls_device_and_permissions">الجهاز والأذونات</string>
     <string name="calls_edit_rule">تعديل</string>
     <string name="calls_nav_receive">الرد</string>
-    <string name="calls_nav_task">مهمة</string>
+    <string name="calls_nav_task">اتصال</string>
     <string name="calls_pause_enable_first">فعّل الرد التلقائي لتتمكن من إيقافه مؤقتًا.</string>
     <string name="calls_rule_delay_summary">مهلة الرد: %1$d ث</string>
     <string name="calls_rule_pause">إيقاف مؤقت</string>

@@ -4,7 +4,7 @@
     <string name="calls_device_and_permissions">دستگاه و مجوزها</string>
     <string name="calls_edit_rule">ویرایش</string>
     <string name="calls_nav_receive">پاسخ دادن</string>
-    <string name="calls_nav_task">وظیفه تماس</string>
+    <string name="calls_nav_task">تماس</string>
     <string name="calls_pause_enable_first">برای توقف موقت، ابتدا پاسخ خودکار را روشن کنید.</string>
     <string name="calls_rule_delay_summary">تأخیر پاسخ: %1$d ثانیه</string>
     <string name="calls_rule_pause">توقف موقت</string>

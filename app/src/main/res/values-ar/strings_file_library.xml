@@ -41,4 +41,10 @@
     <string name="file_library_preview">معاينة</string>
     <string name="file_library_open_in_chat">عرض في المحادثة</string>
     <string name="file_library_open_failed">تعذّر فتح هذه المحادثة</string>
+    <string name="file_library_type_all">كل أنواع الملفات</string>
+    <string name="file_library_type_image">الصور</string>
+    <string name="file_library_type_pdf">ملفات PDF</string>
+    <string name="file_library_type_audio">الصوت</string>
+    <string name="file_library_type_video">الفيديو</string>
+    <string name="file_library_type_other">ملفات أخرى</string>
 </resources>

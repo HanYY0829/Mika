@@ -208,4 +208,9 @@
     <plurals name="settings_auto_archive_days">
         <item quantity="other">%1$d일</item>
     </plurals>
+    <string name="settings_scheduled_quiet">예약 작업 알림 조용한 시간</string>
+    <string name="settings_scheduled_quiet_detail">예약 작업의 결과와 알림은 알림 패널에 조용히 표시됩니다.</string>
+    <string name="settings_scheduled_quiet_start">시작 시간</string>
+    <string name="settings_scheduled_quiet_end">종료 시간</string>
+    <string name="settings_scheduled_quiet_equal">알림을 조용히 표시하려면 시작 시간과 종료 시간을 다르게 선택하세요.</string>
 </resources>

@@ -48,6 +48,7 @@ class RunRecovery(
     private val records: RunRecords? = null,
     private val label: (String) -> String = { it },
     private val appLabel: (String) -> String = { it },
+    private val scheduledLocalChannel: Channel? = null,
 ) {
     private val done = AtomicBoolean(false)
     private val lock = Mutex()
@@ -85,7 +86,10 @@ class RunRecovery(
     private suspend fun settle(run: StoredRun) {
         run.triggerWindowKey?.let { triggers.interrupted(it, "run interrupted before the result was confirmed") }
         val peer = run.channelPeer ?: ChannelPeer(LocalChannel.ID, "phone-owner", run.threadId)
-        val channel = channels(peer.channelId) ?: return
+        val scheduledChannel = scheduledLocalChannel.takeIf {
+            peer.channelId == LocalChannel.ID && run.triggerWindowKey != null
+        }
+        val channel = scheduledChannel ?: channels(peer.channelId) ?: return
         val deliveryId = resultId(run)
         val prior = deliveryId?.let(outbox::get)
         val reply = run.reply ?: (prior?.delivery as? Delivery.Result)?.text

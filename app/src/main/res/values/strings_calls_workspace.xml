@@ -4,7 +4,7 @@
     <string name="calls_device_and_permissions">Device and permissions</string>
     <string name="calls_edit_rule">Edit</string>
     <string name="calls_nav_receive">Answer</string>
-    <string name="calls_nav_task">Call task</string>
+    <string name="calls_nav_task">Dial</string>
     <string name="calls_pause_enable_first">Turn on auto-answer to pause it temporarily.</string>
     <string name="calls_rule_delay_summary">Answer delay: %1$d s</string>
     <string name="calls_rule_pause">Temporary pause</string>

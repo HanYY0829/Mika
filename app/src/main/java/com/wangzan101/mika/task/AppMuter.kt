@@ -1,6 +1,9 @@
 package com.wangzan101.mika.task
 
 import com.wangzan101.mika.cap.phone.shell.AppAudioKey
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * 任务期间让 Mika 屏上的 App 不出声。PLAY_AUDIO 按「包 + 用户」设([AppAudioKey]),本来那份和另一份(分身、工作资料)分开静。
@@ -10,6 +13,7 @@ import com.wangzan101.mika.cap.phone.shell.AppAudioKey
  * - [notOpened]:启动被拒(没装、用户正用着…),提前静上又没开出来的那个马上还原,不让它在任务期间白白没声。
  * - [release]:用户接管时把这个 App 的声音还回去;之后再 [opened] 又会静上。
  * - [unmute]:用户明确恢复声音;这次任务里之后不再自动静它,即使接管交回也保持有声。
+ * - [muteAgain]:用户明确再静上([unmute] 的反向);不走自动静音的判定,静上后回到自动管理。
  *
  * 不碰的:Mika 自己;没有桌面入口的系统包(系统界面、选择框、权限框这一类,静了会连带系统的声音);
  * 用户此刻在主屏上看得见的(静音按包作用,静了用户手上的也没声)。设置里关掉静音时一个也不静。
@@ -34,6 +38,10 @@ class AppMuter(
 
     /** 用户明确恢复过声音的键;这次任务里不再自动静它。 */
     private val unmuted = HashSet<String>()
+
+    /** 用户明确恢复过声音、还没再静上的键;小窗的声音按钮据此显示方向,只反映真实音频记录。 */
+    private val _userUnmuted = MutableStateFlow<Set<String>>(emptySet())
+    val userUnmuted: StateFlow<Set<String>> = _userUnmuted.asStateFlow()
 
     @Synchronized
     fun beforeOpen(packageName: String, user: Int?) {
@@ -86,6 +94,22 @@ class AppMuter(
         early -= key
         muted -= key
         unmuted += key
+        _userUnmuted.value = unmuted.toSet()
+        return true
+    }
+
+    /**
+     * 用户明确再静上(小窗的反向操作)。不走自动静音的判定:显式意图优先,主屏上看得见的也静。
+     * 成功后回到自动管理,与静音台账一致、收尾照常还原;失败保留恢复状态可重试。
+     */
+    @Synchronized
+    fun muteAgain(packageName: String, user: Int?): Boolean {
+        val key = AppAudioKey.of(packageName, user)
+        if (!audio.mute(key)) return false
+        early -= key
+        unmuted -= key
+        muted += key
+        _userUnmuted.value = unmuted.toSet()
         return true
     }
 

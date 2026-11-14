@@ -69,7 +69,9 @@ private data class LibraryRow(
     val handle: LibraryFileHandle,
     /** 最近一次出现的位置,「在对话中查看」跳到这里。 */
     val source: FileSource,
-)
+) {
+    val type = LibraryFileType.of(name)
+}
 
 private data class LibraryLoaded(
     val rows: List<LibraryRow>,
@@ -188,8 +190,10 @@ internal fun FileLibraryScreen(
     var query by rememberSaveable { mutableStateOf("") }
     var conversation by rememberSaveable { mutableStateOf(if (fromDrawer) null else initialConversation ?: "") }
     var source by rememberSaveable { mutableIntStateOf(0) }
+    var type by rememberSaveable { mutableStateOf<LibraryFileType?>(null) }
     var conversationMenu by remember { mutableStateOf(false) }
     var sourceMenu by remember { mutableStateOf(false) }
+    var typeMenu by remember { mutableStateOf(false) }
     var choosing by remember { mutableStateOf<LibraryRow?>(null) }
     var actionsFor by remember { mutableStateOf<LibraryRow?>(null) }
     var actionsAvailable by remember { mutableStateOf<Boolean?>(null) }
@@ -208,7 +212,8 @@ internal fun FileLibraryScreen(
     val rows = allRows.filter {
         it.name.contains(query.trim(), ignoreCase = true) &&
             (conversation == null || conversation in it.conversations) &&
-            (source == 0 || (source == 1) == it.input)
+            (source == 0 || (source == 1) == it.input) &&
+            (type == null || type == it.type)
     }
     val titles = loaded?.titles.orEmpty()
     val archivedIds = loaded?.archived.orEmpty()
@@ -322,6 +327,7 @@ internal fun FileLibraryScreen(
     })
     val conversationLabel = conversation?.let { titles[it] ?: stringResource(R.string.file_library_current) }
         ?: stringResource(R.string.file_library_all)
+    val typeLabel = stringResource(type?.label ?: R.string.file_library_type_all)
     PageBackground {
         Column(Modifier.fillMaxSize().navigationBarsPadding()) {
             if (selecting) {
@@ -335,7 +341,7 @@ internal fun FileLibraryScreen(
                 )
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp)) {
                     Text(
-                        "$conversationLabel · $sourceLabel", Modifier.weight(1f).testTag("file-library-scope"),
+                        "$conversationLabel · $sourceLabel · $typeLabel", Modifier.weight(1f).testTag("file-library-scope"),
                         style = MikaType.Hint, color = MikaTheme.colors.ink3, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
                     Text(
@@ -352,9 +358,10 @@ internal fun FileLibraryScreen(
                 )
                 Column(Modifier.padding(horizontal = 16.dp)) {
                     SearchField(query, { query = it }, stringResource(R.string.file_library_search), Modifier.testTag("file-library-search"))
-                    Row(
+                    FlowRow(
                         Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 10.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         val pillMaxWidth = ((LocalConfiguration.current.screenWidthDp.dp - 32.dp - 10.dp) / 2).coerceAtLeast(120.dp)
                         LibraryFilterPill(
@@ -394,6 +401,25 @@ internal fun FileLibraryScreen(
                                 FilterMenuItem(stringResource(text), source == index) {
                                     source = index
                                     sourceMenu = false
+                                }
+                            }
+                        }
+                        LibraryFilterPill(
+                            label = typeLabel,
+                            active = type != null,
+                            expanded = typeMenu,
+                            onToggle = { typeMenu = true },
+                            onDismiss = { typeMenu = false },
+                            modifier = Modifier.widthIn(max = pillMaxWidth).testTag("file-library-type-filter"),
+                        ) {
+                            FilterMenuItem(stringResource(R.string.file_library_type_all), type == null) {
+                                type = null
+                                typeMenu = false
+                            }
+                            LibraryFileType.entries.forEach { option ->
+                                FilterMenuItem(stringResource(option.label), type == option) {
+                                    type = option
+                                    typeMenu = false
                                 }
                             }
                         }
@@ -903,14 +929,13 @@ private fun FileTypeTile(name: String) {
 
 /** 文件块的图形和扩展名;图片、代码、文档各一种图形。 */
 private fun fileBadge(name: String): Pair<ImageVector, String> {
-    val ext = name.substringAfterLast('.', "").uppercase(Locale.ROOT).take(4)
-    val icon = when (ext) {
-        "JPG", "JPEG", "PNG", "GIF", "WEBP", "BMP", "HEIC", "SVG", "AVIF" -> MikaIcons.Photo
+    val ext = name.substringAfterLast('.', "").uppercase(Locale.ROOT)
+    val icon = if (LibraryFileType.of(name) == LibraryFileType.Image) MikaIcons.Photo else when (ext) {
         "HTML", "HTM", "CSS", "JS", "JSX", "TS", "TSX", "JSON", "KT", "KTS", "JAVA", "PY", "SH",
         "XML", "YAML", "YML", "TOML", "GO", "RS", "RB", "C", "CPP", "H" -> MikaIcons.Code
         else -> MikaIcons.Doc
     }
-    return icon to ext.ifBlank { "FILE" }
+    return icon to ext.take(4).ifBlank { "FILE" }
 }
 
 /** 多选底部操作条:次按钮分享,主按钮把所选加入待发栏;进行中显示进度。 */

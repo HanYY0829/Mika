@@ -108,7 +108,7 @@ object ChatCopy {
 
     /**
      * 一个动作的结果(记录里的 effect 代号 → 给人看的一句话)。错误码只对开发有意义,
-     * 给人看的一律说「没成功」。运行过程页用的是同一份说法。
+     * 给人看的一律说「没成功」;按规矩没收的那几种除外([declinedLabel])。运行过程页用的是同一份说法。
      */
     fun effectLabel(effect: String?): String = when (effect) {
         "changed", "done", "place_changed" -> tr(R.string.result_effective)
@@ -116,7 +116,19 @@ object ChatCopy {
         "unchanged", "no_effect" -> tr(R.string.result_unchanged)
         "completed" -> tr(R.string.result_completed)
         null, "" -> ""
-        else -> tr(R.string.step_failed)
+        else -> declinedLabel(effect) ?: tr(R.string.step_failed)
+    }
+
+    /**
+     * 写记忆、存技能、改资料时按规矩没收(不是用户亲口说的、敏感、没明确要改删):这不是出了故障,
+     * 写「没成功」会让人以为坏了。说清没收和原因;别的错误码返回 null。
+     */
+    fun declinedLabel(code: String?): String? = when (code) {
+        "quote_not_from_user", "content_not_from_user" -> tr(R.string.step_declined_not_said)
+        "inference_not_requested" -> tr(R.string.step_declined_not_requested)
+        "sensitive" -> tr(R.string.step_declined_sensitive)
+        "edit_not_requested" -> tr(R.string.step_declined_not_asked)
+        else -> null
     }
 
     /** 点开一步后每件事一行:做了什么 · 对什么 · 结果(结果为空时不写)。 */

@@ -93,9 +93,7 @@ class PersonalRuntime(private val app: MikaApp) {
         }
         override fun memory(): String {
             if (!app.memory.settings().switches.value.useMemory) return "用户关闭了长期记忆。"
-            return app.memory.store().items.value.filter { it.status == MemoryStatus.active }
-                .sortedWith(compareByDescending<MemoryItem> { it.pinned }.thenByDescending { it.updatedAt })
-                .take(40).joinToString("\n") { it.content }.take(6500)
+            return personalMemoryText(app.memory.store().items.value)
         }
     }
     val agent = PersonalAgent(store, scope, { app.tasks.modelFactory(app, ModelSession.of("personal-main")) }, actions)
@@ -204,3 +202,24 @@ class PersonalRuntime(private val app: MikaApp) {
         }
     }
 }
+
+/**
+ * 给个人助理看的长期记忆:置顶在前、新的在前,最多 [PERSONAL_MEMORY_ITEMS] 条、[max] 个字。
+ * 按整条装:下一条装不下就到此为止,不从中间截断。Mika 自己归纳出来的那几条不是用户说的,标记放在这一条的最前面——
+ * 放在后面的话,正好被截到的那一条会只剩内容、丢了这唯一的来源说明。
+ */
+internal fun personalMemoryText(items: List<MemoryItem>, max: Int = PERSONAL_MEMORY_CHARS): String {
+    val out = StringBuilder()
+    for (m in items.filter { it.status == MemoryStatus.active }
+        .sortedWith(compareByDescending<MemoryItem> { it.pinned }.thenByDescending { it.updatedAt }).take(PERSONAL_MEMORY_ITEMS)) {
+        val line = if (m.source.type == MemoryContext.INFERRED) PERSONAL_INFERRED_MARK + m.content else m.content
+        if (out.length + line.length + 1 > max) break
+        if (out.isNotEmpty()) out.append('\n')
+        out.append(line)
+    }
+    return out.toString()
+}
+
+internal const val PERSONAL_INFERRED_MARK = "(Mika 自己归纳的,不是用户说的)"
+private const val PERSONAL_MEMORY_ITEMS = 40
+private const val PERSONAL_MEMORY_CHARS = 6500

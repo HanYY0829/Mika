@@ -83,6 +83,38 @@ class UsageLedgerTest {
         assertEquals(10L, l.providerTokensToday("p1"))
     }
 
+    @Test fun proactiveUsageIsLeftOutOfProviderBudgetAndSummedAcrossProvidersOnTheLocalDay() {
+        val zone = ZoneId.of("Asia/Shanghai")
+        // 本地 2026-11-10 23:30
+        clock = Instant.parse("2026-11-10T15:30:00Z").toEpochMilli()
+        val l = UsageLedger(file, now = { clock }, zone = { zone }, flushDelayMs = 60_000)
+        l.record(main, Usage(100, 20))
+        l.record(main.copy(purpose = UsagePurpose.Proactive), Usage(40, 2))
+        l.record(other.copy(purpose = UsagePurpose.Proactive), Usage(7, 1))
+        assertEquals("主动能力不占服务商的每日预算", 120L, l.providerTokensToday("p1"))
+        assertEquals(0L, l.providerTokensToday("p2"))
+        assertEquals("各服务商合计", 50L, l.proactiveTokensToday())
+        assertEquals("统计里照样算进去", 170L, l.snapshot().rows.sumOf { it.counts.input + it.counts.output })
+
+        // 本地零点后重新计数
+        clock = Instant.parse("2026-11-10T16:00:00Z").toEpochMilli()
+        assertEquals(0L, l.proactiveTokensToday())
+        l.record(main.copy(purpose = UsagePurpose.Proactive), Usage(5, 5))
+        assertEquals(10L, l.proactiveTokensToday())
+        assertEquals(0L, l.providerTokensToday("p1"))
+
+        l.flush()
+        val reopened = UsageLedger(file, now = { clock }, zone = { zone })
+        assertEquals("用途写进文件、读回来还是主动能力", 10L, reopened.proactiveTokensToday())
+        assertEquals(0L, reopened.providerTokensToday("p1"))
+    }
+
+    @Test fun proactivePurposeKeyRoundTripsAndUnknownKeysStayOther() {
+        assertEquals(UsagePurpose.Proactive, UsagePurpose.of(UsagePurpose.Proactive.key))
+        assertEquals("proactive", UsagePurpose.Proactive.key)
+        assertEquals(UsagePurpose.Other, UsagePurpose.of("from-a-later-version"))
+    }
+
     @Test fun versionMovesOnEveryRecord() {
         val l = ledger()
         val v = l.version.value

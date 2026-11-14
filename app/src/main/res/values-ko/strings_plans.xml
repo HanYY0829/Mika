@@ -77,4 +77,6 @@
     <string name="plans_running_now">실행 중</string>
     <string name="trigger_deleted">예약 작업이 삭제되었어요</string>
     <string name="trigger_busy">이 작업이 아직 실행 중이에요</string>
+    <string name="plans_run_history">실행 기록</string>
+    <string name="plans_copy">새 일정으로 복제</string>
 </resources>

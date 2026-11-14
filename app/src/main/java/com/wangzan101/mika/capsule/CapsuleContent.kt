@@ -109,6 +109,7 @@ object CapsuleCopy {
     /** 读屏时一颗图标的说法:在做什么、要不要你处理、结果;好几件时的件数已在 [CapsuleView.Shown.text] 里。 */
     fun describe(view: CapsuleView.Shown): String = when {
         view.kind == CapsuleKind.Idle -> IDLE
+        view.kind == CapsuleKind.Notice -> tr(R.string.notice_hint_capsule_desc, view.count)
         view.kind.needsYou -> tr(R.string.capsule_desc_needs, view.text)
         view.kind == CapsuleKind.Running -> tr(R.string.capsule_desc_running, view.text)
         view.kind == CapsuleKind.Held || view.kind == CapsuleKind.Cancelled -> tr(R.string.capsule_desc_other, view.text)
@@ -306,11 +307,14 @@ private fun Ring(kind: CapsuleKind, need: Boolean, modifier: Modifier) {
     }
 }
 
-/** 一颗图标角上的标:好几件时写件数(要你处理橙、等条件灰、其余蓝);只一件时办好了绿勾,没办成、已停止灰色。 */
+/**
+ * 一颗图标角上的标:好几件时写件数(要你处理橙、等条件灰、其余蓝);只一件时办好了绿勾,没办成、已停止灰色。
+ * 值得提醒([CapsuleKind.Notice])时写还没看的条数,一条也写。
+ */
 @Composable
 private fun Badge(view: CapsuleView.Shown, need: Boolean, modifier: Modifier) {
     val c = MikaTheme.colors
-    if (view.count >= 2) {
+    if (view.count >= 2 || (view.kind == CapsuleKind.Notice && view.count >= 1)) {
         val fill = when {
             need -> c.warnSolid
             view.kind == CapsuleKind.Held -> c.ink3

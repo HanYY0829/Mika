@@ -30,6 +30,8 @@ object MemoryContext {
     enum class Mode { Relevant, Full, Auto }
 
     private const val FACTS_HEADER = "Memories about the user (things the user told you; may be out of date; when they conflict with what the user says now, follow what they say now):"
+    const val INFERRED = "inferred"
+    private const val INFERRED_MARK = " (your own earlier inference, saved at the user's request; the user did not say this)"
     private const val PROCEDURES_HEADER = "Ways of doing things the user approved (when they conflict with what the user says now, follow what they say now):"
 
     /**
@@ -120,7 +122,9 @@ object MemoryContext {
         val sections = listOf(FACTS_HEADER to facts, PROCEDURES_HEADER to procedures).filter { it.second.isNotEmpty() }
         val message = sections.joinToString("\n\n") { (header, list) ->
             header + "\n" + list.withIndex().joinToString("\n") { (i, m) ->
-                "${i + 1}. ${if (m.kind == MemoryKind.procedure) rewrite(m.content) else m.content}"
+                "${i + 1}. ${if (m.kind == MemoryKind.procedure) rewrite(m.content) else m.content}" +
+                    // Mika 自己归纳出来的那几条不是用户说的:这一段的标题说的是「用户告诉你的」,逐条标出来
+                    if (m.source.type == INFERRED) INFERRED_MARK else ""
             }
         }
         return message to (facts + procedures).map { it.id }

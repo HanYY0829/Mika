@@ -29,6 +29,8 @@ interface TakeoverPort {
     fun setSound(packageName: String, on: Boolean)
     /** 用户明确恢复声音;实现要连同本次任务的自动静音规则一起更新。 */
     fun unmute(packageName: String) = setSound(packageName, true)
+    /** 用户明确再静上;实现不走自动静音的判定(显式意图优先),并连同本次任务的自动静音规则一起更新。 */
+    fun muteAgain(packageName: String) = setSound(packageName, false)
     /** 开始数用户在主屏上对该包的操作;App 交到用户手上时调用。 */
     fun watchInput(packageName: String)
     /** 此刻数到的操作和所在页面;没在数时为 null。 */
@@ -217,6 +219,18 @@ class Takeover(
         port.unmute(packageName)
         return true
     }
+
+    /** 浮层把声音再静回去;条件与路由同 [unmute]。 */
+    @Synchronized
+    fun muteBack(): Boolean {
+        if (_stage.value != Stage.HandedOver || handedWeb) return false
+        val packageName = handedPackage ?: return false
+        port.muteAgain(packageName)
+        return true
+    }
+
+    /** 交到用户手上(不是网页)的那个包;其余状态为 null。浮层的声音开关据此取键。 */
+    val handedOverPackage: String? get() = handedPackage.takeIf { _stage.value == Stage.HandedOver && !handedWeb }
 
     /** 「跳过」:不处理,告诉 Agent 没有发生交回;App 若在主屏先挪回,挪不回就保持原状。 */
     suspend fun skip(key: Int? = null): Boolean = giveBack(HandBack(HandBackOutcome.skipped), key)

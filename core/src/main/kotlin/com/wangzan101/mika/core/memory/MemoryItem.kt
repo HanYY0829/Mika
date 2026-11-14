@@ -9,7 +9,11 @@ enum class MemoryKind { fact, preference, procedure }
 @Suppress("EnumEntryName")
 enum class MemoryStatus { active, pending }
 
-/** [type]:`user_said`(带用户原话 [quote])或 `manual`(用户在设置里手写)。 */
+/**
+ * [type]:`user_said`(带用户原话 [quote])、`manual`(用户在设置里手写),或 `inferred`——用户让 Mika 记、内容却是 Mika
+ * 自己归纳出来的(里面有用户没说过的具体值);这时 [quote] 是用户提出要求的那句话,不是内容的出处。只有用户打开了
+ * 「让 Mika 自己归纳着记」才会有这一种(见 [MemoryStore.inferenceAllowed]);交给任务和界面时都标明不是用户说的。
+ */
 @Serializable
 data class MemorySource(
     val type: String,

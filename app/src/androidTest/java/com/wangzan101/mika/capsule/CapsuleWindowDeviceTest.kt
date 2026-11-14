@@ -41,6 +41,7 @@ class CapsuleWindowDeviceTest {
             assertNotNull("test page did not open", pollUntil(5_000) { findText(service, "taps:0") })
             Thread.sleep(300) // 等页面进入动画结束,再记录用于判断残帧的静态基准
             assertNotNull("idle capsule did not appear", pollUntil(15_000) { find(service, CapsuleCopy.IDLE) })
+            Thread.sleep(3_500) // 等胶囊入场动效(约 272ms)结束并走完空闲淡出(CapsuleFade.IDLE_MS=3s,alpha 1→0.4);否则基准是全不透明,而关卡片耗时>3s 时胶囊已淡出,会被误判成残帧
             val baseline = screenshot()
 
             assertTrue("idle capsule was not clickable", click(service, CapsuleCopy.IDLE))

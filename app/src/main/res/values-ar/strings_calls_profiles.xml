@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_voice_service">خدمة الصوت الفوري</string>
+    <string name="calls_voice_profiles_intro">احفظ عدة إعدادات للصوت الفوري. تستخدم المكالمات الواردة والصادرة الإعداد الافتراضي، ويمكن لكل مكالمة صادرة اختيار إعداد آخر. اختبار الاتصال والتحقق من صوت الهاتف في الاتجاهين إجراءان منفصلان.</string>
+    <string name="calls_voice_profile_subtitle">%1$s · %2$s</string>
+    <string name="calls_voice_audio_verified">تم التحقق من صوت الهاتف</string>
+    <string name="calls_voice_audio_unverified">لم يتم التحقق من صوت الهاتف</string>
+    <string name="calls_voice_selected">الإعداد الافتراضي الحالي</string>
+    <string name="calls_voice_status_untested">يلزم اختبار الاتصال</string>
+    <string name="calls_voice_status_tested">تم اختبار الاتصال</string>
+    <string name="calls_voice_select">تعيين كافتراضي</string>
+    <string name="calls_voice_delete">حذف الإعداد</string>
+    <string name="calls_voice_delete_confirm">هل تريد حذف %1$s وبيانات الاعتماد المحفوظة على الجهاز؟ لن تُحذف سجلات المكالمات.</string>
+    <string name="calls_voice_test">اختبار الاتصال</string>
+    <string name="calls_voice_testing">جارٍ الاختبار…</string>
+    <string name="calls_voice_add">إضافة إعداد صوت فوري</string>
+    <string name="calls_voice_edit">تعديل إعداد الصوت الفوري</string>
+    <string name="calls_voice_test_note">لا يثبت نجاح الاتصال عمل الصوت في الاتجاهين أثناء مكالمة هاتفية. أجرِ مكالمة اختبار حقيقية قبل تفعيل الرد التلقائي.</string>
+    <string name="calls_voice_name">اسم الإعداد</string>
+    <string name="calls_voice_endpoint">عنوان نقطة النهاية (wss)</string>
+    <string name="calls_voice_model">نموذج الحوار الفوري</string>
+    <string name="calls_voice_default_name">الصوت الفوري الافتراضي</string>
+    <string name="calls_voice_protocol">صوت فوري متكامل: تتولى خدمة واحدة التعرف والحوار والنطق.</string>
+    <string name="calls_voice_credentials_keep">اترك الحقل فارغًا للاحتفاظ ببيانات الاعتماد المحفوظة. ستؤدي البيانات الجديدة إلى استبدال القديمة وإعادة الاختبار.</string>
+    <string name="calls_back_settings">العودة إلى الإعدادات</string>
+    <string name="calls_enabled_summary">يمكن للذكاء الاصطناعي الرد وإجراء المكالمات؛ وللرد التلقائي مفتاح مستقل.</string>
+    <string name="calls_settings_voice_group">الصوت والنماذج</string>
+    <string name="calls_settings_device_group">الجهاز والتشغيل</string>
+    <string name="calls_settings_data_group">البيانات</string>
+    <string name="calls_history_entry_summary">الملخصات والمتابعات والنصوص الأصلية</string>
+    <string name="calls_advanced_summary">قناة الصوت والتشخيص</string>
+    <string name="calls_advanced_note">يؤدي تغيير قناة الصوت إلى إعادة تعيين التحقق من الصوت في الاتجاهين. أجرِ مكالمة اختبار حقيقية أخرى قبل تفعيل الرد التلقائي.</string>
+    <string name="calls_voice_setup">إعداد خدمة الصوت واختبارها</string>
+</resources>

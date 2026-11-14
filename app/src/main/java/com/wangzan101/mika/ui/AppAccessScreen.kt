@@ -48,7 +48,7 @@ private class Failure(val message: Int, val detail: String? = null)
  * 分类时让模型用界面的语言写理由:同一个应用换语言后旧理由仍是旧语言,这没关系,下次分类会覆盖。
  * 中文按文字体系分,和资源目录(values-zh / values-b+zh+Hant)一致。
  */
-private fun classifierLanguage(locale: java.util.Locale): String = when {
+internal fun classifierLanguage(locale: java.util.Locale): String = when {
     locale.script == "Hant" || locale.country in setOf("TW", "HK", "MO") -> "Traditional Chinese"
     locale.language == "zh" -> "Simplified Chinese"
     else -> locale.getDisplayLanguage(java.util.Locale.ENGLISH)

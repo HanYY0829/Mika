@@ -223,6 +223,24 @@
                 android:resource="@xml/accessibility_service" />
         </service>
 
+        <!-- 主动能力(实验):默认停用,第一次打开功能时由 ProactiveRuntime 启用,系统「通知使用权」列表里才出现;
+             之后关掉功能只解绑、不再停用(组件一停用系统就收回使用权)。
+             exported=false 与 NotificationListenerService 文档里的清单示例一致(系统按 BIND_NOTIFICATION_LISTENER_SERVICE 绑定);
+             只滤掉常驻通知,不滤静默通知(用户常把微信设成静默)。 -->
+        <service
+            android:name=".proactive.NoticeListenerService"
+            android:enabled="false"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.notification.disabled_filter_types"
+                android:value="ongoing" />
+        </service>
+
         <service
             android:name=".task.TaskService"
             android:exported="false"

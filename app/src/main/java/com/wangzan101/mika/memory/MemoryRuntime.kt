@@ -80,7 +80,11 @@ class MemoryRuntime(context: Context) {
         file ?: EncryptedMemoryFile(app.filesDir, KeystoreKeyCipher(KEY_ALIAS), System::currentTimeMillis).also { file = it }
 
     @Synchronized fun store(): MemoryStore =
-        store ?: MemoryStore(file(), System::currentTimeMillis, { UUID.randomUUID().toString() }).also { store = it }
+        store ?: MemoryStore(
+            file(), System::currentTimeMillis, { UUID.randomUUID().toString() },
+            // 每次保存时现读开关:用户在页面上一改就生效
+            inferenceAllowed = { settings().switches.value.inferMemories },
+        ).also { store = it }
 
     @Synchronized fun skills(): PersonalSkillFiles =
         skills ?: PersonalSkillFiles(app.filesDir).also { skills = it }

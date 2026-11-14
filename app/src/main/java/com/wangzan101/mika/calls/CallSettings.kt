@@ -35,6 +35,7 @@ class CallSettings(
         }.distinctBy(CallPolicy::incomingMatchKey).toSet()
         require(config.greeting.length <= CallPolicy.MAX_GREETING_CHARS) { "开场白过长" }
         require(config.systemPrompt.length <= CallPolicy.MAX_PROMPT_CHARS) { "通话说明过长" }
+        require(Regex("[A-Za-z0-9_-]{1,100}").matches(config.activeVoiceProfileId)) { "实时语音配置无效" }
         val speaker = config.speaker.trim().ifBlank { defaults.speaker }
         require(speaker.length <= CallPolicy.MAX_SPEAKER_CHARS && speaker.all { it in 'a'..'z' || it in 'A'..'Z' || it in '0'..'9' || it in "_-" }) {
             "无效的火山音色编号"
@@ -54,7 +55,7 @@ class CallSettings(
             greeting = config.greeting.trim(), // An explicitly empty greeting is different from a missing preference.
             systemPrompt = config.systemPrompt.trim(),
             speaker = speaker,
-            credentialsConfigured = previous.credentialsConfigured,
+            credentialsConfigured = config.credentialsConfigured,
         )
         val committed = prefs.edit()
             .putBoolean("enabled", next.enabled)
@@ -73,6 +74,7 @@ class CallSettings(
             .putString("greeting", next.greeting)
             .putString("prompt", next.systemPrompt)
             .putString("speaker", next.speaker)
+            .putString("active_voice_profile_id", next.activeVoiceProfileId)
             .commit()
         // A failed write may not leave auto-answer running with a policy the user tried to change.
         mutable.value = if (committed) next else previous.copy(enabled = next.enabled && previous.enabled, autoAnswer = false, backgroundStandbyAuthorized = false)
@@ -127,17 +129,17 @@ class CallSettings(
     }
 
     @Synchronized
-    internal fun credentials(): VolcRealtimeCredentials? = runCatching {
+    internal fun readLegacyCredentials(): VolcRealtimeCredentials? {
         val stored = prefs.getString(CREDENTIALS, null) ?: return null
         val bytes = cipher.decrypt(Base64.decode(stored, Base64.NO_WRAP))
-        try {
+        return try {
             val fields = bytes.toString(Charsets.UTF_8).split('\n')
             if (fields.size != 3) return null
             VolcRealtimeCredentials(apiKey = fields[0], appId = fields[1], accessKey = fields[2]).takeIf { it.valid }
         } finally {
             bytes.fill(0)
         }
-    }.getOrNull()
+    }
 
     private fun read(): CallConfig = runCatching {
         val defaults = CallConfig()
@@ -163,12 +165,14 @@ class CallSettings(
             maxCallSeconds = prefs.getInt("max_seconds", CallPolicy.DEFAULT_SECONDS).coerceIn(15, CallPolicy.MAX_SECONDS),
             audioMode = prefs.getString("audio_mode", null)?.let(CallAudioMode::valueOf) ?: defaults.audioMode,
             audioVerified = verified,
-            credentialsConfigured = credentials() != null,
+            credentialsConfigured = runCatching { readLegacyCredentials() }.getOrNull() != null,
             summaryEnabled = prefs.getBoolean("summary_enabled", false),
             greeting = CallPolicy.migrateDefaultGreeting(prefs.getString("greeting", defaults.greeting).orEmpty())
                 .take(CallPolicy.MAX_GREETING_CHARS),
             systemPrompt = prefs.getString("prompt", "").orEmpty().take(CallPolicy.MAX_PROMPT_CHARS),
             speaker = prefs.getString("speaker", defaults.speaker).orEmpty().take(CallPolicy.MAX_SPEAKER_CHARS),
+            activeVoiceProfileId = prefs.getString("active_voice_profile_id", defaults.activeVoiceProfileId)
+                .takeIf { it?.matches(Regex("[A-Za-z0-9_-]{1,100}")) == true } ?: defaults.activeVoiceProfileId,
         )
     }.getOrDefault(CallConfig())
 

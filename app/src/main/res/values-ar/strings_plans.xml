@@ -82,4 +82,6 @@
     <string name="plans_running_now">قيد التشغيل</string>
     <string name="trigger_deleted">حُذفت المهمة المجدولة</string>
     <string name="trigger_busy">ما زالت هذه المهمة قيد التشغيل</string>
+    <string name="plans_run_history">سجل التنفيذ</string>
+    <string name="plans_copy">نسخ كخطة جديدة</string>
 </resources>

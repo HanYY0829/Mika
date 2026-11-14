@@ -1,5 +1,7 @@
 package com.wangzan101.mika.task
 
+import com.wangzan101.mika.core.general.NOTICES_READ
+import com.wangzan101.mika.core.proactive.ObservedContext
 import com.wangzan101.mika.R
 import com.wangzan101.mika.i18n.tr
 import com.wangzan101.mika.core.agent.LearnGate
@@ -56,6 +58,12 @@ data class RunAftermath(
     val knowledge: KnowledgeStore? = null,
     /** 交出回答后判的结局;只从办成的学([LearnGate])。没判成、没判过为 [RunOutcome.Unknown]。 */
     val outcome: RunOutcome = RunOutcome.Unknown,
+    /**
+     * 这段对话里有通知提醒([com.wangzan101.mika.core.agent.NoticeTurn]),或这次任务开工时带了从通知里得来的那一段
+     * ([com.wangzan101.mika.core.proactive.ObservedContext]):用户在这里说的话多半是在回应别人写的通知
+     * (「好,就按他说的」),和读过网页的任务一样,不自动从里面提取记忆。用户明说要记的(memory_save)不受影响。
+     */
+    val noticeTainted: Boolean = false,
 )
 
 /**
@@ -98,7 +106,11 @@ class RunLearning(
         // 没有运行编号就没处挂提示,用户看不到也撤销不了:不提取
         val learnable = a.origin == RunOrigin.Ui && a.end is TaskState.Succeeded
         val readWeb = events.filterIsInstance<RunEvent.Observed>().any { it.place?.kind in setOf(PlaceKind.Site, PlaceKind.Page) }
-        if (learnable && !readWeb && a.runId != null && store != null && extractor != null && switches.autoRemember && a.utterances.isNotEmpty()) {
+        // 读过通知的任务和读过网页的一样:用户这次说的话多半是在回应别人写的东西,不自动提取
+        val readNotices = events.filterIsInstance<RunEvent.Activity>().any { it.label == NOTICES_READ }
+            // 开工时就带着从通知里得来的那一段的也一样(运行记录里有那一笔;记录读不到时还有 a.noticeTainted)
+            || events.filterIsInstance<RunEvent.State>().any { it.name == ObservedContext.RUN_STATE }
+        if (learnable && !readWeb && !readNotices && !a.noticeTainted && a.runId != null && store != null && extractor != null && switches.autoRemember && a.utterances.isNotEmpty()) {
             val now = store.clock()
             changes += guarded(emptyList()) {
                 yieldToForeground()

@@ -46,6 +46,9 @@
     <string name="tool_list_settings">설정 읽기</string>
     <string name="tool_set_setting">설정 변경</string>
     <string name="tool_save_skill">스킬 저장</string>
+    <string name="tool_memory_search">기억 검색</string>
+    <string name="tool_memory_save">기억에 기록</string>
+    <string name="tool_memory_edit">기억 수정</string>
     <string name="tool_explain_failure">안 된 이유 설명</string>
     <string name="tool_ask_user">질문하기</string>
     <string name="tool_takeover">직접 처리 요청</string>

@@ -1,5 +1,6 @@
 package com.wangzan101.mika.settings
 
+import com.wangzan101.mika.core.proactive.ProactiveCall
 import com.wangzan101.mika.core.model.Capabilities
 import com.wangzan101.mika.core.model.ChatModel
 import com.wangzan101.mika.core.model.ListedModel
@@ -13,6 +14,9 @@ import com.wangzan101.mika.core.model.ModelSession
 import com.wangzan101.mika.core.model.StopReason
 import com.wangzan101.mika.core.model.ToolSpec
 import com.wangzan101.mika.core.model.Usage
+import com.wangzan101.mika.core.usage.ProactiveBudget
+import com.wangzan101.mika.core.usage.UsageKey
+import com.wangzan101.mika.core.usage.UsageLedger
 import com.wangzan101.mika.core.usage.UsagePurpose
 import com.wangzan101.mika.core.usage.UsageSource
 import kotlinx.coroutines.test.runTest
@@ -1043,6 +1047,254 @@ class ProviderStoreTest {
         s.modelFor(ModelRole.Light)!!.complete("s", emptyList(), emptyList())
         assertEquals(listOf(available.id), seen.map { it.providerId })
     }
+
+    /** 主动能力和服务商各有各的预算:用真的账本记账、也从它查当天用量。 */
+    private class Budgets(dir: File) {
+        var clock = java.time.Instant.parse("2026-11-10T04:00:00Z").toEpochMilli()
+        val ledger = UsageLedger(File(dir, "usage.json"), now = { clock }, flushDelayMs = 60_000, zone = { java.time.ZoneOffset.UTC })
+        var proactiveLimit = ProactiveBudget.DEFAULT_DAILY_LIMIT
+    }
+
+    private fun budgeted(b: Budgets) = ProviderStore(
+        tmp.root, AesGcmKeyCipher { key }, usage = b.ledger, dailyUsage = b.ledger::providerTokensToday,
+        proactiveUsage = b.ledger::proactiveTokensToday, proactiveLimit = { b.proactiveLimit },
+        proactiveCalls = b.ledger::proactiveCallsToday,
+    ) { cfg, _, _, _ -> FakeModel(cfg.capabilities) }
+
+    @Test fun proactiveCallIgnoresTheProviderDailyBudgetAndDoesNotCountTowardsIt() = runTest {
+        val b = Budgets(tmp.newFolder())
+        val s = budgeted(b)
+        val p = connected(s)
+        s.use(ModelRole.Main, p.id, "m1", none)
+        assertTrue(s.setDailyTokenBudget(p.id, 10_000))
+        b.ledger.record(UsageSource(p.id, "P", "m1", UsagePurpose.Main), Usage(10_000, 0))
+
+        try {
+            s.modelFor(ModelRole.Main)!!.complete("s", emptyList(), emptyList())
+            fail("服务商今天的预算已用完")
+        } catch (_: ModelError.DailyBudgetExceeded) {}
+        s.proactiveModel()!!.complete("s", emptyList(), emptyList())
+
+        assertEquals("主动能力的用量不动服务商的「今日已用」", 10_000L, b.ledger.providerTokensToday(p.id))
+        assertEquals(5L, b.ledger.proactiveTokensToday())
+        val proactive = b.ledger.snapshot().rows.single { it.key.purpose == UsagePurpose.Proactive }
+        assertEquals("轻量用主模型时记在主模型那条配置名下", UsageKey(p.id, "m1", UsagePurpose.Proactive), proactive.key)
+    }
+
+    @Test fun exhaustedProactiveBudgetRefusesOnlyProactiveCalls() = runTest {
+        val b = Budgets(tmp.newFolder())
+        val s = budgeted(b)
+        val p = connected(s)
+        s.use(ModelRole.Main, p.id, "m1", none)
+        s.use(ModelRole.Light, p.id, "m2", none)
+        assertTrue(s.setDailyTokenBudget(p.id, 10_000))
+        b.proactiveLimit = 10_000
+        // 另一家记的主动能力用量也算在同一份预算里
+        b.ledger.record(UsageSource("other", "O", "x", UsagePurpose.Proactive), Usage(10_000, 0))
+        val before = b.ledger.snapshot()
+
+        try {
+            s.proactiveModel()!!.complete("s", emptyList(), emptyList())
+            fail("主动能力今天的预算已用完")
+        } catch (e: ModelError.ProactiveBudgetExceeded) {
+            assertEquals(10_000L, e.limit)
+            assertEquals(10_000L, e.used)
+        }
+        assertEquals("拒绝时不记一笔不存在的调用", before, b.ledger.snapshot())
+
+        s.modelFor(ModelRole.Main)!!.complete("s", emptyList(), emptyList())
+        assertEquals(5L, b.ledger.providerTokensToday(p.id))
+
+        // 第二天恢复
+        b.clock += 24 * UsageLedger.HOUR_MS
+        s.proactiveModel()!!.complete("s", emptyList(), emptyList())
+        assertEquals("轻量模型选了 m2 就用 m2", "m2", b.ledger.snapshot().rows.last { it.key.purpose == UsagePurpose.Proactive && it.key.providerId == p.id }.key.model)
+    }
+
+    /** 服务商不报用量时 Token 数不涨,靠请求次数的上限停下(默认 20 万 Token 时是 800 次);主模型的调用不受影响。 */
+    @Test fun proactiveCallsStopAtTheDailyCallLimitWhenNoUsageIsReported() = runTest {
+        val b = Budgets(tmp.newFolder())
+        val s = budgeted(b)
+        val p = connected(s)
+        s.use(ModelRole.Main, p.id, "m1", none)
+        val cap = ProactiveBudget.callLimit(b.proactiveLimit)
+        assertEquals(800L, cap)
+        repeat(cap.toInt()) {
+            b.ledger.record(UsageSource(p.id, "P", "m1", UsagePurpose.Proactive), null)
+        }
+        assertEquals(0L, b.ledger.proactiveTokensToday())
+        assertEquals(cap, b.ledger.proactiveCallsToday())
+
+        try {
+            s.proactiveModel()!!.complete("s", emptyList(), emptyList())
+            fail("主动能力今天的请求次数已到上限")
+        } catch (e: ModelError.ProactiveBudgetExceeded) {
+            assertTrue(e.byCalls)
+        }
+        s.modelFor(ModelRole.Main)!!.complete("s", emptyList(), emptyList())
+    }
+
+    /**
+     * 只剩最后一次请求额度时,适配器在同一次调用里要再发一个请求(这里是不认 include 参数的 Responses 服务:400 后去掉参数重发):
+     * 不发,次数停在上限上;已经发出去的那一个照实记账。用的是真的适配器和账本。
+     */
+    @Test fun proactiveRetryInsideOneCallStopsAtTheCallLimit() = runTest {
+        val server = okhttp3.mockwebserver.MockWebServer().also { it.start() }
+        try {
+            val b = Budgets(tmp.newFolder())
+            val s = ProviderStore(
+                tmp.root, AesGcmKeyCipher { key }, usage = b.ledger, dailyUsage = b.ledger::providerTokensToday,
+                proactiveUsage = b.ledger::proactiveTokensToday, proactiveLimit = { b.proactiveLimit },
+                proactiveCalls = b.ledger::proactiveCallsToday,
+            )
+            val listed = ListedModel("r-only", endpoint = ModelEndpoint(ModelProtocol.Responses, server.url("/v1").toString()))
+            val p = s.connect("Go", ProviderConfig.Kind.OpenAiCompat, "https://go.test/v1", "k", listOf(listed))
+            s.use(ModelRole.Main, p.id, "r-only", none)
+            val cap = ProactiveBudget.callLimit(b.proactiveLimit)
+            repeat(cap.toInt() - 1) { b.ledger.record(UsageSource(p.id, "Go", "r-only", UsagePurpose.Proactive), null) }
+            server.enqueue(okhttp3.mockwebserver.MockResponse().setResponseCode(400)
+                .setBody("""{"error":{"param":"include","message":"reasoning.encrypted_content unsupported"}}"""))
+            server.enqueue(okhttp3.mockwebserver.MockResponse().setHeader("Content-Type", "text/event-stream")
+                .setBody("data: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\"}}\n\n"))
+            try {
+                s.proactiveModel()!!.complete("s", emptyList(), emptyList())
+                fail("只剩一次额度,重发的那个请求不该发出去")
+            } catch (e: ModelError.ProactiveBudgetExceeded) {
+                assertTrue(e.byCalls)
+            }
+            assertEquals(1, server.requestCount)
+            assertEquals(cap, b.ledger.proactiveCallsToday())
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    /** 判定到八成就自己停(在 TriageRunner 里);直接的主动能力调用照样能用到整份。 */
+    @Test fun directProactiveCallsMayUseTheWholeBudgetPastTheTriageShare() = runTest {
+        val b = Budgets(tmp.newFolder())
+        val s = budgeted(b)
+        val p = connected(s)
+        s.use(ModelRole.Main, p.id, "m1", none)
+        val src = UsageSource(p.id, "P", "m1", UsagePurpose.Proactive)
+        b.ledger.record(src, Usage(ProactiveBudget.triageShare(b.proactiveLimit).toInt(), 0))
+        repeat(ProactiveBudget.triageShare(ProactiveBudget.callLimit(b.proactiveLimit)).toInt() - 1) { b.ledger.record(src, null) }
+        assertEquals(ProactiveBudget.Limit.Tokens,
+            ProactiveBudget.triageExhausted(b.ledger.proactiveTokensToday(), b.ledger.proactiveCallsToday(), b.proactiveLimit))
+        s.proactiveModel()!!.complete("s", emptyList(), emptyList())
+    }
+
+    /** 请求次数上限跟着 Token 上限走:调高 Token 上限后,不报用量的服务商不会停在 200 次。 */
+    @Test fun raisingTheTokenLimitRaisesTheDerivedCallLimit() = runTest {
+        val b = Budgets(tmp.newFolder())
+        b.proactiveLimit = 50_000
+        val s = budgeted(b)
+        val p = connected(s)
+        s.use(ModelRole.Main, p.id, "m1", none)
+        repeat(200) { b.ledger.record(UsageSource(p.id, "P", "m1", UsagePurpose.Proactive), null) }
+        try {
+            s.proactiveModel()!!.complete("s", emptyList(), emptyList())
+            fail("5 万 Token 时请求上限是下限 200 次")
+        } catch (e: ModelError.ProactiveBudgetExceeded) {
+            assertTrue(e.byCalls)
+            assertEquals(200L, e.limit)
+        }
+        b.proactiveLimit = 2_000_000
+        s.proactiveModel()!!.complete("s", emptyList(), emptyList())
+        repeat((8_000 - b.ledger.proactiveCallsToday()).toInt()) { b.ledger.record(UsageSource(p.id, "P", "m1", UsagePurpose.Proactive), null) }
+        assertEquals(8_000L, b.ledger.proactiveCallsToday())
+        try {
+            s.proactiveModel()!!.complete("s", emptyList(), emptyList())
+            fail("200 万 Token 时请求上限是 8000 次")
+        } catch (e: ModelError.ProactiveBudgetExceeded) {
+            assertEquals(8_000L, e.limit)
+        }
+    }
+
+    @Test fun proactiveModelIsNullWithoutAnyModel() {
+        assertNull(budgeted(Budgets(tmp.newFolder())).proactiveModel())
+    }
+
+    /** 主动能力的模型:回复限短;服务商写明了档位的取最低一档,没写明的照用这个用途选的档位;主动能力以外不受影响。 */
+    @Test fun proactiveModelIsBuiltWithACapAndTheLowestDeclaredEffort() {
+        val s = store()
+        val p = s.connect("P", ProviderConfig.Kind.OpenAiCompat, "https://p.test/v1", "k", listOf(
+            ListedModel("m1", reasoningEfforts = listOf("high", "low", "minimal", "weird")),
+            ListedModel("m2"),
+        ))
+        s.use(ModelRole.Main, p.id, "m1", none)
+        assertTrue(s.setReasoningEffort(ModelRole.Main, "high"))
+        s.proactiveModel()
+        assertEquals("minimal", setups.last().reasoningEffort)
+        assertEquals(ProactiveModelSetup.CAP_THINKING, setups.last().maxOutputTokens)
+        // 请求是哪一种,一路带到建模型的那份设置里:回复长的(当日归纳之类)不另设上限,档位照旧取最低的
+        for (call in listOf(ProactiveCall.Notes, ProactiveCall.Day, ProactiveCall.Span)) {
+            s.proactiveTargeted(call)
+            assertNull(call.name, setups.last().maxOutputTokens)
+            assertEquals("minimal", setups.last().reasoningEffort)
+        }
+        s.proactiveTargeted(ProactiveCall.Learn)
+        assertEquals(ProactiveModelSetup.CAP_THINKING, setups.last().maxOutputTokens)
+        s.modelFor(ModelRole.Main)
+        assertEquals("用户任务照用选的档位", "high", setups.last().reasoningEffort)
+        assertNull(setups.last().maxOutputTokens)
+        assertEquals(TriageTargetOf(p.id, "P", "m1"), s.proactiveTarget())
+
+        // 轻量模型单独选了 m2(服务商没写档位):不猜,不发档位
+        s.use(ModelRole.Light, p.id, "m2", none)
+        s.proactiveModel()
+        assertNull(setups.last().reasoningEffort)
+        assertEquals(TriageTargetOf(p.id, "P", "m2"), s.proactiveTarget())
+    }
+
+    @Test fun proactiveCapIsSmallOnlyWhenThinkingIsOff() {
+        val short = ProactiveCall.Triage
+        val listed = ReasoningOptions(listOf("none", "low", "high"), fromProvider = true)
+        assertEquals("none" to ProactiveModelSetup.CAP, ProactiveModelSetup.of(ProviderConfig.Kind.Gemini, listed, "high", short))
+        assertEquals(null to ProactiveModelSetup.CAP, ProactiveModelSetup.of(ProviderConfig.Kind.Anthropic, null, null, short))
+        assertEquals(null to ProactiveModelSetup.CAP_THINKING, ProactiveModelSetup.of(ProviderConfig.Kind.Gemini, null, null, short))
+        val guessed = ReasoningOptions(listOf("none", "low"), fromProvider = false)
+        assertEquals("手动档位不猜", "high" to ProactiveModelSetup.CAP_THINKING, ProactiveModelSetup.of(ProviderConfig.Kind.OpenAiResponses, guessed, "high", short))
+        assertNull(ProactiveModelSetup.lowestDeclared(ReasoningOptions(listOf("ultra"), fromProvider = true)))
+        assertEquals(ProactiveModelSetup.CAP, ProactiveModelSetup.of(ProviderConfig.Kind.Anthropic, null, null, ProactiveCall.Learn).second)
+    }
+
+    // 分段、当日、周、月归纳的回复有十几句、每句上百字:不另设上限(不管开没开思考、走哪种协议),和普通任务一样用适配器的默认。
+    // 短上限只给判定和归纳话题;它得放得下写满的一批判定(8 条、每条一句最长的理由)
+    @Test fun longProactiveCallsAreNotCapped() {
+        val listed = ReasoningOptions(listOf("none", "low", "high"), fromProvider = true)
+        for (call in listOf(ProactiveCall.Notes, ProactiveCall.Day, ProactiveCall.Span)) {
+            assertTrue(call.long)
+            assertEquals("none" to null, ProactiveModelSetup.of(ProviderConfig.Kind.Gemini, listed, "high", call))
+            assertEquals(null to null, ProactiveModelSetup.of(ProviderConfig.Kind.Anthropic, null, null, call))
+            assertEquals("high" to null, ProactiveModelSetup.of(ProviderConfig.Kind.Anthropic, null, "high", call))
+        }
+        assertFalse(ProactiveCall.Triage.long || ProactiveCall.Learn.long)
+        val fullBatch = com.wangzan101.mika.core.proactive.NoticeTriage.MAX_BATCH * (com.wangzan101.mika.core.proactive.NoticeTriage.REASON_MAX + 60)
+        assertTrue("写满的一批判定(按一个字一个半 token 算)也放得下", ProactiveModelSetup.CAP >= fullBatch * 3 / 2)
+    }
+
+    @Test fun proactiveTargetIsNullWithoutAnyModel() {
+        assertNull(store().proactiveTarget())
+    }
+
+    // 目标和模型是同一次读配置得来的:给出的目标就是建模型用的那条配置
+    @Test fun proactiveTargetedModelIsBuiltFromTheTargetItNames() {
+        val s = store()
+        assertNull(s.proactiveTargeted(ProactiveCall.Triage))
+        val p = s.connect("P", ProviderConfig.Kind.OpenAiCompat, "https://p.test/v1", "k", listOf(ListedModel("m1"), ListedModel("m2")))
+        s.use(ModelRole.Main, p.id, "m1", none)
+        val main = s.proactiveTargeted(ProactiveCall.Triage)!!
+        assertEquals(TriageTargetOf(p.id, "P", "m1"), main.target)
+        assertEquals(main.target.providerId to main.target.model, built.last().first.providerId to built.last().first.model)
+        s.use(ModelRole.Light, p.id, "m2", none)
+        val light = s.proactiveTargeted(ProactiveCall.Triage)!!
+        assertEquals(TriageTargetOf(p.id, "P", "m2"), light.target)
+        assertEquals("m2", built.last().first.model)
+        assertEquals(s.proactiveTarget(), light.target)
+    }
+
+    @Suppress("TestFunctionName")
+    private fun TriageTargetOf(id: String, name: String, model: String) = com.wangzan101.mika.core.proactive.TriageTarget(id, name, model)
 
     private class FakeModel(override val capabilities: Capabilities) : ChatModel {
         override suspend fun complete(system: String, messages: List<Message>, tools: List<ToolSpec>): ModelReply =

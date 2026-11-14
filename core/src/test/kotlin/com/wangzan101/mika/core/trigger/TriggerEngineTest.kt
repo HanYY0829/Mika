@@ -8,6 +8,16 @@ import java.time.Instant
 import java.time.ZoneId
 
 class TriggerEngineTest {
+    @Test fun recentWindowsAreLimitedToTheSelectedPlanAndNewestFirst() {
+        val windows = (1L..12L).map { dueAt ->
+            TriggerWindow("selected", dueAt, dueAt, state = TriggerWindowState.Delivered)
+        }.reversed() + listOf(TriggerWindow("another", 13, 13), TriggerWindow("selected", 0, 14))
+        val snapshot = TriggerSnapshot(emptyList(), windows)
+
+        assertEquals(listOf(0L) + (12L downTo 4L), snapshot.recentWindows("selected", 10).map { it.dueAtMs })
+        assertTrue(snapshot.recentWindows("never-run", 10).isEmpty())
+    }
+
     @Test fun editingPlanInvalidatesOnlyThePendingConditionCheck() {
         val original = TriggerDefinition("check", "t", "old action", 1_000,
             conditionGoal = "old condition", intervalMs = 1_000)

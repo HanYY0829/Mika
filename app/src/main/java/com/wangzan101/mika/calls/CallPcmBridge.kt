@@ -23,7 +23,7 @@ internal class CallPcmBridge(
     private val interruptPlayback: suspend () -> Boolean,
 ) {
     suspend fun run(
-        session: VolcRealtimeSession,
+        session: CallRealtimeSession,
         greeting: String,
         counters: CallMediaCounters?,
         onTranscript: (String, String) -> Unit,
@@ -75,7 +75,7 @@ internal class CallPcmBridge(
                 throw CallMediaFailure("火山未接受本次通话的开场白")
             }
             val input = launch(Dispatchers.IO) {
-                val frame = ByteArray(VolcRealtimeClient.INPUT_CHUNK_BYTES)
+                val frame = ByteArray(session.inputChunkBytes)
                 var position = 0
                 while (true) {
                     val count = callPipeIo { capture.read(frame, position, frame.size - position) }

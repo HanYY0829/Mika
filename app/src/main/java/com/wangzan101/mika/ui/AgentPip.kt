@@ -113,6 +113,8 @@ fun AgentPip(
     webContent: Boolean,
     /** 小窗直接操作的口子(点/滑/返回注入到虚拟屏);屏没建好或任务结束时为 null。 */
     pipInput: PipInput? = null,
+    /** 目标 App 的声音被用户恢复过:按钮显示「静音」,再按一次静回去;否则「恢复声音」。 */
+    soundOn: Boolean = false,
     /** 用户在设置里开了「允许我在小窗里直接操作」。 */
     operateEnabled: Boolean = false,
     reduceMotion: Boolean,
@@ -123,7 +125,7 @@ fun AgentPip(
     onAttention: () -> Unit,
     onClose: () -> Unit = {},
     onReopen: () -> Unit = {},
-    onUnmute: () -> Unit = {},
+    onToggleSound: () -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val fade = if (reduceMotion) tween<Float>(150) else tween(300)
@@ -140,11 +142,11 @@ fun AgentPip(
         }
         AnimatedVisibility(pip.visible && !pip.closed, enter = fadeIn(fade), exit = fadeOut(if (reduceMotion) tween(150) else tween(500))) {
             PipWindow(
-                pip, frame, webContent, pipInput, operateEnabled, reduceMotion,
+                pip, frame, webContent, pipInput, soundOn, operateEnabled, reduceMotion,
                 areaWidth = constraints.maxWidth.toFloat(), areaHeight = constraints.maxHeight.toFloat(),
                 topInset = topInset, bottomInset = bottomInset, onExpand = onExpand, onCollapse = onCollapse, onAttention = onAttention,
                 onClose = onClose,
-                onUnmute = onUnmute,
+                onToggleSound = onToggleSound,
             )
         }
     }
@@ -186,6 +188,7 @@ private fun PipWindow(
     frame: Bitmap?,
     webContent: Boolean,
     pipInput: PipInput?,
+    soundOn: Boolean,
     operateEnabled: Boolean,
     reduceMotion: Boolean,
     areaWidth: Float,
@@ -196,7 +199,7 @@ private fun PipWindow(
     onCollapse: () -> Unit,
     onAttention: () -> Unit,
     onClose: () -> Unit,
-    onUnmute: () -> Unit,
+    onToggleSound: () -> Unit,
 ) {
     val density = LocalDensity.current
     var expandedScale by rememberSaveable { mutableStateOf(1f) }
@@ -402,7 +405,7 @@ private fun PipWindow(
                     }
                     PipSizeButton("↺", stringResource(R.string.pip_size_reset), "pip-size-reset") { expandedScale = 1f }
                 }
-                // 左上角:返回(直接操作时)、一次性恢复声音、关掉小画面;不伪造与真实音频无关的开关状态
+                // 左上角:返回(直接操作时)、声音开关(恢复/再静,方向跟着任务里的真实音频记录)、关掉小画面;不伪造与真实音频无关的开关状态
                 Row(Modifier.align(Alignment.TopStart).padding(6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (operateInput != null) {
                         PipButton(
@@ -413,10 +416,10 @@ private fun PipWindow(
                         )
                     }
                     PipButton(
-                        icon = MikaIcons.Sound,
-                        label = stringResource(R.string.pip_unmute),
-                        onClick = onUnmute,
-                        tag = "pip-unmute",
+                        icon = if (soundOn) MikaIcons.Mute else MikaIcons.Sound,
+                        label = stringResource(if (soundOn) R.string.pip_mute else R.string.pip_unmute),
+                        onClick = onToggleSound,
+                        tag = if (soundOn) "pip-mute" else "pip-unmute",
                     )
                     PipButton(
                         icon = MikaIcons.EyeOff,

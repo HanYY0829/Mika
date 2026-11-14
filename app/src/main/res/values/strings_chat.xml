@@ -172,6 +172,10 @@
     <string name="step_viewed">Viewed %1$s</string>
     <string name="step_viewed_part">Viewed %2$s in %1$s</string>
     <string name="step_failed">Failed</string>
+    <string name="step_declined_not_said">Not written: not your own words</string>
+    <string name="step_declined_sensitive">Not written: sensitive information</string>
+    <string name="step_declined_not_asked">Not changed: you did not ask for it</string>
+    <string name="step_declined_not_requested">Not written: this message did not ask Mika to remember</string>
     <string name="step_number">Step %1$d</string>
     <string name="source_label">Source</string>
     <plurals name="screenshots">
@@ -248,6 +252,7 @@
     <string name="chat_withdraw_message">Withdraw message</string>
     <string name="pip_close">Close the small view for this task</string>
     <string name="pip_unmute">Turn sound back on</string>
+    <string name="pip_mute">Turn sound off</string>
     <string name="pip_back">Back on the virtual screen</string>
     <string name="pip_reopen">Show screen</string>
     <string name="pip_closed_needs_you">Needs you</string>

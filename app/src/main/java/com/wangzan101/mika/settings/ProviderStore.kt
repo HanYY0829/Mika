@@ -33,6 +33,10 @@ import com.wangzan101.mika.core.model.PromptCaching
 import com.wangzan101.mika.core.model.ResponsesModel
 import com.wangzan101.mika.core.model.Role
 import com.wangzan101.mika.core.model.ToolSpec
+import com.wangzan101.mika.core.usage.ProactiveBudget
+import com.wangzan101.mika.core.proactive.ProactiveCall
+import com.wangzan101.mika.core.proactive.TargetedModel
+import com.wangzan101.mika.core.proactive.TriageTarget
 import com.wangzan101.mika.core.usage.TokenBudgetLimits
 import com.wangzan101.mika.core.usage.UsagePurpose
 import com.wangzan101.mika.core.usage.UsageSink
@@ -297,6 +301,10 @@ class ProviderStore(
     val xaiAuth: XaiAuth = defaultXaiAuth,
     /** OpenRouter 账号授权(换 Key)。 */
     val openRouterAuth: OpenRouterAuth = defaultOpenRouterAuth,
+    /** 主动能力今天已报告的 Token(各服务商合计)、它的每日预算、今天已发出的请求数;每次请求前实时读。 */
+    private val proactiveUsage: () -> Long = { 0L },
+    private val proactiveLimit: () -> Long = { ProactiveBudget.DEFAULT_DAILY_LIMIT },
+    private val proactiveCalls: () -> Long = { 0L },
     /**
      * 建可调用的模型:配置、Key、服务商列表里给这个模型单独指定的接口(没有为 null,按配置的接口类型和地址)、请求头等。
      * 为 null 时用内置的适配器(测试里换成假的)。
@@ -596,23 +604,81 @@ class ProviderStore(
 
     /**
      * 这个用途用的模型,套好计量;没选、不用时为 null。用量记在 [role] 名下:「用主模型」的看图、轻量调用
-     * 记作看图、轻量,服务商和模型是主模型那条配置的。这是 App 里建可调用模型的唯一入口。
+     * 记作看图、轻量,服务商和模型是主模型那条配置的。这是 App 里建可调用模型的唯一入口(主动能力走 [proactiveModel])。
      * [session] 是这次调用属于的对话(同一段对话里建的模型都给同一个);服务商声明了会话头的,每个请求都带上它。
      */
-    fun modelFor(role: ModelRole, session: ModelSession = ModelSession.fresh()): ChatModel? = configFor(role)?.let { cfg ->
+    fun modelFor(role: ModelRole, session: ModelSession = ModelSession.fresh()): ChatModel? =
+        meteredFor(role, session, UsagePurpose.of(role), ::checkDailyBudget)
+
+    /**
+     * 主动能力用的模型:轻量模型,没有时用主模型;用量记在 [UsagePurpose.Proactive] 名下。
+     * 每次请求前只查主动能力自己的每日预算(见 [ProactiveBudget]),不查也不占服务商的每日预算。
+     */
+    fun proactiveModel(session: ModelSession = ModelSession.fresh(), call: ProactiveCall = ProactiveCall.Triage): ChatModel? =
+        proactiveTargeted(call, session)?.model
+
+    /** [proactiveModel] 实际会用的服务商和模型(同样先轻量、后主模型);不建模型、不读 Key。界面据此请用户确认。 */
+    fun proactiveTarget(): TriageTarget? = proactiveConfig()?.let { (_, cfg) -> targetOf(cfg) }
+
+    /**
+     * 主动能力的模型(同 [proactiveModel]),连同建它用的那条配置对应的服务商和模型:两样出自同一次读配置。
+     * 发请求前对着这个目标查同意,中间换了模型也不会把通知文字发给没同意过的那个。
+     * [call] 是这次要发哪一种请求:回复上限跟着它定(见 [ProactiveModelSetup])。没有默认值:漏了它,回复长的那几种就会悄悄用上短上限。
+     */
+    fun proactiveTargeted(call: ProactiveCall, session: ModelSession = ModelSession.fresh()): TargetedModel? =
+        proactiveConfig()?.let { (role, cfg) ->
+            TargetedModel(targetOf(cfg), meteredWith(cfg, role, session, UsagePurpose.Proactive, ::checkProactiveBudget, call, ::checkProactiveRetry))
+        }
+
+    /** 主动能力用的那条配置和它的用途:轻量模型,没有时用主模型。只读一次配置。 */
+    private fun proactiveConfig(): Pair<ModelRole, ProviderConfig>? =
+        configFor(ModelRole.Light)?.let { ModelRole.Light to it } ?: configFor(ModelRole.Main)?.let { ModelRole.Main to it }
+
+    private fun targetOf(cfg: ProviderConfig) = TriageTarget(cfg.providerId, provider(cfg.providerId)?.name ?: cfg.name, cfg.model)
+
+    private fun meteredFor(
+        role: ModelRole, session: ModelSession, purpose: UsagePurpose, beforeCall: (UsageSource) -> Unit,
+    ): ChatModel? = configFor(role)?.let { cfg -> meteredWith(cfg, role, session, purpose, beforeCall) }
+
+    /** 用 [cfg](已按 [role] 取出的那条配置)建模型,套好计量。 */
+    private fun meteredWith(
+        cfg: ProviderConfig, role: ModelRole, session: ModelSession, purpose: UsagePurpose, beforeCall: (UsageSource) -> Unit,
+        call: ProactiveCall = ProactiveCall.Triage,
+        beforeRetry: (UsageSource, Int) -> Unit = { _, _ -> },
+    ): ChatModel {
         val p = provider(cfg.providerId)
-        val source = UsageSource(cfg.providerId, p?.name ?: cfg.name, cfg.model, UsagePurpose.of(role))
+        val source = UsageSource(cfg.providerId, p?.name ?: cfg.name, cfg.model, purpose)
         val listed = listedOf(cfg)
         val settings = p?.contextSettings?.get(cfg.model)
         val configured = if (settings == null) cfg else cfg.copy(capabilities = cfg.capabilities.copy(
             contextTokens = settings.windowTokens ?: cfg.capabilities.contextTokens,
             compactionTriggerTokens = settings.triggerTokens,
         ))
-        modelFactory(configured, apiKey(cfg.id), listed?.endpoint, ClientSetup(
-            headers(p?.sessionHeader, session), reasoningEffort = _roles.value.reasoningEffort(role),
+        val roleEffort = _roles.value.reasoningEffort(role)
+        // 主动能力:思考取服务商写明的最低档;回复短的那两种请求另设上限(见 ProactiveModelSetup)
+        val (effort, cap) = if (purpose == UsagePurpose.Proactive) {
+            ProactiveModelSetup.of(adapterFor(cfg, listed?.endpoint).first, ReasoningOptions.of(cfg, listed), roleEffort, call)
+        } else roleEffort to null
+        return modelFactory(configured, apiKey(cfg.id), listed?.endpoint, ClientSetup(
+            headers(p?.sessionHeader, session), maxOutputTokens = cap, reasoningEffort = effort,
             thinkingTypes = listed?.thinkingTypes, readTimeoutSeconds = settings?.readTimeoutSeconds,
-        )).metered(source, usage, ::checkDailyBudget)
+        )).metered(source, usage, beforeRetry = beforeRetry, beforeCall = beforeCall)
     }
+
+    /**
+     * 主动能力的调用只查它自己的每日预算:整份的硬上限(Token 上限,和跟着它算的请求次数上限,见 [ProactiveBudget.check])。
+     * 判定只用其中的一部分,那是 [com.wangzan101.mika.proactive.TriageRunner] 自己先停,不在这里。
+     */
+    @Suppress("UNUSED_PARAMETER")
+    private fun checkProactiveBudget(source: UsageSource) = ProactiveBudget.check(proactiveUsage(), proactiveLimit(), proactiveCalls())
+
+    /**
+     * 同一次调用里再发一个请求之前:这次调用已经发出的 [started] 个还没记进账本,加上再查。
+     * 不然只剩最后一次额度时,一次调用里的兼容重试会把次数上限顶过去。
+     */
+    @Suppress("UNUSED_PARAMETER")
+    private fun checkProactiveRetry(source: UsageSource, started: Int) =
+        ProactiveBudget.check(proactiveUsage(), proactiveLimit(), proactiveCalls() + started)
 
     /** 每次实际请求前重查配置和账本；达到预算时不发请求，也不记一笔虚假调用。 */
     private fun checkDailyBudget(source: UsageSource) {
@@ -1244,9 +1310,14 @@ class ProviderStore(
             else ProviderConfig.Kind.of(endpoint.protocol) to endpoint.adapterBaseUrl
 
         /** 产品里的那份(App 建):配置在 files/settings 下,Key 用 Android 密钥库加密,用量记到 [usage]。 */
-        fun create(context: Context, usage: UsageSink, userAgent: String, dailyUsage: (String) -> Long = { 0L }): ProviderStore =
+        fun create(
+            context: Context, usage: UsageSink, userAgent: String, dailyUsage: (String) -> Long = { 0L },
+            proactiveUsage: () -> Long = { 0L }, proactiveLimit: () -> Long = { ProactiveBudget.DEFAULT_DAILY_LIMIT },
+            proactiveCalls: () -> Long = { 0L },
+        ): ProviderStore =
             ProviderStore(File(context.applicationContext.filesDir, "settings"), KeystoreKeyCipher(), usage,
-                dailyUsage = dailyUsage, userAgent = userAgent)
+                dailyUsage = dailyUsage, userAgent = userAgent, proactiveUsage = proactiveUsage, proactiveLimit = proactiveLimit,
+                proactiveCalls = proactiveCalls)
 
         /** App 内共用的那份(经 [Owner] 给出)。 */
         fun get(context: Context): ProviderStore = (context.applicationContext as? Owner)?.providers

@@ -46,6 +46,9 @@
     <string name="tool_list_settings">Leer ajustes</string>
     <string name="tool_set_setting">Cambiar un ajuste</string>
     <string name="tool_save_skill">Guardar habilidad</string>
+    <string name="tool_memory_search">Buscar en la memoria</string>
+    <string name="tool_memory_save">Guardar en la memoria</string>
+    <string name="tool_memory_edit">Editar la memoria</string>
     <string name="tool_explain_failure">Explicar por qué no funcionó</string>
     <string name="tool_ask_user">Hacerte una pregunta</string>
     <string name="tool_takeover">Pedirte que tomes el control</string>

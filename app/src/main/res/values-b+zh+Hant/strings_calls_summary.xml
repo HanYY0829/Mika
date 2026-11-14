@@ -2,13 +2,14 @@
 <resources>
     <string name="calls_completed_notification_channel">AI 電話結束通知</string>
     <string name="calls_completed_notification_title">AI 已接聽電話</string>
+    <string name="calls_completed_notification_title_outgoing">AI 撥打已結束</string>
     <string name="calls_completed_notification_text">點按查看通話詳情</string>
     <string name="calls_summary_enable">產生 AI 通話摘要和待辦事項</string>
     <string name="calls_summary_cloud_consent">開啟後，通話轉寫會傳送給目前選定的 AI 模型服務進行摘要；原文仍會加密儲存在本機。關閉時不會傳送轉寫。</string>
     <string name="calls_summary_failed">摘要產生失敗，可在此通話詳情中重試。</string>
     <string name="calls_summary_generating">正在產生摘要…</string>
     <string name="calls_summary_retry">重試摘要</string>
-    <string name="calls_summary_purpose">來電目的</string>
+    <string name="calls_summary_purpose">通話目的</string>
     <string name="calls_summary_highlights">通話重點</string>
     <string name="calls_summary_conclusion">結論</string>
     <string name="calls_summary_uncertainties">未確認事項</string>

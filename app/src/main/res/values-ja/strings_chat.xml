@@ -162,6 +162,10 @@
     <string name="step_viewed">%1$s を確認</string>
     <string name="step_viewed_part">%1$s の %2$s を確認</string>
     <string name="step_failed">失敗</string>
+    <string name="step_declined_not_said">あなた自身の言葉ではないため、書き込みませんでした</string>
+    <string name="step_declined_sensitive">機密情報が含まれるため、書き込みませんでした</string>
+    <string name="step_declined_not_asked">変更や削除の指示がなかったため、変更していません</string>
+    <string name="step_declined_not_requested">このメッセージでは覚えるよう頼まれていないため、書き込みませんでした</string>
     <string name="step_number">ステップ %1$d</string>
     <string name="source_label">ソース</string>
     <plurals name="screenshots">
@@ -236,6 +240,7 @@
     <string name="chat_withdraw_message">メッセージを取り消す</string>
     <string name="pip_close">このタスクの小さな表示を閉じる</string>
     <string name="pip_unmute">音を戻す</string>
+    <string name="pip_mute">音を消す</string>
     <string name="pip_back">仮想画面で戻る</string>
     <string name="pip_reopen">画面を表示</string>
     <string name="pip_closed_needs_you">あなたの対応が必要</string>

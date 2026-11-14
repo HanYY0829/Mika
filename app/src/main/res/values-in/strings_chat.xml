@@ -162,6 +162,10 @@
     <string name="step_viewed">Melihat %1$s</string>
     <string name="step_viewed_part">Melihat %2$s di %1$s</string>
     <string name="step_failed">Gagal</string>
+    <string name="step_declined_not_said">Tidak ditulis: bukan kata-kata Anda sendiri</string>
+    <string name="step_declined_sensitive">Tidak ditulis: informasi sensitif</string>
+    <string name="step_declined_not_asked">Tidak diubah: Anda tidak memintanya</string>
+    <string name="step_declined_not_requested">Tidak ditulis: pesan ini tidak meminta untuk mengingat</string>
     <string name="step_number">Langkah %1$d</string>
     <string name="source_label">Sumber</string>
     <plurals name="screenshots">
@@ -236,6 +240,7 @@
     <string name="chat_withdraw_message">Tarik pesan</string>
     <string name="pip_close">Tutup tampilan kecil untuk tugas ini</string>
     <string name="pip_unmute">Kembalikan suara</string>
+    <string name="pip_mute">Matikan suara</string>
     <string name="pip_back">Kembali di layar virtual</string>
     <string name="pip_reopen">Tampilkan layar</string>
     <string name="pip_closed_needs_you">Perlu Anda</string>

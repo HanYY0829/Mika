@@ -218,4 +218,9 @@
         <item quantity="many">%1$d dias</item>
         <item quantity="other">%1$d dias</item>
     </plurals>
+    <string name="settings_scheduled_quiet">Horário silencioso para tarefas agendadas</string>
+    <string name="settings_scheduled_quiet_detail">Resultados e lembretes agendados aparecem silenciosamente no painel de notificações.</string>
+    <string name="settings_scheduled_quiet_start">Hora de início</string>
+    <string name="settings_scheduled_quiet_end">Hora de término</string>
+    <string name="settings_scheduled_quiet_equal">Escolha horários de início e término diferentes para silenciar as notificações.</string>
 </resources>

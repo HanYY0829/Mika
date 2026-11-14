@@ -155,6 +155,24 @@ class RunRecoveryTest {
         assertEquals(RunPhase.Ended, rig.store.get(RunId("a"))?.phase)
     }
 
+    @Test fun recoveredScheduledResultUsesTheScheduledLocalChannel() = runTest(UnconfinedTestDispatcher()) {
+        val rig = Rig(this)
+        val scheduled = RecordingChannel()
+        val recovery = RunRecovery(rig.store, rig.outbox, { rig.channel }, NoTriggers, rig.conversations, this,
+            scheduledLocalChannel = scheduled)
+        rig.store.save(run("scheduled", RunPhase.Finishing).copy(
+            reply = "scheduled result", deliveryId = "result:scheduled", triggerWindowKey = "plan:1",
+        ))
+        rig.store.save(run("manual", RunPhase.Finishing).copy(
+            reply = "manual result", deliveryId = "result:manual",
+        ))
+
+        recovery.recover()
+
+        assertEquals(listOf("result:scheduled"), scheduled.sent.map { it.id })
+        assertEquals(listOf("result:manual"), rig.channel.sent.map { it.id })
+    }
+
     @Test fun interruptedChannelRunRecoversToItsOriginalPeer() = runTest(UnconfinedTestDispatcher()) {
         val rig = Rig(this, "wechat")
         val peer = ChannelPeer("wechat", "owner", "thread-a")

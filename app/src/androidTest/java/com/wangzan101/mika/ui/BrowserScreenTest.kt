@@ -174,7 +174,7 @@ class BrowserScreenTest {
         }
         compose.onNodeWithText(BROWSER_DESKTOP_TAG).assertIsDisplayed()
         compose.onNodeWithTag("browser-progress").assertIsDisplayed()
-        compose.onNodeWithContentDescription("后退").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("返回").assertIsNotEnabled()
         compose.onNodeWithContentDescription("停止").performClick()
         compose.onNodeWithContentDescription("起始页").performClick()
         compose.onNodeWithContentDescription("分享").performClick()

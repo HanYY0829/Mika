@@ -210,6 +210,7 @@ object CapsuleCards {
         CapsuleKind.Failed -> tr(R.string.capsule_failed)
         CapsuleKind.Cancelled -> tr(R.string.capsule_stopped)
         CapsuleKind.KeptPage -> tr(R.string.kept_capsule)
+        CapsuleKind.Notice -> tr(R.string.notice_hint_title)
         CapsuleKind.Idle -> "Mika"
     }
 

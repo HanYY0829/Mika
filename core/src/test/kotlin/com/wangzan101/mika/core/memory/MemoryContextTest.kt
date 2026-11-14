@@ -17,6 +17,15 @@ class MemoryContextTest {
         assertTrue(block.usedIds.all { id -> pinned.any { it.id == id } })
     }
 
+    // 交给任务的那段标题说的是「用户告诉你的」:Mika 自己归纳出来的那几条逐条标明不是用户说的
+    @Test fun inferredMemoriesAreMarkedAsNotTheUsersWords() {
+        val said = mem("用户点外卖不要香菜")
+        val own = mem("用户常在张江路一带活动").let { it.copy(source = it.source.copy(type = MemoryContext.INFERRED)) }
+        val lines = numberedLines(MemoryContext.build(listOf(said, own), goal = "点个外卖", lastUserTurn = null, mode = MemoryContext.Mode.Full).message!!)
+        assertTrue(lines.single { "张江路" in it }.endsWith("the user did not say this)"))
+        assertTrue(lines.single { "香菜" in it }.endsWith("用户点外卖不要香菜"))
+    }
+
     @Test fun pinnedPendingNotIncluded() {
         val p = mem("置顶但未批准的做法", kind = MemoryKind.procedure, status = MemoryStatus.pending, pinned = true)
         assertNull(MemoryContext.build(listOf(p), goal = "随便", lastUserTurn = null).message)

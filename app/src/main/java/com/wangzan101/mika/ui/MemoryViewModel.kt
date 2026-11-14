@@ -249,7 +249,9 @@ class MemoryViewModel(
         fun sourceLine(s: MemorySource): String =
             if (s.type == "manual") tr(R.string.memory_manual)
             else SimpleDateFormat(tr(R.string.date_pattern_md), uiLocale()).format(Date(s.atMs)).let { day ->
-                if (s.channel != null && s.channel != "Ui") tr(R.string.memory_said_via, day, s.channel, s.quote.orEmpty())
+                // Mika 自己归纳出来的:引的是用户提出要求的那句话,不能说成「你说的」
+                if (s.type == com.wangzan101.mika.core.memory.MemoryContext.INFERRED) tr(R.string.memory_inferred, day, s.quote.orEmpty())
+                else if (s.channel != null && s.channel != "Ui") tr(R.string.memory_said_via, day, s.channel, s.quote.orEmpty())
                 else tr(R.string.memory_said, day, s.quote.orEmpty())
             }
     }

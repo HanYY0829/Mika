@@ -4,7 +4,7 @@
     <string name="calls_device_and_permissions">Perangkat dan izin</string>
     <string name="calls_edit_rule">Edit</string>
     <string name="calls_nav_receive">Terima</string>
-    <string name="calls_nav_task">Tugas</string>
+    <string name="calls_nav_task">Panggil</string>
     <string name="calls_pause_enable_first">Aktifkan jawab otomatis untuk menjedanya sementara.</string>
     <string name="calls_rule_delay_summary">Jeda sebelum menjawab: %1$d dtk</string>
     <string name="calls_rule_pause">Jeda sementara</string>

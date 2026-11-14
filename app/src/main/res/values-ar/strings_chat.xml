@@ -212,6 +212,10 @@
     <string name="step_viewed">تم عرض %1$s</string>
     <string name="step_viewed_part">تم عرض %2$s في %1$s</string>
     <string name="step_failed">فشلت</string>
+    <string name="step_declined_not_said">لم يُكتب: ليس من كلامك أنت</string>
+    <string name="step_declined_sensitive">لم يُكتب: معلومات حساسة</string>
+    <string name="step_declined_not_asked">لم يُغيَّر: لم تطلب ذلك</string>
+    <string name="step_declined_not_requested">لم يُكتب: هذه الرسالة لم تطلب التذكّر</string>
     <string name="step_number">الخطوة %1$d</string>
     <string name="source_label">المصدر</string>
     <plurals name="screenshots">
@@ -298,6 +302,7 @@
     <string name="chat_withdraw_message">سحب الرسالة</string>
     <string name="pip_close">إغلاق العرض المصغّر لهذه المهمة</string>
     <string name="pip_unmute">إرجاع الصوت</string>
+    <string name="pip_mute">كتم الصوت</string>
     <string name="pip_back">الرجوع على الشاشة الافتراضية</string>
     <string name="pip_reopen">عرض الشاشة</string>
     <string name="pip_closed_needs_you">تتطلب تدخّلك</string>

@@ -46,6 +46,9 @@
     <string name="tool_list_settings">查看设置</string>
     <string name="tool_set_setting">改设置</string>
     <string name="tool_save_skill">保存技能</string>
+    <string name="tool_memory_search">查找记忆</string>
+    <string name="tool_memory_save">写入记忆</string>
+    <string name="tool_memory_edit">修改记忆</string>
     <string name="tool_explain_failure">说明没办成的原因</string>
     <string name="tool_ask_user">问你一个问题</string>
     <string name="tool_takeover">请你接手</string>

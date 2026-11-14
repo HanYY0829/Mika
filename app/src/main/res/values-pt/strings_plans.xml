@@ -79,4 +79,6 @@
     <string name="plans_running_now">Em execução</string>
     <string name="trigger_deleted">A tarefa agendada foi excluída</string>
     <string name="trigger_busy">Esta tarefa ainda está em execução</string>
+    <string name="plans_run_history">Histórico de execuções</string>
+    <string name="plans_copy">Copiar como nova tarefa</string>
 </resources>

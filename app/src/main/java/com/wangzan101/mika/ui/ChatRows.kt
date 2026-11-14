@@ -18,7 +18,7 @@ internal fun chatItemKeys(
     exchanges.forEachIndexed { index, ex ->
         if (ex.goal.isNotEmpty()) add("u$index")
         val answering = ex.status == ExchangeStatus.Working && !ex.draft.isNullOrBlank()
-        if (if (ex.status.isActive()) !answering else ex.steps.isNotEmpty() || ex.runId != null) add("s$index")
+        if (if (ex.status.isActive()) !answering else ex.steps.isNotEmpty() || ex.recordedRun != null) add("s$index")
         val (joined, waiting) = steersAroundDraft(ex.steers)
         (joined + waiting).forEach { note ->
             if (!note.finished.isNullOrBlank()) add("a$index-${note.id}")

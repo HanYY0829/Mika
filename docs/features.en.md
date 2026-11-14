@@ -42,6 +42,9 @@ Any app installed on your phone works, with no per-app integration: Mika looks a
 - "Remind me at 9 tomorrow morning", "check the weather every morning and tell me only if it will rain", "do X every Friday".
 - Conditions can compare with last time: "tell me when it drops by more than 50" compares with the price from the last time the condition started the task; "tell me every time it rains" speaks up on each rainy day; you can also say "at most once a day".
 - Runs at the scheduled time in the original conversation and sends the result back. The scheduled tasks page lets you create, edit, pause, run now or delete, with a preview of the next three occurrences. A daily or weekly plan can use several local times (e.g. `08:00, 12:30, 20:00`) under one identity and pause switch. In its original conversation, you can also ask to edit its content, condition, reminder or recurrence.
+- Open a scheduled task's menu and select **Run history** to see the times and statuses of its last 10 recorded runs.
+- Choose **Copy as new plan** from a plan's menu to reuse its content, condition, and recurrence. The copy starts paused by default and sends results to the same conversation.
+- Under **Settings › Notifications**, turn on scheduled task quiet hours and choose start and end times. The window repeats daily in the device's local time and can span midnight. Tasks still run, results go back to the conversation, and scheduled results and reminders appear silently in the notification shade.
 
 ## Interrupt or stop anytime
 
@@ -83,6 +86,7 @@ The apps and websites that already have usage knowledge are listed in the collap
 ## Linux sandbox
 
 - Each conversation gets a workspace that can run Python, Node and shell commands, process files you send, and save results to your phone's Download/Mika folder.
+- Open **Files** in the sidebar to browse attachments and exported files. Combine name, conversation, source, and file type filters. File types are determined by extension and include images, PDFs, audio, video, and other files.
 - Long-press a conversation and choose "Terminal", or open "Files & computing environment" in Settings and tap "Open terminal" on a workspace row, to run commands yourself in that conversation's workspace. It uses the same workspace and network setting as Mika's scripts; Mika cannot see what is in the terminal, and terminal commands do not go into the conversation or run records.
 - Online by default; turn off "Allow scripts to go online" (允许脚本联网) under "Files & computing environment" (文件与计算环境) in Settings if you don't need it. arm64 devices only; on other devices the app installs normally and the sandbox shows "not supported on this device".
 - When it is online these commands also use **Settings › Network proxy** (the same proxy Mika uses for model calls, updates and the in-app browser; see [Models and sign-in](models.en.md#network-proxy)).

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_voice_service">リアルタイム音声サービス</string>
+    <string name="calls_voice_profiles_intro">複数のリアルタイム音声設定を保存できます。着信と発信では同じデフォルトを使い、個々の発信では別の設定を選べます。接続テストと端末の双方向音声検証は別の確認です。</string>
+    <string name="calls_voice_profile_subtitle">%1$s · %2$s</string>
+    <string name="calls_voice_audio_verified">端末の音声を検証済み</string>
+    <string name="calls_voice_audio_unverified">端末の音声は未検証</string>
+    <string name="calls_voice_selected">現在のデフォルト設定</string>
+    <string name="calls_voice_status_untested">接続テストが必要</string>
+    <string name="calls_voice_status_tested">接続テスト済み</string>
+    <string name="calls_voice_select">デフォルトに設定</string>
+    <string name="calls_voice_delete">設定を削除</string>
+    <string name="calls_voice_delete_confirm">「%1$s」と端末に保存された認証情報を削除しますか？通話履歴は削除されません。</string>
+    <string name="calls_voice_test">接続をテスト</string>
+    <string name="calls_voice_testing">テスト中…</string>
+    <string name="calls_voice_add">リアルタイム音声設定を追加</string>
+    <string name="calls_voice_edit">リアルタイム音声設定を編集</string>
+    <string name="calls_voice_test_note">接続できても、携帯電話の通話で双方向の音声を保証するものではありません。自動応答を有効にする前に、実際のテスト通話を行ってください。</string>
+    <string name="calls_voice_name">設定名</string>
+    <string name="calls_voice_endpoint">エンドポイント（wss）</string>
+    <string name="calls_voice_model">リアルタイム対話モデル</string>
+    <string name="calls_voice_default_name">デフォルトのリアルタイム音声</string>
+    <string name="calls_voice_protocol">統合型リアルタイム音声：認識、対話、発話を1つのサービスで処理します。</string>
+    <string name="calls_voice_credentials_keep">空欄のままにすると保存済みの認証情報を保持します。新しい認証情報を入力すると置き換わり、再テストが必要です。</string>
+    <string name="calls_back_settings">設定に戻る</string>
+    <string name="calls_enabled_summary">AIによる応答と発信を使用できます。自動応答には別のスイッチがあります。</string>
+    <string name="calls_settings_voice_group">音声とモデル</string>
+    <string name="calls_settings_device_group">端末と動作</string>
+    <string name="calls_settings_data_group">データ</string>
+    <string name="calls_history_entry_summary">要約、フォローアップ、原文</string>
+    <string name="calls_advanced_summary">音声チャンネルと診断</string>
+    <string name="calls_advanced_note">音声チャンネルを変更すると双方向音声の検証がリセットされます。自動応答を有効にする前に、再度実際のテスト通話を行ってください。</string>
+    <string name="calls_voice_setup">音声サービスを設定してテスト</string>
+</resources>

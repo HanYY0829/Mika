@@ -70,15 +70,17 @@ internal class CallNotifications(private val context: Context) {
     fun clear() { runCatching { manager?.cancel(ID) } }
 
     /** Separate, user-dismissable call-complete notice; never reuses the live-call notification ID. */
-    fun completed(callId: String, number: String?, summary: CallSummary? = null, summaryPending: Boolean = false, summaryFailed: Boolean = false) {
-        postCompleted(callId, number, summary, summaryPending, summaryFailed, onlyIfActive = false)
+    fun completed(callId: String, number: String?, direction: CallDirection = CallDirection.INCOMING,
+                  summary: CallSummary? = null, summaryPending: Boolean = false, summaryFailed: Boolean = false) {
+        postCompleted(callId, number, direction, summary, summaryPending, summaryFailed, onlyIfActive = false)
     }
 
-    fun updateCompletedSummary(callId: String, number: String?, summary: CallSummary?, failed: Boolean) {
-        postCompleted(callId, number, summary, summaryPending = false, summaryFailed = failed, onlyIfActive = true)
+    fun updateCompletedSummary(callId: String, number: String?, direction: CallDirection = CallDirection.INCOMING,
+                               summary: CallSummary?, failed: Boolean) {
+        postCompleted(callId, number, direction, summary, summaryPending = false, summaryFailed = failed, onlyIfActive = true)
     }
 
-    private fun postCompleted(callId: String, number: String?, summary: CallSummary?, summaryPending: Boolean,
+    private fun postCompleted(callId: String, number: String?, direction: CallDirection, summary: CallSummary?, summaryPending: Boolean,
                               summaryFailed: Boolean, onlyIfActive: Boolean) {
         runCatching {
         val notificationManager = manager ?: return@runCatching
@@ -94,7 +96,9 @@ internal class CallNotifications(private val context: Context) {
         val pending = PendingIntent.getActivity(context, callId.hashCode(), openDetail,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val caller = number?.takeIf { it.isNotBlank() } ?: context.getString(R.string.calls_completed_notification_text)
-        val title = "${context.getString(R.string.calls_completed_notification_title)} · $caller"
+        val titleRes = if (direction == CallDirection.OUTGOING) R.string.calls_completed_notification_title_outgoing
+            else R.string.calls_completed_notification_title
+        val title = "${context.getString(titleRes)} · $caller"
         val summaryText = summary?.let { value ->
             buildList {
                 value.purpose?.takeIf(String::isNotBlank)?.let { add("${context.getString(R.string.calls_summary_purpose)}: $it") }

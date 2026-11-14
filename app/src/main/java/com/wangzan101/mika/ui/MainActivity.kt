@@ -547,6 +547,7 @@ private fun MikaRoot(
                 reopen = nav.reopenDrawer,
                 onReopened = nav::drawerReopened,
                 onPersonal = { nav.show(Route.Personal) },
+                showPersonal = personalStart,
                 onRegularChat = nav::reset,
                 resetKey = nav.resetSerial,
             ) { openDrawer ->
@@ -568,6 +569,7 @@ private fun MikaRoot(
                             frames = app.taskState.frames,
                             webOpen = app.tasks.webScreenOpen,
                             pipInput = app.taskState.pipInput,
+                            pipSoundOn = app.taskState.pipSoundOn,
                             pipOperateEnabled = FeatureFlags.get(context).pipOperate(),
                             reduceMotion = MikaTheme.reduceMotion,
                             onOpenDrawer = openDrawer,
