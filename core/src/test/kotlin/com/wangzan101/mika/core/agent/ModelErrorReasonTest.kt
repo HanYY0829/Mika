@@ -75,6 +75,16 @@ class ModelErrorReasonTest {
         assertFalse(reason.contains("接口类型"))
     }
 
+    /** 整条链失败:主消息是主模型的错误,后面附每个模型的状态码与一行摘要(MK-1 第 2 批)。 */
+    @Test fun chainFailedLeadsWithPrimaryAndListsTrail() {
+        val primary = ModelError.RateLimited(null)
+        val e = ModelError.ChainFailed(primary, listOf("inferx-main" to primary, "gemini-backup" to ModelError.Server(400)))
+        val reason = StopRules.modelFailed(e).reason
+        assertTrue(reason.startsWith(userReason(primary)))
+        assertTrue(reason.contains("「inferx-main」 HTTP 429"))
+        assertTrue(reason.contains("「gemini-backup」 HTTP 400"))
+    }
+
     /** 断流有自己的说法、不提 Base URL;真的解析不了(格式对不上)才提示检查 Base URL 和接口类型。 */
     @Test fun streamCutIsNotBlamedOnConfiguration() {
         val cut = StopRules.modelFailed(ModelError.StreamCut()).reason

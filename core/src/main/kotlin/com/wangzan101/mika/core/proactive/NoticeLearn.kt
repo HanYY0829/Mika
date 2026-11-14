@@ -160,7 +160,7 @@ class NoticeLearn(
             if (existing.isEmpty()) {
                 appendLine("Existing topics: none")
             } else {
-                appendLine("Existing topics (reuse an id when it fits):")
+                appendLine("Existing topics (cite one of these ids when it is about the same subject):")
                 existing.forEachIndexed { i, t ->
                     appendLine("[${topicRef(i)}] kind: ${t.kind.wire}, label: ${untrusted(NoticeFilter.clean(t.label, LearnTuning.LABEL_MAX))}")
                 }

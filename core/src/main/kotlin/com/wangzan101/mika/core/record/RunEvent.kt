@@ -2,6 +2,7 @@ package com.wangzan101.mika.core.record
 
 import com.wangzan101.mika.core.replay.Anchors
 import com.wangzan101.mika.core.replay.Selector
+import com.wangzan101.mika.core.usage.DeepSeekCost
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -260,6 +261,7 @@ sealed interface RunEvent {
     data class ModelCalls(
         override val atMs: Long, val calls: Int, val unreported: Int, val inputTokens: Long, val outputTokens: Long, val cachedTokens: Long,
         val httpCalls: Int? = null, val httpUnreported: Int? = null,
+        val deepSeekCost: DeepSeekCost? = null,
     ) : RunEvent
 
     /**

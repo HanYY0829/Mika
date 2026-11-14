@@ -49,7 +49,10 @@ sealed class ModelError(message: String, cause: Throwable? = null) : Exception(m
      * 回复不完整、不能用,重发同一个请求通常就好;和接口配置无关。
      */
     class StreamCut : ModelError("回复还没传完,连接就被断开了")
-    class Server(val status: Int) : ModelError("模型服务出错(HTTP $status)")
+    /** [detail] 保住服务商的报错原话:分类归 Server 走切换,原话给连接探测等诊断场景看(MK-1 第 2 批)。 */
+    class Server(val status: Int, val detail: String? = null) : ModelError(
+        "模型服务出错(HTTP $status)" + (detail?.takeIf { it.isNotBlank() }?.let { ":" + it.take(200) } ?: ""),
+    )
     class ContentRefused : ModelError("模型拒绝处理该内容")
     /** 服务端明确拒绝思考强度参数:保留服务端原话,引导改档位,不能误报成地址或接口错误。 */
     class ReasoningEffortRejected(val detail: String) : ModelError("模型不接受所选的思考强度")
@@ -68,4 +71,10 @@ sealed class ModelError(message: String, cause: Throwable? = null) : Exception(m
         ModelError("你的${account}订阅档位不能用这个接口")
     class BadResponse(detail: String = "", cause: Throwable? = null) :
         ModelError(if (detail.isEmpty()) "模型返回了无法解析的内容" else "模型返回了无法解析的内容: $detail", cause)
+    /**
+     * 主模型链整条都试过、全部失败(MK-1 第 2 批):[primary] 是主模型最初的错误,失败说法以它为主;
+     * [entries] 按尝试顺序记每个模型(名字、它犯的错误),主模型自己是第一条。任务/每日预算错误不包这层,原样交出。
+     */
+    class ChainFailed(val primary: ModelError, val entries: List<Pair<String, ModelError>>) :
+        ModelError(primary.message.orEmpty())
 }

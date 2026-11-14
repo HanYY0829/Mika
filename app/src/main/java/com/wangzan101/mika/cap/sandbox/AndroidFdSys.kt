@@ -97,9 +97,17 @@ object AndroidFdSys : FdSys {
 
     override fun rename(dir: OpenFd, from: String, to: String) = errno { Os.rename(at(dir, from), at(dir, to)) }
 
+    override fun link(fromDir: OpenFd, from: String, toDir: OpenFd, to: String) =
+        errno { Os.link(at(fromDir, from), at(toDir, to)) }
+
     override fun symlink(dir: OpenFd, name: String, target: String) = errno { Os.symlink(target, at(dir, name)) }
 
     override fun chmod(fd: OpenFd, mode: Int) = errno { Os.fchmod(fd(fd).pfd.fileDescriptor, mode) }
+
+    // 公开的 android.system.Os 没有 fchmodat/lchmod；删树前只对 lstat 确认过是目录的项调用，
+    // 且这里改成 0700 是收紧权限，用 chmod（跟随最后一段链接）的风险可接受。
+    override fun chmodAt(dir: OpenFd, name: String, mode: Int) =
+        errno { Os.chmod(at(dir, name), mode) }
 
     private fun StructStat.toFdStat(): FdStat {
         val kind = when {

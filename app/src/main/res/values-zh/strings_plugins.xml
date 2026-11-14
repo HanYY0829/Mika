@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugins_title">插件</string>
+    <string name="plugins_install">安装插件</string>
+    <string name="plugins_installing">正在安装…</string>
+    <string name="plugins_empty">还没有插件</string>
+    <string name="plugins_empty_sub">安装插件 zip 可以给 Mika 增加它能读的技能。插件不能改 App 设置，也不能读你的其他数据。</string>
+    <string name="plugins_enabled">已启用</string>
+    <string name="plugins_disabled">已停用</string>
+    <string name="plugins_skills">技能</string>
+    <string name="plugins_no_skills">没有技能</string>
+    <string name="plugins_permissions">权限</string>
+    <string name="plugins_none">无</string>
+    <string name="plugins_version">版本 %1$s</string>
+    <string name="plugins_uninstall">卸载</string>
+    <string name="plugins_uninstall_body">卸载这个插件和它的技能？对话和记忆不受影响。</string>
+    <string name="plugins_install_failed">安装失败：%1$s</string>
+    <string name="plugins_unsupported_in_version">这个版本只支持技能插件。</string>
+    <string name="plugins_error_too_new">这个插件需要更新版本的 Mika。</string>
+    <string name="plugins_error_unsafe">安装包里有不安全的路径，已拒绝安装。</string>
+    <string name="plugins_error_too_large">安装包太大。</string>
+    <string name="plugins_error_missing_manifest">安装包根目录没有 manifest.json。</string>
+    <string name="plugins_error_invalid">这个安装包不是有效的插件。</string>
+    <plurals name="plugins_skill_count">
+        <item quantity="other">%1$d 个技能</item>
+    </plurals>
+    <plurals name="plugins_count">
+        <item quantity="other">%1$d 个插件</item>
+    </plurals>
+</resources>

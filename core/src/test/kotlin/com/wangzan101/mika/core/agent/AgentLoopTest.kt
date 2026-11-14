@@ -87,7 +87,7 @@ class AgentLoopTest {
     /** 只有手机、展开了手机一组之后的系统提示词:几组的入口、交给用户的规矩、手机一段(去掉没提供的工具那几行)。 */
     private fun phoneOpenedPrompt(base: String) = listOf(
         base, com.wangzan101.mika.core.capability.PromptEnv(setOf("phone_launch_app", "phone_set_alarm"), false).gate(SystemPrompt.read("groups")), SystemPrompt.read("handover"),
-        SystemPrompt.read("phone").lines().filterNot { "<!-- needs: phone_open_link -->" in it || "<!-- needs: phone_find_visually -->" in it }.joinToString("\n"),
+        SystemPrompt.read("phone").lines().filterNot { "<!-- needs: phone_open_link -->" in it || "<!-- needs: phone_find_visually -->" in it || "<!-- needs: phone_sms_login -->" in it }.joinToString("\n"),
     ).joinToString("\n\n")
 
     private fun loop(
@@ -108,6 +108,21 @@ class AgentLoopTest {
         assertTrue(main.offeredTools.last().isEmpty())
         assertTrue(events.none { it is RunEvent.ToolResult })
         assertTrue(events.filterIsInstance<RunEvent.State>().any { it.name == "intent_gate" && it.detail == "Discuss" })
+    }
+
+    @Test fun typedIntentDecisionUsesExistingDiscussionGateAndIsRecorded() = runTest {
+        val main = FakeModel(tools(call("phone_list_apps")), finish("可以，先讨论具体流程。"))
+        val judge = FakeModel()
+        val events = mutableListOf<RunEvent>()
+        val end = AgentLoop(main, toolDispatcher(FakeScreen()), "BASE", intentJudge = judge,
+            intentDecision = com.wangzan101.mika.core.decision.DecisionModel { _, _, _, _ ->
+                com.wangzan101.mika.core.decision.DecisionChoice("DISCUSS", 0.98)
+            }, sink = object : RunSink { override fun event(e: RunEvent) { events += e } })
+            .run("以后可以帮我把内容同步到公众号并发送，对吧？")
+        assertTrue(end is TaskState.Succeeded)
+        assertTrue(judge.requests.isEmpty())
+        assertTrue(events.none { it is RunEvent.ToolResult })
+        assertTrue(events.filterIsInstance<RunEvent.State>().any { it.name == "jev_intent" && it.detail == "selected:Discuss" })
     }
 
     // 判断不出意图(判断模型和兜底的主模型都没给出三个词之一)时照主模型原来的决定执行,不改成文字回答

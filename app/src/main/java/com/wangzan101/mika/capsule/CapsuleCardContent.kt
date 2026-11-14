@@ -268,6 +268,7 @@ fun CapsuleCard(
  * 缩放和透明度从 [origin] 那边长出来(按此刻的大小给出方位,例如卡片从胶囊那边),真开始出来时调 [onOpened];
  * [open] 变成 false 时缩回那边、淡掉,做完调 [onClosed]。
  * 只动图层,不改布局,也就不逐帧改窗口。关了动画时直接到位,收起时马上调 [onClosed]。
+ * 展开、收起都等不了没完没了的帧:浮层收不到下一帧时超时就位(见 [runOverlayOpen]、[runOverlayClose]),不把卡片留在半开。
  */
 @Composable
 fun OverlayMotion(
@@ -284,10 +285,19 @@ fun OverlayMotion(
                 shown.snapTo(1f)
                 opened()
             } else {
-                // 刚出来那一帧要排版、窗口换大小,最慢:等它画完再起步,动画的头几帧不被它吃掉
-                if (shown.value == 0f) repeat(SETTLE_FRAMES) { withFrameNanos { } }
-                opened()
-                shown.animateTo(1f, tween(CARD_IN_MS, easing = MikaMotion.Decelerate))
+                var openedCalled = false
+                var finished = false
+                runOverlayOpen(still) {
+                    // 刚出来那一帧要排版、窗口换大小,最慢:等它画完再起步,动画的头几帧不被它吃掉
+                    if (shown.value == 0f) repeat(SETTLE_FRAMES) { withFrameNanos { } }
+                    openedCalled = true
+                    opened()
+                    shown.animateTo(1f, tween(CARD_IN_MS, easing = MikaMotion.Decelerate))
+                    finished = true
+                }
+                // 帧停了(浮层收不到下一帧)时上面走不完:值归位、回调补上,卡片不留在半开的缩放上,窗口状态也不卡在 opening(#323)
+                if (!finished) shown.snapTo(1f)
+                if (!openedCalled) opened()
             }
         } else {
             runOverlayClose(still) {
@@ -324,9 +334,21 @@ internal suspend fun runOverlayClose(reduceMotion: Boolean, animate: suspend () 
     withTimeoutOrNull((CARD_OUT_MS * scale).toLong() + CLOSE_GRACE_MS) { animate() }
 }
 
+/**
+ * 等展开动画走完,但浮层拿不到后续帧时也必须落位:与收起([runOverlayClose])同一形状,帧停超时后由调用处
+ * 直接把值归位并补上展开回调。等待时长跟随系统的动画速度;极大的慢动作倍率最多按十倍算,避免卡在中间缩放的时间无限长。
+ */
+internal suspend fun runOverlayOpen(reduceMotion: Boolean, animate: suspend () -> Unit) {
+    if (reduceMotion) return
+    val scale = currentCoroutineContext()[MotionDurationScale]?.scaleFactor
+        ?.takeIf { it.isFinite() && it > 0f }?.coerceAtMost(10f) ?: 1f
+    withTimeoutOrNull((CARD_IN_MS * scale).toLong() + OPEN_GRACE_MS) { animate() }
+}
+
 private const val CARD_IN_MS = 240
 private const val CARD_OUT_MS = 180
 private const val CLOSE_GRACE_MS = 500L
+private const val OPEN_GRACE_MS = 500L
 private const val CARD_FROM_SCALE = 0.6f
 private const val SETTLE_FRAMES = 2
 

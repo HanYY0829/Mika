@@ -53,7 +53,7 @@ class SettingsScreenTest {
             SettingsContent(
                 status = status, androidRelease = "14", mainModel = mainModel, onBack = {}, onProblem = onProblem,
                 onOpenModels = { opened += "models" }, onOpenPhoneOps = { opened += "phone" }, onOpenDuringWork = { opened += "work" },
-                onOpenWechat = { opened += "wechat" },
+                onOpenWechat = { opened += "wechat" }, onOpenProactive = { opened += "proactive" },
                 capsuleMode = CapsuleMode.DuringTasks, onOpenCapsule = { opened += "capsule" }, onOpenNotifications = { opened += "notifications" },
                 onOpenLanguage = { opened += "language" }, onOpenAppAccess = { opened += "access" },
                 onOpenMemory = { opened += "memory" }, onOpenAdvanced = { opened += "advanced" },
@@ -84,11 +84,12 @@ class SettingsScreenTest {
     fun homeRowsOpenTheirPages() {
         val opened = mutableListOf<String>()
         home(opened = opened)
-        for (t in listOf("模型", "手机操作", "微信", "任务运行", "悬浮胶囊", "语言与外观", "通知", "记忆与数据", "应用访问", "高级与其他", "关于 Mika")) {
+        // 「主动能力」在「微信」和「任务运行」之间
+        for (t in listOf("模型", "手机操作", "微信", "主动能力", "任务运行", "悬浮胶囊", "语言与外观", "通知", "记忆与数据", "应用访问", "高级与其他", "关于 Mika")) {
             scrollTo(t)
             compose.onNodeWithText(t).performClick()
         }
-        assertEquals(listOf("models", "phone", "wechat", "work", "capsule", "language", "notifications", "memory", "access", "advanced", "about"), opened)
+        assertEquals(listOf("models", "phone", "wechat", "proactive", "work", "capsule", "language", "notifications", "memory", "access", "advanced", "about"), opened)
     }
 
     /** 高级与其他集中放连接、维护和工程入口,各行仍打开原来的子页。 */
@@ -349,6 +350,22 @@ class SettingsScreenTest {
         scrollTo("不同对话同时进行")
         scrollTo("长任务的摘要分条写")
         compose.onNodeWithText("长任务的摘要分条写").assertIsDisplayed()
+    }
+
+    @Test
+    fun deviceFilesExperimentalSwitchToggles() {
+        val toggled = mutableListOf<Boolean>()
+        var enabled by mutableStateOf(false)
+        compose.setContent {
+            DeveloperOptionsScreen(SpeedFlags.OFF, onSpeed = {}, onBack = {}, deviceFiles = enabled,
+                onDeviceFiles = { enabled = it; toggled += it })
+        }
+        scrollTo("导入手机文件")
+        compose.onNodeWithTag("dev-device-files").assertIsOff().performClick()
+        compose.onNodeWithTag("dev-device-files").assertIsOn()
+        compose.onNodeWithText("导入手机文件").performClick()
+        compose.onNodeWithTag("dev-device-files").assertIsOff()
+        assertEquals(listOf(true, false), toggled)
     }
 
     /** 「自主模式」在任务运行最前面,默认关;点开关或整行都切换。 */

@@ -9,6 +9,7 @@ import com.wangzan101.mika.core.model.ToolSpec
 import com.wangzan101.mika.core.model.Usage
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
+import java.time.Instant
 
 /** 一次调用是为哪个用途发的。存储里记 [key];认不出的 key(以后的版本写的)读成 [Other]。 */
 enum class UsagePurpose(val key: String) {
@@ -26,7 +27,10 @@ enum class UsagePurpose(val key: String) {
 }
 
 /** 一个模型是谁的、为哪个用途建的:记用量时原样带上。[providerName] 是建模型时服务商的名字(服务商删了也留着)。 */
-data class UsageSource(val providerId: String, val providerName: String, val model: String, val purpose: UsagePurpose)
+data class UsageSource(
+    val providerId: String, val providerName: String, val model: String, val purpose: UsagePurpose,
+    val deepSeekDirect: Boolean = false,
+)
 
 /**
  * 一次逻辑调用的结果:[usage] 为 null 表示服务商没报用量(或调用失败),不估 token。
@@ -76,19 +80,21 @@ private open class MeteredModel(
         tally?.checkBudget()
         beforeCall(source)
         val attempts = ModelHttpAttempts { started -> beforeRetry(source, started) }
+        val startedAt = tally?.deepSeekCost?.let { Instant.now() }
         val reply = try {
             withContext(attempts) { call() }
         } catch (e: Throwable) {
-            note(null, tally, attempts.started)
+            note(null, tally, attempts.started, startedAt)
             throw e
         }
-        note(reply.usage, tally, attempts.started)
+        note(reply.usage, tally, attempts.started, startedAt)
         return reply
     }
 
-    private fun note(usage: Usage?, tally: RunUsageTally?, httpAttempts: Int) {
+    private fun note(usage: Usage?, tally: RunUsageTally?, httpAttempts: Int, startedAt: Instant?) {
         runCatching { sink.record(source, usage, httpAttempts) }
         tally?.add(usage, httpAttempts)
+        if (startedAt != null) tally?.deepSeekCost?.add(source.model.takeIf { source.deepSeekDirect }, startedAt, usage, httpAttempts)
     }
 }
 

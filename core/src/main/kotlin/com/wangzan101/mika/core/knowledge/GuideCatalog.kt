@@ -1,10 +1,12 @@
 package com.wangzan101.mika.core.knowledge
 
+import com.wangzan101.mika.core.skills.PLUGIN_KIND
 import com.wangzan101.mika.core.skills.PersonalSkills
+import com.wangzan101.mika.core.skills.PluginSkills
 import com.wangzan101.mika.core.skills.SkillStatus
 import com.wangzan101.mika.core.teach.TeachSkill
 
-/** 内置的 App 知识(kind `app`)、站点知识(`site`)、技能(`skill`),或用户的个人技能(`personal`);[files] 是可读的文件(主文件在前,其余是附件)。 */
+/** 内置的 App 知识(kind `app`)、站点知识(`site`)、技能(`skill`),用户的个人技能(`personal`),或插件技能(`plugin`);[files] 是可读的文件(主文件在前,其余是附件)。 */
 data class GuideInfo(
     val kind: String,
     val name: String,
@@ -41,7 +43,7 @@ const val RECOMMEND_MIN_SCORE = 60
 const val PERSONAL_KIND = "personal"
 /** App 与网站知识(knowledge_search / knowledge_read 管的);技能是另一组(内置技能与个人技能)。 */
 val KNOWLEDGE_KINDS = setOf(KnowledgeIndex.APP, KnowledgeIndex.SITE)
-val SKILL_KINDS = setOf(KnowledgeIndex.SKILL, PERSONAL_KIND)
+val SKILL_KINDS = setOf(KnowledgeIndex.SKILL, PERSONAL_KIND, PLUGIN_KIND)
 
 /**
  * 只读的目录:按名称/别名/描述查找、读取文本。内置部分来自构建时生成的 [KnowledgeIndex.RESOURCE] 与各自的目录,
@@ -53,16 +55,22 @@ class GuideCatalog private constructor(
     private val personal: PersonalSkills? = null,
     /** 个人技能正文载入时做的改写(改名前的工具名换成现在的);默认原样。 */
     private val rewrite: (String) -> String = { it },
+    /** 已启用插件的只读技能;名字带插件命名空间,不会覆盖内置/个人技能。 */
+    private val plugins: PluginSkills? = null,
 ) {
     private val bundledItems: List<GuideInfo> = rows.map(::info)
 
-    /** 个人技能每次现读:收下、停用随时发生。 */
+    /** 个人与插件技能每次现读:收下、停用、启停插件随时发生。插件不覆盖内置/个人技能。 */
     val items: List<GuideInfo>
         get() {
             val mine = personalEntries().map { it.info }
-            val names = mine.map { it.name }.toSet()
-            return mine + bundledItems.filter { it.name !in names }
+            val personalNames = mine.map { it.name }.toSet()
+            val bundled = bundledItems.filter { it.name !in personalNames }
+            val reserved = personalNames + bundled.map { it.name }
+            return mine + pluginEntries().filter { it.name !in reserved } + bundled
         }
+
+    private fun pluginEntries(): List<GuideInfo> = plugins?.entries().orEmpty()
 
     /**
      * [route] 为 `android`:有名为 [name] 的 App 知识;为 `browser`:有名为 [name] 的站点知识,或名为 [name] 的 App 关联了站点。
@@ -105,11 +113,11 @@ class GuideCatalog private constructor(
         }.sum()
     }
 
-    /** [name] 可写 `app:meituan` / `site:jd.com` / `skill:documents` / `personal:xxx`,也可只写名字(重名时报歧义)。 */
+    /** [name] 可写 `app:meituan` / `site:jd.com` / `skill:documents` / `personal:xxx` / `plugin:<插件 id>/<技能>`,也可只写名字(重名时报歧义)。 */
     /** [note] 是放在正文前的附注(见 [toolsNote])。[among] 给了时只读这几种,名字是另一组的时说清该用哪个工具读。 */
     fun view(name: String, file: String? = null, note: String = UNAVAILABLE_TOOLS_NOTE, among: Set<String>? = null): GuideView {
         val n = name.trim()
-        val prefixed = n.substringBefore(':', "").takeIf { it in KnowledgeIndex.KINDS || it == PERSONAL_KIND }
+        val prefixed = n.substringBefore(':', "").takeIf { it in KnowledgeIndex.KINDS || it == PERSONAL_KIND || it == PLUGIN_KIND }
         val id = if (prefixed != null) n.substringAfter(':') else n
         val named = items.filter { it.name == id && (prefixed == null || it.kind == prefixed) }
         val hits = named.filter { among == null || it.kind in among }
@@ -128,6 +136,7 @@ class GuideCatalog private constructor(
         val main = info.files.first()
         val path = (file?.trim()?.takeIf { it.isNotEmpty() } ?: main).removePrefix("./")
         if (info.kind == PERSONAL_KIND) return viewPersonal(info, path)
+        if (info.kind == PLUGIN_KIND) return viewPlugin(info, path, note)
         if (path !in info.files)
             return GuideView.Failed("file_not_found", "No file '$path' in ${info.kind}:${info.name}. Available: ${info.files.joinToString()}.")
         val text = (if (path == main) fullText(info) else read(info, path))
@@ -146,17 +155,32 @@ class GuideCatalog private constructor(
         return GuideView.Found(info, SKILL_FILE, if (cut) body.take(VIEW_LIMIT) + "\n…(truncated)" else body, cut, body.length)
     }
 
+    // 插件技能是第三方内容:标明来源,正文按不可信内容对待
+    private fun viewPlugin(info: GuideInfo, path: String, note: String): GuideView {
+        if (path !in info.files) {
+            return GuideView.Failed("file_not_found", "No file '$path' in plugin skill ${info.name}. Available: ${info.files.joinToString()}.")
+        }
+        val body = plugins?.read(info, path)
+            ?: return GuideView.Failed("file_not_found", "Plugin skill ${info.name} could not be read; the plugin may have been disabled or removed.")
+        val pluginId = info.name.substringBefore('/')
+        val text = "(third-party plugin skill: $pluginId)\n$note\n$body"
+        val cut = text.length > VIEW_LIMIT
+        return GuideView.Found(info, path, if (cut) text.take(VIEW_LIMIT) + "\n…(truncated)" else text, cut, text.length)
+    }
+
     /** 主文件(APP.md / SITE.md / SKILL.md)的正文,去掉头部。坏掉的个人技能为 null。 */
     fun fullText(info: GuideInfo): String? {
         if (info.kind == PERSONAL_KIND) return personalEntries().find { it.info.name == info.name }?.body
+        if (info.kind == PLUGIN_KIND) return plugins?.read(info, info.files.first())
         return read(info, KnowledgeIndex.fileOf(info.kind))
     }
 
     private fun read(info: GuideInfo, file: String): String? =
         resource("${KnowledgeIndex.dirOf(info.kind)}/${info.name}/$file")?.let { FrontMatter.parse(it.toString(Charsets.UTF_8)).second }
 
-    /** 在沙箱里的目录(`/opt/mika/skills` 之下),也是 run_bundled_script 的 source 参数,如 `skills/documents`、`skills/research`。 */
-    fun scriptSource(info: GuideInfo): String = "${KnowledgeIndex.dirOf(info.kind).substringAfterLast('/')}/${info.name}"
+    /** 在沙箱里的目录(`/opt/mika/skills` 之下),也是 run_bundled_script 的 source 参数,如 `skills/documents`、`skills/research`。插件技能不走这个入口。 */
+    fun scriptSource(info: GuideInfo): String =
+        if (info.kind == PLUGIN_KIND) "" else "${KnowledgeIndex.dirOf(info.kind).substringAfterLast('/')}/${info.name}"
 
     /**
      * 要同步进沙箱的脚本:每个带 `scripts/manifest.json` 的条目,清单本身加上清单里列出的文件。
@@ -244,9 +268,18 @@ class GuideCatalog private constructor(
             return GuideCatalog(loader, rows.orEmpty())
         }
 
-        /** 内置目录 + 个人技能;[rewrite] 是个人技能正文载入时的改写(改名前的工具名换成现在的)。 */
-        fun withPersonal(bundled: GuideCatalog, personal: PersonalSkills, rewrite: (String) -> String = { it }): GuideCatalog =
-            GuideCatalog(bundled.loader, bundled.rows, personal, rewrite)
+        /** 内置目录 + 个人技能 + 插件技能;[rewrite] 是个人技能正文载入时的改写(改名前的工具名换成现在的)。 */
+        fun withPersonal(
+            bundled: GuideCatalog,
+            personal: PersonalSkills,
+            rewrite: (String) -> String = { it },
+            plugins: PluginSkills? = null,
+        ): GuideCatalog =
+            GuideCatalog(bundled.loader, bundled.rows, personal, rewrite, plugins)
+
+        /** 只有内置目录 + 插件技能(测试或不带个人技能的场景)。 */
+        fun withPlugins(bundled: GuideCatalog, plugins: PluginSkills): GuideCatalog =
+            GuideCatalog(bundled.loader, bundled.rows, null, { it }, plugins)
 
         private fun info(e: IndexEntry) = GuideInfo(
             kind = e.kind, name = e.name, display = e.display, description = e.description,

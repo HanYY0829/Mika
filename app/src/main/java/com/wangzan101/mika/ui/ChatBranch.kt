@@ -1,7 +1,7 @@
 package com.wangzan101.mika.ui
 
 import com.wangzan101.mika.core.agent.QuoteMessage
-import com.wangzan101.mika.core.cap.web.AttachedPage
+import com.wangzan101.mika.core.agent.AttachedPage
 import com.wangzan101.mika.core.userscreen.UserScreenMessage
 
 /**

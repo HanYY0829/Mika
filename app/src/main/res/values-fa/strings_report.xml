@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="report_title">گزارش کار</string>
+    <string name="report_entry_hint">نتیجه، جزئیات و تصاویر</string>
+    <string name="report_no_answer">پاسخ نهایی برای این کار ذخیره نشده است.</string>
+    <string name="report_screens">تصاویر کلیدی</string>
+    <string name="report_view_step">مرحلهٔ %1$d · مشاهدهٔ بازپخش</string>
+    <string name="report_local_note">همراه سابقهٔ کار روی دستگاه ذخیره می‌شود. تصاویر ممکن است حاوی محتوای صفحه باشند؛ تنها ۳۰ کار اخیر نگه داشته می‌شوند.</string>
+    <string name="playback_title">بازپخش عملیات</string>
+    <string name="playback_empty">برای این کار تصویری ثبت نشده است.</string>
+    <string name="playback_legacy">سابقهٔ قدیمی: فقط تصاویر موجودند؛ نشانه‌های عملیات ثبت نشده‌اند.</string>
+    <string name="playback_approximate">پیکان جهت پیمایش را نشان می‌دهد، نه محل دقیق لمس.</string>
+    <string name="playback_marks">دایرهٔ قرمز: لمس · پیکان: کشیدن</string>
+    <string name="playback_progress">پیشرفت بازپخش</string>
+    <string name="playback_pause">مکث</string>
+    <string name="playback_play">پخش</string>
+    <string name="playback_previous">قبلی</string>
+    <string name="playback_next">بعدی</string>
+    <string name="playback_image">تصویر ثبت‌شدهٔ کار</string>
+    <string name="playback_missing">تصویر در دسترس نیست</string>
+    <string name="report_export">صدور</string>
+    <string name="report_saved">گزارش ذخیره شد</string>
+    <string name="report_save_failed">ذخیره نشد. سابقه و مقصد را بررسی و دوباره تلاش کنید.</string>
+    <string name="report_close">بستن</string>
+    <string name="report_final_page">آخرین صفحهٔ ثبت‌شده</string>
+    <string name="playback_stage_start">شروع</string>
+    <string name="playback_stage_input">ورود اطلاعات و جستجو</string>
+    <string name="playback_skipped">تصاویر در دسترس نبودند و رد شدند: %1$d.</string>
+    <string name="playback_no_mark">برای این عملیات نشانه‌ای ثبت نشده است.</string>
+    <string name="playback_error_unknown">خطا: دلیل مشخصی ثبت نشده است.</string>
+    <string name="playback_result">نتیجهٔ عملیات</string>
+    <string name="playback_element_click">دایره جای تقریبی عنصر را نشان می‌دهد، نه نقطهٔ واقعی لمس.</string>
+</resources>

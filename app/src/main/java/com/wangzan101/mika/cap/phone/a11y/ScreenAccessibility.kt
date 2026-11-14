@@ -74,6 +74,10 @@ open class ScreenAccessibility : AccessibilityService() {
             windowGeneration.incrementAndGet()
         }
         val app = application as? com.wangzan101.mika.MikaApp
+        // Do not copy local consent fields or privately filled code events into teaching/observers.
+        if (app != null && (app.appAccess.sensitiveUi && event.packageName?.toString() == app.packageName ||
+                app.phone.smsLogin.isPrivate(event.packageName?.toString()) ||
+                app.phone.smsLogin.privateLoginActive && event.eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED)) return
         val access = app?.appAccess?.current()
         if (access != null && access.denial(event.packageName?.toString()) != null) return
         if (app != null && app.teachReady && app.teach.wantsEvents()) {
@@ -100,8 +104,15 @@ open class ScreenAccessibility : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     /** 指定屏上的窗口;该屏没有窗口(或不存在)时为空列表。 */
-    fun windowsOn(displayId: Int): List<AccessibilityWindowInfo> =
-        instance.value?.windowsOnAllDisplays?.get(displayId).orEmpty()
+    fun windowsOn(displayId: Int): List<AccessibilityWindowInfo> {
+        val service = instance.value ?: return emptyList()
+        // getWindowsOnAllDisplays 是安卓 11 起才有的;更早的系统只有主屏那一份 getWindows。
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) return service.windowsOnAllDisplays[displayId].orEmpty()
+        if (displayId != Display.DEFAULT_DISPLAY) return emptyList()
+        @Suppress("DEPRECATION")
+        val main = service.windows
+        return main.orEmpty()
+    }
 
     /** 在指定屏上沿 [path] 做一次单指手势;完成返回 true,被取消或无法下发返回 false。 */
     suspend fun gesture(displayId: Int, path: Path, durationMs: Long): Boolean {
@@ -163,6 +174,11 @@ open class ScreenAccessibility : AccessibilityService() {
             cont.resume(MainShot.Failed(ERROR_TAKE_SCREENSHOT_NO_ACCESSIBILITY_ACCESS))
             return@suspendCancellableCoroutine
         }
+        // takeScreenshot 是安卓 11 起才有的;更早的系统当作截不到,不让胶囊的截屏路径崩掉。
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            cont.resume(MainShot.Failed(ERROR_TAKE_SCREENSHOT_INTERNAL_ERROR))
+            return@suspendCancellableCoroutine
+        }
         service.takeScreenshot(Display.DEFAULT_DISPLAY, service.mainExecutor, object : TakeScreenshotCallback {
             override fun onSuccess(result: ScreenshotResult) {
                 val shot = runCatching {
@@ -201,6 +217,12 @@ open class ScreenAccessibility : AccessibilityService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) return event.displayId
         val windowId = event.windowId
         if (windowId == -1) return Display.INVALID_DISPLAY
+        // 安卓 11 起才有「各屏的窗口」;更早的系统只有主屏一份,只在主屏里找。
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            @Suppress("DEPRECATION")
+            val main = windows
+            return if (main.any { it.id == windowId }) Display.DEFAULT_DISPLAY else Display.INVALID_DISPLAY
+        }
         val all = windowsOnAllDisplays
         for (i in 0 until all.size()) {
             if (all.valueAt(i).any { it.id == windowId }) return all.keyAt(i)

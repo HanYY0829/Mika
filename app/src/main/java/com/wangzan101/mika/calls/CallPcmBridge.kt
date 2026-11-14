@@ -75,6 +75,7 @@ internal class CallPcmBridge(
                 throw CallMediaFailure("火山未接受本次通话的开场白")
             }
             val input = launch(Dispatchers.IO) {
+                val inputPacer = CallInputPacer(session.inputChunkBytes, session.inputSampleRate)
                 val frame = ByteArray(session.inputChunkBytes)
                 var position = 0
                 while (true) {
@@ -83,7 +84,7 @@ internal class CallPcmBridge(
                     if (count == 0) continue
                     position += count
                     if (position == frame.size) {
-                        if (!session.sendPcm16(frame)) throw CallMediaFailure("火山音频输入已中断")
+                        if (!inputPacer.send { session.sendPcm16(frame) }) throw CallMediaFailure("火山音频输入已中断")
                         counters?.inputAccepted(frame, System.nanoTime())
                         position = 0
                     }
@@ -122,12 +123,12 @@ internal class CallPcmBridge(
                                 flushAssistantText()
                             }
                             is VolcRealtimeEvent.UserTranscript -> {
-                                cancelFarewellWaiter()
+                                if (event.isCurrentTurn) cancelFarewellWaiter()
                                 if (event.isFinal) {
-                                    farewell.callerFinal(event.text, event.isCompleteFinal)
+                                    if (event.isCurrentTurn) farewell.callerFinal(event.text, event.isCompleteFinal)
                                     onTranscript("caller", event.text)
                                     onFinalTranscript("caller", event.text)
-                                } else farewell.cancelCandidate()
+                                } else if (event.isCurrentTurn) farewell.cancelCandidate()
                             }
                             VolcRealtimeEvent.AssistantAudioStarted -> {
                                 cancelFarewellWaiter()

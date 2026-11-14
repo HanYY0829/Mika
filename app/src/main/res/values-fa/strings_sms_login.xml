@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sms_login_title">ورود با پیامک (آزمایشی)</string>
+    <string name="sms_login_enable">اجازهٔ ورود با پیامک</string>
+    <string name="sms_login_default_off">پیش‌فرض خاموش · تنظیمات محلی مورد اعتماد</string>
+    <string name="sms_login_limits">ورود خودکار در برنامه‌های بومی تنظیم‌شده با تطبیق امضا، فرستنده، سرویس و حساب؛ بدون تأیید هر بار. بدون مجوز یا مدرک موفقیت، دستی اقدام کنید. پس از تأیید، خواندن متن ادامه می‌یابد؛ تصاویر محلی می‌مانند.</string>
+    <string name="sms_login_permission">مجوز پیامک Android</string>
+    <string name="sms_login_error">مجوز یا ذخیره‌سازی ناموفق بود. دستی وارد شوید و مجوزهای سیستم را بررسی کنید.</string>
+    <string name="sms_login_disclosure">فقط برنامه‌های امضاشده و حساب‌های تنظیم‌شده در اینجا را مجاز کنید. درخواست و ورود کد، ورود نهایی و تأیید حساب بدون پرسش دوباره انجام می‌شود. پرداخت، بازیابی و ثبت‌نام مجاز نیست. پیامک و کد ذخیره یا به مدل ارسال نمی‌شود. با خاموش کردن یا حذف تنظیمات لغو کنید.</string>
+    <string name="sms_login_sender">فرستندهٔ دقیق پیامک</string>
+    <string name="sms_login_signature">نام سرویس داخل کروشه</string>
+    <string name="sms_login_account">رقم‌های مشترک حساب (۴ تا ۱۱)</string>
+    <string name="sms_login_listening">درخواست، ورود کد و تأیید خودکار حساب تنظیم‌شده در حال انجام است. می‌توانید لغو کنید.</string>
+    <string name="sms_login_tool">ورود با پیامک</string>
+    <string name="sms_profile_title">سرویس‌ها و حساب‌های مورد اعتماد</string>
+    <string name="sms_profile_help">یک‌بار تنظیم کنید. ذخیره اجازهٔ درخواست کد، ورود حساب و کد، زدن دکمهٔ نهایی ورود و تأیید حساب در این برنامهٔ امضاشده را می‌دهد. شناسه‌های بومی بررسی‌شده و نشانگر روشن حساب واردشده لازم است. یک حساب برای هر برنامه؛ ویرایش یا حذف مجوز را لغو می‌کند. رمزنگاری محلی با Android Keystore.</string>
+    <string name="sms_profile_accountvalue">شمارهٔ حساب (فقط روی این دستگاه)</string>
+    <string name="sms_profile_package">بستهٔ برنامهٔ نصب‌شده</string>
+    <string name="sms_profile_accountfield">شناسهٔ فیلد حساب</string>
+    <string name="sms_profile_codefield">شناسهٔ فیلد کد</string>
+    <string name="sms_profile_sendbutton">شناسهٔ دکمهٔ درخواست کد</string>
+    <string name="sms_profile_loginbutton">شناسهٔ دکمهٔ نهایی ورود</string>
+    <string name="sms_profile_successview">شناسهٔ نشانگر ورود موفق</string>
+    <string name="sms_profile_successtext">متن دقیق نشانگر ورود موفق</string>
+    <string name="sms_profile_successaccount">شناسهٔ نمای حساب واردشده</string>
+</resources>

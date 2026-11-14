@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.wangzan101.mika.capsule.OverlayMotionTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-11-14T01:00:00" hostname="troyliu-OptiPlex-3040" time="0.017">
+  <properties/>
+  <testcase name="reducedMotionSkipsTheAnimation" classname="com.wangzan101.mika.capsule.OverlayMotionTest" time="0.001"/>
+  <testcase name="missingFramesCannotKeepTheOverlayClosingForever" classname="com.wangzan101.mika.capsule.OverlayMotionTest" time="0.004"/>
+  <testcase name="missingFramesCannotKeepTheOverlayOpeningForever" classname="com.wangzan101.mika.capsule.OverlayMotionTest" time="0.003"/>
+  <testcase name="normalAnimationFinishesBeforeClose" classname="com.wangzan101.mika.capsule.OverlayMotionTest" time="0.002"/>
+  <testcase name="systemSlowMotionGetsEnoughTimeToFinish" classname="com.wangzan101.mika.capsule.OverlayMotionTest" time="0.002"/>
+  <testcase name="reducedMotionSkipsTheOpenAnimation" classname="com.wangzan101.mika.capsule.OverlayMotionTest" time="0.001"/>
+  <testcase name="normalAnimationFinishesBeforeOpenTimeout" classname="com.wangzan101.mika.capsule.OverlayMotionTest" time="0.001"/>
+  <testcase name="openSystemSlowMotionGetsEnoughTimeToFinish" classname="com.wangzan101.mika.capsule.OverlayMotionTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

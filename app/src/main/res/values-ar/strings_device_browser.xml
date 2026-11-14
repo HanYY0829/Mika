@@ -1,0 +1,15 @@
+<resources>
+    <string name="device_browser_title">ملفات الجهاز</string>
+    <string name="device_browser_roots">المجلدات المصرح بها</string>
+    <string name="device_browser_back">رجوع</string>
+    <string name="device_browser_retry">تعذر التحميل. اضغط لإعادة المحاولة</string>
+    <string name="device_browser_empty">لا توجد ملفات أو مجلدات مصرح بها</string>
+    <string name="device_browser_more">تحميل المزيد</string>
+    <string name="device_browser_add">إضافة المحدد (%1$d)</string>
+    <string name="device_browser_cancel">إلغاء</string>
+    <string name="device_browser_history">واردات هذه المحادثة</string>
+    <string name="device_browser_show_files">تصفح الملفات</string>
+    <string name="device_browser_history_hint">قد تكون النسخ في السجل قد حذفت. افتح مكتبة الملفات لعرضها.</string>
+    <string name="device_browser_search">البحث عن الملفات</string>
+    <string name="device_browser_truncated">بلغ البحث حد العمق أو الوقت أو عدد الملفات؛ قد تكون النتائج غير مكتملة.</string>
+</resources>

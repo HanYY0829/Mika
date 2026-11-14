@@ -56,15 +56,10 @@ class ChatAttachmentsTest {
         MikaTheme {
             CompositionLocalProvider(LocalAttachImages provides images) {
                 var t by remember { mutableStateOf(text) }
-                var followUpMode by remember { mutableStateOf(FollowUpMode.Steer) }
-                val canAttach = mode == ComposerMode.Idle || followUpMode == FollowUpMode.Queue
                 Box(Modifier.fillMaxSize()) {
                     Composer(
                         Modifier, t, { t = it }, mode, hasHistory = false, onSend = onSend, onStop = {},
-                        followUpMode = followUpMode,
-                        onFollowUpMode = { followUpMode = it },
-                        attachPanel = if (canAttach) ({ Box(Modifier.fillMaxSize().testTag("panel-body")) }) else null,
-                        attachBlocked = !canAttach,
+                        attachPanel = { Box(Modifier.fillMaxSize().testTag("panel-body")) },
                         attachments = attachments,
                         rejected = rejected,
                     )
@@ -97,12 +92,9 @@ class ChatAttachmentsTest {
         compose.onNodeWithContentDescription(AttachCopy.ADD).assertIsDisplayed()
     }
 
-    @Test fun waitingForAnAnswerCanSwitchToQueueAndAddTheFirstAttachment() {
+    @Test fun waitingForAnAnswerCanAddTheFirstAttachment() {
         composer(mode = ComposerMode.Answer)
-        compose.onNodeWithContentDescription(AttachCopy.ADD).assertIsDisplayed()
-        compose.onNodeWithTag("follow-up-mode-queue").assertIsDisplayed().performClick()
-        compose.onNode(hasTestTag("follow-up-mode-queue") and isSelected()).assertIsDisplayed()
-        compose.onNodeWithContentDescription(AttachCopy.ADD).performClick()
+        compose.onNodeWithContentDescription(AttachCopy.ADD).assertIsDisplayed().performClick()
         compose.onNodeWithTag("panel-body").assertIsDisplayed()
     }
 

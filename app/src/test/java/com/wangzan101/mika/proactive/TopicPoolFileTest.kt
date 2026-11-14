@@ -37,6 +37,23 @@ class TopicPoolFileTest {
         }
     }
 
+    // 有并掉的话题名的文件写成第 2 版:只认第 1 版的代码读它会把这些名字丢掉,所以让它认不得、不去碰;
+    // 没有的时候和第 1 版写出来的一样,还写 1
+    @Test fun aFileWithMergedNamesIsVersionTwo() {
+        fun version() = kotlinx.serialization.json.Json.parseToJsonElement(AesGcmKeyCipher { key }.decrypt(bin.readBytes()).toString(Charsets.UTF_8))
+            .let { (it as kotlinx.serialization.json.JsonObject)["version"].toString() }
+        file().save(data)
+        assertEquals("1", version())
+        val merged = data.copy(merged = mapOf("0123456789abcdef" to "k1"))
+        file().save(merged)
+        assertEquals("2", version())
+        // (最外层的版本号也读进了数据类里那一项;话题池不看它)
+        assertEquals(merged.copy(version = 2), file().load())
+        // 并进去的话题没了、别名跟着没了之后,又是第 1 版
+        file().save(data)
+        assertEquals("1", version())
+    }
+
     @Test fun brokenFileIsSetAsideAndPoolStartsEmpty() {
         file().save(data)
         val other = KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()

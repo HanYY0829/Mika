@@ -20,6 +20,9 @@
     <string name="proactive_learn_topic_detail">%1$s · %2$s · %3$d 天 · 上次 %4$s</string>
     <string name="proactive_learn_topic_outcomes">%1$d 个 App · 点开 %2$d · 划掉 %3$d</string>
     <string name="proactive_learn_delete">删除</string>
+    <string name="proactive_learn_topic_merge">并入…</string>
+    <string name="proactive_learn_topic_merge_title">把「%1$s」并入</string>
+    <string name="proactive_learn_topic_merge_body">它记下的日子和次数会加到你选的话题上，以后这个名字也算在那边。并了之后分不开。</string>
     <string name="proactive_learn_clear_all">清空 Mika 攒下的全部内容</string>
     <string name="proactive_learn_clear_all_body">删掉 Mika 攒下的所有话题、联系人、各级归纳和存着的通知原文？删掉就找不回来了。之后还会从新的通知里重新攒。</string>
     <string name="proactive_learn_clear_app">清空来自 %1$s 的</string>

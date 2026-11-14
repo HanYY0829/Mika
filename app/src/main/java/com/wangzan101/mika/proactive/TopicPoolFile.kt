@@ -35,7 +35,7 @@ class TopicPoolFile(dir: File, private val cipher: KeyCipher, private val clock:
     @Synchronized
     override fun save(data: TopicPoolData) {
         poolDir.mkdirs()
-        val bytes = cipher.encrypt(StoreCodec.write(TopicPoolData.serializer(), data, VERSION))
+        val bytes = cipher.encrypt(StoreCodec.write(TopicPoolData.serializer(), data, versionOf(data)))
         FileOutputStream(tmp).use { it.write(bytes); it.fd.sync() }
         Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
     }
@@ -67,8 +67,15 @@ class TopicPoolFile(dir: File, private val cipher: KeyCipher, private val clock:
     }
 
     companion object {
-        /** 这份存盘现在的写法是第几版;读到更新的就不碰(见 [StoreCodec])。改了写法、旧代码读了会出错或丢东西时加一。 */
-        const val VERSION = 1
+        /**
+         * 这份存盘现在的写法是第几版;读到更新的就不碰(见 [StoreCodec])。改了写法、旧代码读了会出错或丢东西时加一。
+         * 第 2 版:多了并掉的话题名([TopicPoolData.merged])。只认第 1 版的代码读得进来,但下一次存盘就把它丢了,
+         * 并掉的名字又会被另起成一个话题。
+         */
+        const val VERSION = 2
+
+        /** 这份内容要按第几版写:没有并掉的名字时和第 1 版写出来的一模一样,就还写 1(换回旧版本照常读得出来)。 */
+        fun versionOf(data: TopicPoolData): Int = if (data.merged.isEmpty()) 1 else VERSION
         const val FILE = "topics.bin"
         const val KEY_ALIAS = "mika-proactive-topics"
     }

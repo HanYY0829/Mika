@@ -1,10 +1,14 @@
 package com.wangzan101.mika.core.proactive
 
 /**
- * 几个聊天 App 把「哪个会话、谁说的、第几条」都挤在通知的标题和正文里,不用系统的会话样式。这里按各家的写法拆开,
- * 拆成:[NoticeRecord.title] 是会话的名字(人或群),[NoticeRecord.sender] 是群里说话的人,[NoticeRecord.text] 只剩那句话,
- * [NoticeRecord.group] 说这是不是群。未读条数不是内容,去掉。纯函数,在清洗([NoticeFilter.sanitize])之后、进收件箱之前做一次,
- * 后面的判定、提醒、归纳、联系人都用拆好的。
+ * 把一条聊天通知理成后面都认的样子:[NoticeRecord.title] 是会话的名字(人或群),[NoticeRecord.sender] 是群里说话的人,
+ * [NoticeRecord.text] 只剩那句话,[NoticeRecord.group] 说这是不是群。未读条数不是内容,去掉。纯函数,在清洗
+ * ([NoticeFilter.sanitize])之后、进收件箱之前做一次,后面的判定、提醒、归纳、联系人都用理好的。
+ *
+ * 带会话样式的通知(任何 App):会话名、是不是群都听系统的([styled]),不看是哪家 App。
+ *
+ * 不用系统会话样式的,有几个聊天 App 把「哪个会话、谁说的、第几条」都挤在标题和正文里,这里按各家的写法拆开。
+ * 只拆在真机上见过写法的那几家;别的 App 不猜——猜错了会把不是聊天的通知拆出一个「发言人」来。
  *
  * 各家的写法(只看结构,不看内容):
  * - QQ 群:真机上看到的,标题「群名(13条新消息)」,正文「某人: 那句话」。
@@ -27,11 +31,30 @@ object NoticeShapes {
     private val SAID = Regex("^([^:：]{1,40}): (.+)$")
 
     fun apply(r: NoticeRecord): NoticeRecord = when {
-        // 带会话样式的自己就分得清谁说了什么
-        r.conversation || r.messages.isNotEmpty() -> r
+        // 带会话样式的自己就分得清谁说了什么;会话的名字要换成系统给的那个
+        r.conversation || r.messages.isNotEmpty() -> styled(r)
         r.packageName in QQ -> chat(r, ContactIdentity.withoutUnreadCount(r.title), r.text, privateWithoutPrefix = true)
         r.packageName == WECHAT -> chat(r, r.title, UNREAD_PREFIX.replace(r.text, ""), privateWithoutPrefix = false)
         else -> r
+    }
+
+    /**
+     * 会话样式的群聊:系统把通知标题写成「会话名: 发言人」(发言人取最新一条消息的),会话名另放在一个字段里。
+     * 拿标题当会话名的话,同一个群里每个人说话都成了另一个「会话」。有会话名就用它当标题,标题里的发言人放到 [NoticeRecord.sender]
+     * (提醒、判定里的那一句带上是谁说的)。
+     *
+     * 是不是群:系统说是就是;系统没说、有会话名的当群(老写法里会话名只给群聊设)。系统说不是、却有会话名的看不出来——
+     * 老的写法只设会话名、不另说是群,新的写法也可以给私聊起会话名——留给模型判断,不硬说是私聊。
+     *
+     * 没有会话名:私聊的标题本来就是对方,不动。群聊(系统说是群)的标题是最新一条的发言人,认不了会话,记上一笔。
+     */
+    private fun styled(r: NoticeRecord): NoticeRecord {
+        val name = r.conversationTitle?.trim().orEmpty()
+        if (name.isEmpty()) return if (r.group == true) r.copy(titleIsSpeaker = true) else r
+        val rest = r.title.trim().removePrefix(name).trimStart()
+        val speaker = if (rest.startsWith(":") || rest.startsWith("：")) rest.drop(1).trim() else ""
+        // 发言人就是会话名的(以对方的名字当会话名的私聊)不另记,和 [chat] 里一样
+        return r.copy(title = name, sender = speaker.takeIf { it.isNotEmpty() && it != name }, group = if (r.group == false) null else true)
     }
 
     /**

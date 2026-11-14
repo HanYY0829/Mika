@@ -63,6 +63,117 @@ class BuiltinHelperDeviceTest {
     }
 
     @Test
+    fun fileBridgeReadsSharedStorageAndRejectsInvalidTargets() {
+        val shell = helperUp()
+        val dir = "/sdcard/Download/mika-file-bridge-${android.os.Process.myPid()}"
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        val hintPrefs = context.getSharedPreferences("device-hints-test-${android.os.Process.myPid()}", Context.MODE_PRIVATE)
+        val hintStore = com.wangzan101.mika.settings.DeviceDirectoryStore(hintPrefs, android.os.Process.myUid() / 100000)
+        val testHub = HelperHub(context, hintStore, shell)
+        fun command(cmd: String) {
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand(cmd)).use { it.readBytes() }
+        }
+        try {
+            command("mkdir -p $dir/subdir; printf bridge > $dir/sample.txt")
+            hintStore.save(com.wangzan101.mika.settings.DeviceDirectory(dir, "Test", "Files", "user"))
+            assertTrue(testHub.syncDeviceFiles())
+            assertEquals("denied", shell.listFiles(dir, null, 128).getString("status"))
+            hintStore.setAuthorization(dir, true, true)
+            assertTrue(testHub.syncDeviceFiles())
+            assertEquals("denied", shell.listFiles("/sdcard/Download", null, 128).getString("status"))
+            val listing = shell.listFiles(dir, null, 128)
+            assertEquals("ok", listing.getString("status"))
+            val names = listing.getStringArrayList("names")!!
+            val types = listing.getIntArray("types")!!
+            assertEquals(1, types[names.indexOf("sample.txt")])
+            assertEquals(6L, listing.getLongArray("sizes")!![names.indexOf("sample.txt")])
+            assertTrue(listing.getLongArray("modified")!![names.indexOf("sample.txt")] > 0)
+            assertEquals(2, types[names.indexOf("subdir")])
+            val opened = shell.openFile("$dir/sample.txt")
+            assertEquals("ok", opened.getString("status"))
+            val fd = opened.getParcelable<android.os.ParcelFileDescriptor>("fd")!!
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(fd).use {
+                assertEquals("bridge", it.readBytes().toString(Charsets.UTF_8))
+            }
+            val workspaceId = "device-file-test-${android.os.Process.myPid()}"
+            val dirs = com.wangzan101.mika.cap.sandbox.SandboxDirs(context)
+            val sandbox = com.wangzan101.mika.cap.sandbox.AndroidSandbox(context, com.wangzan101.mika.cap.sandbox.SandboxState.get(context))
+            try {
+                val importPrefs = context.getSharedPreferences("device-import-test-${android.os.Process.myPid()}", Context.MODE_PRIVATE)
+                importPrefs.edit().clear().commit()
+                val store = com.wangzan101.mika.task.DeviceImportStore(importPrefs)
+                val deviceFiles = com.wangzan101.mika.task.AndroidDeviceFiles(testHub, dirs, sandbox, hintStore, store)
+                val hint = runBlocking { deviceFiles.listDirectoryHints().single { it.path == dir } }
+                assertEquals("ok", hint.status)
+                val updated = runBlocking { deviceFiles.updateDirectoryDescription(dir, "Reports") }
+                assertEquals("mika", updated.source)
+                assertEquals("Reports", hintStore.directories().single { it.path == dir }.description)
+                val copied = runBlocking { deviceFiles.importFile("$dir/sample.txt", workspaceId) }
+                assertEquals("/workspace/inbox/sample.txt", copied.path)
+                assertEquals(6L, copied.size)
+                dirs.gate.openRead(dirs.workspace(workspaceId), "inbox/sample.txt").use {
+                    assertEquals("bridge", it.input().readBytes().toString(Charsets.UTF_8))
+                }
+                val record = com.wangzan101.mika.task.DeviceImportStore(importPrefs).list(workspaceId).single()
+                assertEquals("$dir/sample.txt", record.sourcePath)
+                assertEquals(copied.path, record.workspacePath)
+                assertEquals(copied, runBlocking { deviceFiles.importFile("$dir/sample.txt", workspaceId) })
+                assertEquals(record.id, store.list(workspaceId).single().id)
+                java.io.File(dirs.workspace(workspaceId), "inbox/sample.txt").delete()
+                val replacement = runBlocking { deviceFiles.importFile("$dir/sample.txt", workspaceId) }
+                assertEquals(copied.path, replacement.path)
+                assertEquals(2, store.list(workspaceId).size)
+                importPrefs.edit().clear().commit()
+            } finally {
+                runBlocking { dirs.deleteWorkspace(workspaceId) }
+            }
+            assertEquals("not_file", shell.openFile(dir).getString("status"))
+            assertEquals("denied", shell.openFile("/dev/null").getString("status"))
+            assertEquals("denied", shell.openFile("/data/data/file").getString("status"))
+            assertEquals("not_found", shell.openFile("$dir/missing").getString("status"))
+            assertEquals("denied", shell.listFiles("$dir/sample.txt", null, 128).getString("status"))
+            assertEquals("invalid", shell.listFiles("relative", null, 128).getString("status"))
+            val first = shell.listFiles(dir, null, 1)
+            assertEquals(listOf("sample.txt"), first.getStringArrayList("names"))
+            val second = shell.listFiles(dir, first.getString("next"), 1)
+            assertEquals(listOf("subdir"), second.getStringArrayList("names"))
+            assertNull(second.getString("next"))
+            command("printf nested > $dir/subdir/Report.PDF; ln -s /data/local/tmp $dir/escape; ln -s $dir/subdir $dir/alias")
+            if (shell.listFiles(dir, null, 128).getStringArrayList("names")!!.contains("alias")) {
+                val invalidPolicy = shell.setDeviceFilePolicy(1, "test-link", 1, arrayOf("$dir/alias"), booleanArrayOf(true))
+                assertEquals("invalid", invalidPolicy.getString("status"))
+            }
+            val search = shell.searchFiles(dir, "report", "pdf", -1, -1, 2, 100, 5000)
+            assertEquals("ok", search.getString("status"))
+            assertEquals(listOf("Report.PDF"), search.getStringArrayList("paths")!!.map { java.io.File(it).name })
+            val future = shell.searchFiles(dir, "report", "pdf", System.currentTimeMillis() + 86400000, -1, 2, 100, 5000)
+            assertTrue(future.getStringArrayList("paths")!!.isEmpty())
+            assertEquals("invalid", shell.searchFiles(dir, null, null, 2, 1, 2, 100, 5000).getString("status"))
+            val shallow = shell.searchFiles(dir, null, null, -1, -1, 0, 100, 5000)
+            assertEquals("max_depth", shallow.getString("reason"))
+            assertTrue(shallow.getBoolean("truncated"))
+            val bounded = shell.searchFiles(dir, null, null, -1, -1, 2, 1, 5000)
+            assertEquals("max_entries", bounded.getString("reason"))
+            assertEquals(1, bounded.getInt("visited"))
+            assertEquals("denied", shell.searchFiles("/data/local/tmp", null, null, -1, -1, 2, 10, 1000).getString("status"))
+            hintStore.setAuthorization(dir, true, false)
+            assertTrue(testHub.syncDeviceFiles())
+            assertEquals("denied", shell.openFile("$dir/subdir/Report.PDF").getString("status"))
+            assertEquals("ok", shell.openFile("$dir/sample.txt").also { it.getParcelable<android.os.ParcelFileDescriptor>("fd")?.close() }.getString("status"))
+            hintStore.setAuthorization(dir, false, false)
+            assertTrue(testHub.syncDeviceFiles())
+            assertEquals("denied", shell.openFile("$dir/sample.txt").getString("status"))
+            assertEquals("ok", shell.setDeviceFilePolicy(1, "test-revision", 2, arrayOf(dir), booleanArrayOf(true)).getString("status"))
+            assertEquals("stale_policy", shell.setDeviceFilePolicy(1, "test-revision", 1, emptyArray(), booleanArrayOf()).getString("status"))
+            assertEquals("stale_policy", shell.setDeviceFilePolicy(1, "test-revision", 2, emptyArray(), booleanArrayOf()).getString("status"))
+        } finally {
+            runCatching { hintStore.setAuthorization(dir, false, false); testHub.syncDeviceFiles() }
+            hintPrefs.edit().clear().commit()
+            command("rm -rf $dir")
+        }
+    }
+
+    @Test
     fun helperRunsAsShellDrivesItsDisplayAndSurvivesUnbind() {
         assumeTrue(Build.VERSION.SDK_INT >= BuiltinShellManager.MIN_SDK)
         val shell = helperUp()

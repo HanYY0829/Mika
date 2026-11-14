@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="report_title">タスクレポート</string>
+    <string name="report_entry_hint">結果 · 詳細 · スクリーンショット</string>
+    <string name="report_no_answer">このタスクの最終回答は保存されていません。</string>
+    <string name="report_screens">主な画面</string>
+    <string name="report_view_step">ステップ %1$d · 再生を開く</string>
+    <string name="report_local_note">記録は端末内に保存されます。画面の内容が含まれる場合があります。最新30件のタスクのみ保持します。</string>
+    <string name="playback_title">操作の再生</string>
+    <string name="playback_empty">このタスクにはスクリーンショットがありません。</string>
+    <string name="playback_legacy">古い記録には画面のみがあり、操作マーカーはありません。</string>
+    <string name="playback_approximate">矢印はスクロール方向の目安で、実際の接触位置ではありません。</string>
+    <string name="playback_marks">赤い丸：タップ · 矢印：スワイプ</string>
+    <string name="playback_progress">再生位置</string>
+    <string name="playback_pause">一時停止</string>
+    <string name="playback_play">再生</string>
+    <string name="playback_previous">前へ</string>
+    <string name="playback_next">次へ</string>
+    <string name="playback_image">タスクのスクリーンショット</string>
+    <string name="playback_missing">画像が保存されていないか削除されました</string>
+    <string name="report_export">エクスポート</string>
+    <string name="report_saved">レポートを保存しました</string>
+    <string name="report_save_failed">保存できませんでした。記録と保存先を確認してください。</string>
+    <string name="report_close">閉じる</string>
+    <string name="report_final_page">最後に記録した画面</string>
+    <string name="playback_stage_start">開始</string>
+    <string name="playback_stage_input">入力と検索</string>
+    <string name="playback_skipped">利用できない画像 %1$d 枚をスキップしました。</string>
+    <string name="playback_no_mark">この操作の位置マーカーは記録されていません。</string>
+    <string name="playback_error_unknown">エラー：具体的な原因は記録されていません。</string>
+    <string name="playback_result">操作結果</string>
+    <string name="playback_element_click">円は推定した要素の位置で、実際のタッチ位置ではありません。</string>
+</resources>

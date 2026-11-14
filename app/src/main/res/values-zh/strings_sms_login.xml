@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sms_login_title">短信验证码登录（实验性）</string>
+    <string name="sms_login_enable">允许短信验证码登录</string>
+    <string name="sms_login_default_off">默认关闭 · 本机可信配置</string>
+    <string name="sms_login_limits">对已配置原生 App 自动登录：严格匹配 App 签名、发送方、服务和账户，无需逐次确认。身份、权限或成功证据不足时手工接管。验证后恢复原生文字读屏；本次任务图像留在本机。</string>
+    <string name="sms_login_permission">Android 短信权限</string>
+    <string name="sms_login_error">权限或保存失败。请手工登录，并检查系统应用权限。</string>
+    <string name="sms_login_disclosure">仅为你在此配置的账户和签名 App 开启自动短信登录。Mika 无需再次询问即可请求、填码、提交登录，再在本机核验账户。不允许支付、找回或注册；短信和验证码不保存、不发给模型。关闭或删除配置立即撤销。</string>
+    <string name="sms_login_sender">准确的短信发送方</string>
+    <string name="sms_login_signature">短信括号内的服务名</string>
+    <string name="sms_login_account">双方可见的账户数字（4–11 位）</string>
+    <string name="sms_login_listening">正在自动请求、填写并核验已配置账户。可取消本次操作。</string>
+    <string name="sms_login_tool">短信验证码登录</string>
+    <string name="sms_profile_title">可信服务与账户</string>
+    <string name="sms_profile_help">一次配置后，保存即授权此签名 App 自动请求验证码、填写账户与验证码、点击最终登录并核验账户。需使用已核实的原生控件资源 ID 及明确的已登录账户标志；每个 App 一个账户，可修改或删除撤销。本机 Android 密钥库加密保存。</string>
+    <string name="sms_profile_accountvalue">账户号码（仅留在本机）</string>
+    <string name="sms_profile_package">已安装 App 包名</string>
+    <string name="sms_profile_accountfield">账户输入框资源 ID</string>
+    <string name="sms_profile_codefield">验证码输入框资源 ID</string>
+    <string name="sms_profile_sendbutton">请求验证码按钮资源 ID</string>
+    <string name="sms_profile_loginbutton">最终登录按钮资源 ID</string>
+    <string name="sms_profile_successview">已登录标志资源 ID</string>
+    <string name="sms_profile_successtext">已登录标志的准确文字</string>
+    <string name="sms_profile_successaccount">已登录账户控件资源 ID</string>
+</resources>

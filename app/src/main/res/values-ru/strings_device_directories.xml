@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dirs_title">Папки устройства</string>
+    <string name="device_dirs_explanation">Подсказки помогают Mika находить файлы. Добавление подсказки не даёт доступа; разрешите доступ к каждой сохранённой папке отдельно.</string>
+    <string name="device_dirs_authorize">Разрешить доступ к папке</string>
+    <string name="device_dirs_recursive">Включая вложенные папки</string>
+    <string name="device_dirs_not_synced">Разрешение не синхронизировано</string>
+    <string name="device_dirs_synced">Разрешение синхронизировано</string>
+    <string name="device_dirs_retry_sync">Повторить синхронизацию</string>
+    <string name="device_dirs_edit_path">Измените путь к папке и повторите попытку.</string>
+    <string name="device_dirs_not_authorized">Доступ не разрешён</string>
+    <string name="device_dirs_write_failed">Не удалось сохранить настройки папок. Перезапустите приложение и повторите попытку.</string>
+    <string name="device_dirs_add">Добавить подсказку о папке</string>
+    <string name="device_dirs_edit">Подсказка о папке</string>
+    <string name="device_dirs_name">Название</string>
+    <string name="device_dirs_path">Путь на устройстве</string>
+    <string name="device_dirs_description">Описание</string>
+    <string name="device_dirs_invalid">Укажите название и уникальный путь в общем хранилище.</string>
+    <string name="device_dirs_delete">Удалить подсказку</string>
+    <string name="device_dirs_save">Сохранить</string>
+    <string name="device_dirs_cancel">Отмена</string>
+    <string name="device_dirs_available">Доступна</string>
+    <string name="device_dirs_missing">Папка не найдена</string>
+    <string name="device_dirs_denied">Доступ запрещён</string>
+    <string name="device_dirs_unknown">Статус недоступен</string>
+    <string name="device_dirs_entry">Подсказки о папках</string>
+    <string name="device_dirs_entry_sub">Помогают Mika находить скачанные файлы</string>
+    <string name="device_dirs_source_preset">Предустановлено</string>
+    <string name="device_dirs_source_user">Изменено вами</string>
+    <string name="device_dirs_source_mika">Изменено Mika</string>
+</resources>

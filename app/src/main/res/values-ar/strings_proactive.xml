@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="proactive_title">الاستباقية (تجريبي)</string>
+    <string name="proactive_title">الاستباقية</string>
     <string name="proactive_entry_sub">يقرأ إشعارات التطبيقات التي تختارها</string>
     <string name="proactive_switch">تشغيل</string>
     <string name="proactive_listener">المستمع: %1$s</string>

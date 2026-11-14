@@ -505,10 +505,10 @@ class UserBrowser private constructor(private val app: Context) {
     // ---------- 在这一页上问 Mika ----------
 
     /** 此刻看着的这一页(给 Mika 的说明用);没有打开的网页为 null。 */
-    fun pageInfo(): com.wangzan101.mika.core.cap.web.AttachedPage.Page? {
+    fun pageInfo(): com.wangzan101.mika.core.agent.AttachedPage.Page? {
         val url = currentUrl()?.takeIf { it.startsWith("http") } ?: return null
         val title = tab?.view?.title?.takeIf { it != url }.orEmpty().ifEmpty { _page.value?.title.orEmpty() }
-        return com.wangzan101.mika.core.cap.web.AttachedPage.Page(url, title)
+        return com.wangzan101.mika.core.agent.AttachedPage.Page(url, title)
     }
 
     /** 读用户在页面上选中的字,交给 [onText](没选、读不到为 null)。 */

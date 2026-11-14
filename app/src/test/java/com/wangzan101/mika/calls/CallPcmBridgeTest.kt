@@ -96,6 +96,56 @@ class CallPcmBridgeTest {
         }
     }
 
+    @Test fun `late caller history neither cancels a current farewell nor skips archival`() = runBlocking {
+        val session = VolcRealtimeSession(VolcRealtimeConfig(), closeTimeoutMs = 100L)
+        val socket = FakeSocket()
+        val queryStarted = CompletableDeferred<Unit>()
+        val queryAnswer = CompletableDeferred<Boolean>()
+        val lateArchived = CompletableDeferred<Unit>()
+        val history = mutableListOf<String>()
+        val liveFinals = mutableListOf<String>()
+        var committed = false
+        val bridge = CallPcmBridge(BlockingCapture(), object : OutputStream() {
+            override fun write(value: Int) = Unit
+            override fun write(bytes: ByteArray, offset: Int, count: Int) = Unit
+        }) { true }
+        session.listener.onOpen(socket, Response.Builder().request(socket.request()).protocol(Protocol.HTTP_1_1)
+            .code(101).message("Switching Protocols").build())
+        fun receive(frame: String) = session.listener.onMessage(socket, frame)
+        receive("""{"type":"session.created"}""")
+        val running = launch(start = CoroutineStart.UNDISPATCHED) {
+            bridge.run(session, "", counters = null,
+                onTranscript = { role, text ->
+                    if (role == "caller") history += text
+                    if (text == "迟到的第一句") lateArchived.complete(Unit)
+                },
+                onFinalTranscript = { role, text -> if (role == "caller") liveFinals += text },
+                awaitFarewellDrain = { queryStarted.complete(Unit); queryAnswer.await() },
+                commitFarewell = { committed = true; true })
+        }
+        try {
+            receive("""{"type":"conversation.item.input_audio_transcription.started","item_id":"u1"}""")
+            receive("""{"type":"conversation.item.input_audio_transcription.started","item_id":"u2"}""")
+            receive("""{"type":"conversation.item.input_audio_transcription.completed","item_id":"u2","transcript":"谢谢，再见"}""")
+            receive("""{"type":"response.output_audio.started","response_id":"reply2"}""")
+            receive("""{"type":"response.output_audio.delta","response_id":"reply2","delta":"AQI="}""")
+            receive("""{"type":"response.output_text.delta","response_id":"reply2","delta":"好的，再见"}""")
+            receive("""{"type":"response.output_text.done","response_id":"reply2"}""")
+            receive("""{"type":"response.output_audio.done","response_id":"reply2"}""")
+            withTimeout(3_000L) { queryStarted.await() }
+            receive("""{"type":"conversation.item.input_audio_transcription.completed","item_id":"u1","transcript":"迟到的第一句"}""")
+            withTimeout(3_000L) { lateArchived.await() }
+            queryAnswer.complete(true)
+            withTimeout(3_000L) { running.join() }
+            assertTrue(committed)
+            assertEquals(listOf("谢谢，再见", "迟到的第一句"), history)
+            assertEquals(history, liveFinals)
+        } finally {
+            running.cancelAndJoin()
+            session.close()
+        }
+    }
+
     @Test fun `caller resuming during the final playback query cannot commit a stale hangup`() = runTest {
         val playbackQuery = CompletableDeferred<Boolean>()
         var committed = false

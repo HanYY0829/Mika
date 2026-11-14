@@ -1,0 +1,15 @@
+<resources>
+    <string name="device_browser_title">手機檔案</string>
+    <string name="device_browser_roots">已授權的資料夾</string>
+    <string name="device_browser_back">返回</string>
+    <string name="device_browser_retry">無法讀取檔案，點擊重試</string>
+    <string name="device_browser_empty">沒有檔案或已授權的資料夾</string>
+    <string name="device_browser_more">載入更多</string>
+    <string name="device_browser_add">加入已選檔案（%1$d）</string>
+    <string name="device_browser_cancel">取消</string>
+    <string name="device_browser_history">本對話的匯入紀錄</string>
+    <string name="device_browser_show_files">瀏覽檔案</string>
+    <string name="device_browser_history_hint">匯入紀錄中的副本可能已刪除，可在檔案庫查看。</string>
+    <string name="device_browser_search">搜尋檔案</string>
+    <string name="device_browser_truncated">搜尋受到深度、時間或檔案數量限制，結果可能不完整。</string>
+</resources>

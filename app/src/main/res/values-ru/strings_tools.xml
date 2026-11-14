@@ -20,6 +20,8 @@
     <string name="tool_find_element">Найти на экране</string>
     <string name="tool_collect">Собрать данные с нескольких экранов</string>
     <string name="tool_phone_run">Несколько действий на телефоне</string>
+    <string name="tool_list_device_files">Просмотр файлов устройства</string>
+    <string name="tool_copy_device_file">Копирование файла устройства</string>
     <string name="tool_process_files">Работа с файлами</string>
     <string name="tool_run_script">Запустить встроенный скрипт</string>
     <string name="tool_read_file">Прочитать файл</string>

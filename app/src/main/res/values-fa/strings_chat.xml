@@ -282,4 +282,7 @@
         <item quantity="one">%1$d بایگانی نشد</item>
         <item quantity="other">%1$d بایگانی نشد</item>
     </plurals>
+    <string name="chat_task_cost_estimate">تقریباً %1$s</string>
+    <string name="chat_task_cost_partial">%1$s (ناقص)</string>
+    <string name="chat_task_cost_unavailable">هزینه در دسترس نیست</string>
 </resources>

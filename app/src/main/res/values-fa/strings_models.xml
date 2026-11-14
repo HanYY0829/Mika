@@ -196,4 +196,11 @@
     <string name="models_daily_token_budget">سقف توکن روزانه</string>
     <string name="models_daily_token_budget_save_failed">سقف ذخیره نشد. تنظیم قبلی همچنان فعال است.</string>
     <string name="models_daily_token_budget_sub">تمام مدل‌ها و کاربردهای این ارائه‌دهنده را در روز تقویمی محلی می‌شمارد. فقط توکن‌های ورودی و خروجی گزارش‌شده حساب می‌شوند. با رسیدن به سقف، درخواست بعدی مسدود می‌شود؛ درخواست‌های در حال اجرا ممکن است از آن عبور کنند. با تغییر تاریخ محلی بازنشانی می‌شود.</string>
+    <string name="main_fallback_name">Fallback model %1$d</string>
+    <string name="main_fallback_what">Takes over when the main model is unavailable</string>
+    <string name="main_fallback_pick">Pick a fallback model</string>
+    <string name="main_fallback_clear">No fallback</string>
+    <string name="main_fallback_hint">The main model runs first. If it runs out of quota or fails, the fallback takes over automatically.</string>
+    <string name="main_fallback_failed">Could not set the fallback model</string>
+    <string name="main_fallback_is_main">This is the current main model, so it cannot also be its fallback</string>
 </resources>

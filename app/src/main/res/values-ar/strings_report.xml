@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="report_title">تقرير المهمة</string>
+    <string name="report_entry_hint">النتائج · التفاصيل · لقطات الشاشة</string>
+    <string name="report_no_answer">لم يتم حفظ إجابة نهائية لهذه المهمة.</string>
+    <string name="report_screens">لقطات الشاشة الرئيسية</string>
+    <string name="report_view_step">الخطوة %1$d · فتح العرض</string>
+    <string name="report_local_note">تُحفظ السجلات على الجهاز. قد تتضمن اللقطات محتوى الصفحات. يتم الاحتفاظ بآخر 30 مهمة فقط.</string>
+    <string name="playback_title">عرض العمليات</string>
+    <string name="playback_empty">لا توجد لقطات شاشة مسجلة لهذه المهمة.</string>
+    <string name="playback_legacy">سجل قديم: لقطات شاشة فقط دون علامات العمليات.</string>
+    <string name="playback_approximate">يشير السهم إلى اتجاه التمرير وليس مواضع اللمس الدقيقة.</string>
+    <string name="playback_marks">الدائرة الحمراء: نقرة · السهم: سحب</string>
+    <string name="playback_progress">تقدم العرض</string>
+    <string name="playback_pause">إيقاف مؤقت</string>
+    <string name="playback_play">تشغيل</string>
+    <string name="playback_previous">السابق</string>
+    <string name="playback_next">التالي</string>
+    <string name="playback_image">لقطة شاشة المهمة</string>
+    <string name="playback_missing">لقطة الشاشة غير متاحة</string>
+    <string name="report_export">تصدير</string>
+    <string name="report_saved">تم حفظ التقرير</string>
+    <string name="report_save_failed">تعذر الحفظ. تحقق من السجل وموقع الحفظ ثم أعد المحاولة.</string>
+    <string name="report_close">إغلاق</string>
+    <string name="report_final_page">آخر صفحة مسجلة</string>
+    <string name="playback_stage_start">البداية</string>
+    <string name="playback_stage_input">الإدخال والبحث</string>
+    <string name="playback_skipped">تم تخطي %1$d من الصور غير المتاحة.</string>
+    <string name="playback_no_mark">لم يتم تسجيل علامة موضع لهذه العملية.</string>
+    <string name="playback_error_unknown">خطأ: لم يتم تسجيل سبب محدد.</string>
+    <string name="playback_result">نتيجة العملية</string>
+    <string name="playback_element_click">تشير الدائرة إلى موضع العنصر التقديري، وليس نقطة لمس فعلية.</string>
+</resources>

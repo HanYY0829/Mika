@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "id": "com.example.feishu",
+  "name": "飞书消息",
+  "version": "0.1.0",
+  "kind": "capability",
+  "minApp": "0.1.33",
+  "author": "Mika 插件示例",
+  "description": "飞书消息技能：读消息、回消息、发到群或个人；当前版本只装技能。",
+  "skills": [
+    {
+      "name": "feishu",
+      "path": "skills/feishu",
+      "display": "飞书消息"
+    }
+  ]
+}

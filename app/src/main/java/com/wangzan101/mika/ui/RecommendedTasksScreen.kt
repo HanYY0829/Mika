@@ -118,10 +118,19 @@ fun RecommendedTasksScreen(store: RecommendedTaskStore, onBack: () -> Unit) {
         draggedId = null
         scope.launch {
             delay(180) // 先让松手的任务平滑归位，再切换到底层保存的顺序。
-            reorderError = withContext(Dispatchers.IO) { store.reorder(order) }
-            previewOrder = null
+            val error = withContext(Dispatchers.IO) { store.reorder(order) }
+            reorderError = error
+            // 失败时列表不会变，撤掉预览让行滑回真实顺序；成功要等 tasks 真的换成新顺序
+            // 再撤（见下面的 LaunchedEffect），否则会先按旧布局把预览倒回去，闪一帧。
+            if (error != null) previewOrder = null
             savingOrder = false
         }
+    }
+
+    // 预览顺序已经被底层列表接住（或本来就该收起）时，才撤掉预览状态。
+    LaunchedEffect(ids, draggedId, savingOrder, previewOrder) {
+        val preview = previewOrder ?: return@LaunchedEffect
+        if (draggedId == null && !savingOrder && preview == ids) previewOrder = null
     }
 
     LaunchedEffect(draggedId) {
@@ -168,10 +177,15 @@ fun RecommendedTasksScreen(store: RecommendedTaskStore, onBack: () -> Unit) {
                             val oldTop = ids.take(index).sumOf { heights[it] ?: 0 }
                             val newTop = order.take(destination).sumOf { heights[it] ?: 0 }
                             val moving = draggedId == task.id
-                            val animatedOffset by animateFloatAsState(
-                                targetValue = if (moving) dragDistance + scroll.value - startScroll else (newTop - oldTop).toFloat(),
-                                animationSpec = tween(if (moving) 0 else 180), label = "recommendation position",
-                            )
+                            // 拖动时跟手，预览换位时平滑让位；一旦 ids 变成新顺序，布局自己已经
+                            // 到了新位置，位移必须同帧归零。用 key(ids) 重建动画，让新动画以当前
+                            // 目标（0）为初值直接归位，而不是从旧位移再补一段反向动画。
+                            val animatedOffset by key(ids) {
+                                animateFloatAsState(
+                                    targetValue = if (moving) dragDistance + scroll.value - startScroll else (newTop - oldTop).toFloat(),
+                                    animationSpec = tween(if (moving) 0 else 180), label = "recommendation position",
+                                )
+                            }
                             val moveUp = stringResource(R.string.recommendations_move_up)
                             val moveDown = stringResource(R.string.recommendations_move_down)
                             Box(Modifier.fillMaxWidth().zIndex(if (moving) 1f else 0f)

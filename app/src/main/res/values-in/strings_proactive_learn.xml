@@ -20,6 +20,9 @@
     <string name="proactive_learn_topic_detail">%1$s · %2$s · %3$d hari · terakhir %4$s</string>
     <string name="proactive_learn_topic_outcomes">%1$d aplikasi · dibuka %2$d · ditutup %3$d</string>
     <string name="proactive_learn_delete">Hapus</string>
+    <string name="proactive_learn_topic_merge">Gabungkan…</string>
+    <string name="proactive_learn_topic_merge_title">Gabungkan “%1$s” ke</string>
+    <string name="proactive_learn_topic_merge_body">Hari dan hitungannya ditambahkan ke topik yang Anda pilih, dan nama itu selanjutnya dihitung di sana. Tidak dapat dibatalkan.</string>
     <string name="proactive_learn_clear_all">Hapus semua yang dikumpulkan Mika</string>
     <string name="proactive_learn_clear_all_body">Hapus semua topik, kontak, dan ringkasan yang dikumpulkan Mika, beserta teks notifikasi yang tersimpan? Ini tidak dapat dibatalkan. Mika akan mulai mengumpulkan lagi dari notifikasi baru.</string>
     <string name="proactive_learn_clear_app">Hapus yang berasal dari %1$s</string>

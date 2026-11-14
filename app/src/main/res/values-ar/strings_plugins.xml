@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugins_title">المكوّنات الإضافية</string>
+    <string name="plugins_install">تثبيت مكوّن إضافي</string>
+    <string name="plugins_installing">جارٍ التثبيت…</string>
+    <string name="plugins_empty">لا توجد مكوّنات إضافية بعد</string>
+    <string name="plugins_empty_sub">ثبّت ملف zip لمكوّن إضافي لإضافة مهارات يمكن لـ Mika قراءتها. لا يمكن للمكوّن الإضافي تغيير إعدادات التطبيق أو قراءة بياناتك الأخرى.</string>
+    <string name="plugins_enabled">مفعّل</string>
+    <string name="plugins_disabled">معطّل</string>
+    <string name="plugins_skills">المهارات</string>
+    <string name="plugins_no_skills">لا مهارات</string>
+    <string name="plugins_permissions">الأذونات</string>
+    <string name="plugins_none">لا شيء</string>
+    <string name="plugins_version">الإصدار %1$s</string>
+    <string name="plugins_uninstall">إلغاء التثبيت</string>
+    <string name="plugins_uninstall_body">إزالة هذا المكوّن الإضافي ومهاراته؟ لا تتأثر المحادثات والذكريات.</string>
+    <string name="plugins_install_failed">فشل التثبيت: %1$s</string>
+    <string name="plugins_unsupported_in_version">هذا الإصدار يدعم فقط المكوّنات الإضافية التي تحتوي على مهارات.</string>
+    <string name="plugins_error_too_new">يحتاج هذا المكوّن الإضافي إلى إصدار أحدث من Mika.</string>
+    <string name="plugins_error_unsafe">تحتوي الحزمة على مسار غير آمن وتم رفضها.</string>
+    <string name="plugins_error_too_large">الحزمة كبيرة جدًا.</string>
+    <string name="plugins_error_missing_manifest">لا تحتوي الحزمة على manifest.json في جذرها.</string>
+    <string name="plugins_error_invalid">الحزمة ليست مكوّنًا إضافيًا صالحًا.</string>
+    <plurals name="plugins_skill_count">
+        <item quantity="zero">%1$d مهارة</item>
+        <item quantity="one">%1$d مهارة</item>
+        <item quantity="two">%1$d مهارة</item>
+        <item quantity="few">%1$d مهارات</item>
+        <item quantity="many">%1$d مهارة</item>
+        <item quantity="other">%1$d مهارة</item>
+    </plurals>
+    <plurals name="plugins_count">
+        <item quantity="zero">%1$d مكوّن</item>
+        <item quantity="one">%1$d مكوّن</item>
+        <item quantity="two">%1$d مكوّن</item>
+        <item quantity="few">%1$d مكوّنات</item>
+        <item quantity="many">%1$d مكوّنًا</item>
+        <item quantity="other">%1$d مكوّن</item>
+    </plurals>
+</resources>

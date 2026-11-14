@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dirs_title">手机目录</string>
+    <string name="device_dirs_explanation">目录线索帮助 Mika 查找文件。添加线索不会授予访问权限；请单独授权已保存的目录。</string>
+    <string name="device_dirs_authorize">授权访问此目录</string>
+    <string name="device_dirs_recursive">包含子目录</string>
+    <string name="device_dirs_not_synced">授权尚未同步</string>
+    <string name="device_dirs_synced">授权已同步</string>
+    <string name="device_dirs_retry_sync">重试同步</string>
+    <string name="device_dirs_edit_path">请编辑目录路径后重试。</string>
+    <string name="device_dirs_not_authorized">尚未授权</string>
+    <string name="device_dirs_write_failed">无法保存目录设置，请重启应用后重试。</string>
+    <string name="device_dirs_add">添加目录线索</string>
+    <string name="device_dirs_edit">目录线索</string>
+    <string name="device_dirs_name">名称</string>
+    <string name="device_dirs_path">手机目录路径</string>
+    <string name="device_dirs_description">简介</string>
+    <string name="device_dirs_invalid">请填写名称和不重复的手机共享存储路径。</string>
+    <string name="device_dirs_delete">删除线索</string>
+    <string name="device_dirs_save">保存</string>
+    <string name="device_dirs_cancel">取消</string>
+    <string name="device_dirs_available">可访问</string>
+    <string name="device_dirs_missing">目录不存在</string>
+    <string name="device_dirs_denied">无权访问</string>
+    <string name="device_dirs_unknown">状态暂不可用</string>
+    <string name="device_dirs_entry">手机目录线索</string>
+    <string name="device_dirs_entry_sub">帮助 Mika 查找下载的文件</string>
+    <string name="device_dirs_source_preset">系统预设</string>
+    <string name="device_dirs_source_user">用户填写</string>
+    <string name="device_dirs_source_mika">Mika 更新</string>
+</resources>

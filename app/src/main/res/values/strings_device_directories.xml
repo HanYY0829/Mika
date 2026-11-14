@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dirs_title">Device folders</string>
+    <string name="device_dirs_explanation">Folder hints help Mika find files. Adding a hint does not grant access; authorize each saved folder separately.</string>
+    <string name="device_dirs_authorize">Authorize folder access</string>
+    <string name="device_dirs_recursive">Include subfolders</string>
+    <string name="device_dirs_not_synced">Authorization not synced</string>
+    <string name="device_dirs_synced">Authorization synced</string>
+    <string name="device_dirs_retry_sync">Retry synchronization</string>
+    <string name="device_dirs_edit_path">Edit the folder path and try again.</string>
+    <string name="device_dirs_not_authorized">Not authorized</string>
+    <string name="device_dirs_write_failed">Could not save folder settings. Restart the app and try again.</string>
+    <string name="device_dirs_add">Add folder hint</string>
+    <string name="device_dirs_edit">Folder hint</string>
+    <string name="device_dirs_name">Name</string>
+    <string name="device_dirs_path">Device path</string>
+    <string name="device_dirs_description">Description</string>
+    <string name="device_dirs_invalid">Enter a name and a unique shared-storage path.</string>
+    <string name="device_dirs_delete">Delete hint</string>
+    <string name="device_dirs_save">Save</string>
+    <string name="device_dirs_cancel">Cancel</string>
+    <string name="device_dirs_available">Accessible</string>
+    <string name="device_dirs_missing">Folder not found</string>
+    <string name="device_dirs_denied">Access denied</string>
+    <string name="device_dirs_unknown">Status unavailable</string>
+    <string name="device_dirs_entry">Folder hints</string>
+    <string name="device_dirs_entry_sub">Help Mika find downloaded files</string>
+    <string name="device_dirs_source_preset">Preset</string>
+    <string name="device_dirs_source_user">Edited by you</string>
+    <string name="device_dirs_source_mika">Edited by Mika</string>
+</resources>

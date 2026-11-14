@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jev_title">Model keputusan · Jev</string>
+    <string name="jev_row_sub">Penilaian maksud dan pemilihan rute opsional</string>
+    <string name="jev_enabled">Gunakan model keputusan</string>
+    <string name="jev_privacy">Jika diaktifkan, permintaan, konteks percakapan terbaru, dan rute kandidat dikirim ke penyedia yang diatur untuk menilai maksud dan memilih rute. Jika gagal, Mika menggunakan model sebelumnya. Pengaturan model utama, visual, dan ringan tetap terpisah.</string>
+    <string name="jev_provider">Penyedia</string>
+    <string name="jev_endpoint">Endpoint</string>
+    <string name="jev_model">ID model</string>
+    <string name="jev_endpoint_note">Masukkan URL endpoint SystemOne lengkap. HTTPS wajib, kecuali untuk layanan HTTP lokal. Kunci API disimpan terenkripsi di perangkat ini.</string>
+    <string name="jev_invalid">Masukkan endpoint dan ID model yang valid. Mengaktifkan atau menguji juga memerlukan kunci API.</string>
+    <string name="jev_apply_note">Simpan agar status aktif dan pengaturan koneksi berlaku untuk tugas baru.</string>
+    <string name="jev_test">Uji koneksi</string>
+    <string name="jev_test_note">Pengujian hanya mengirim salam tetap dan dua pilihan ke endpoint ini. Percakapan, layar, dan memori tidak dikirim; perubahan tidak disimpan dan layanan tidak diaktifkan.</string>
+    <string name="jev_test_success">Koneksi berfungsi dan pilihan pengujian benar.</string>
+    <string name="jev_test_failed">Pengujian gagal. Periksa endpoint, model, kunci API, dan jaringan.</string>
+    <string name="jev_saved">Tersimpan. Tugas baru akan menggunakan pengaturan ini.</string>
+    <string name="jev_save_failed">Tidak dapat menyimpan. Pengaturan yang sebelumnya disimpan tidak berubah.</string>
+</resources>

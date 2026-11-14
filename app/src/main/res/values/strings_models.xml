@@ -61,6 +61,13 @@
     <string name="role_vision_what">Looks at screenshots</string>
     <string name="role_light_what">Small jobs like checks and notes</string>
     <string name="role_main_hint">Does all the thinking and acting. Pick a model with tool calling so tasks go reliably.</string>
+    <string name="main_fallback_name">Fallback model %1$d</string>
+    <string name="main_fallback_what">Takes over when the main model is unavailable</string>
+    <string name="main_fallback_pick">Pick a fallback model</string>
+    <string name="main_fallback_clear">No fallback</string>
+    <string name="main_fallback_hint">The main model runs first. If it runs out of quota or fails, the fallback takes over automatically.</string>
+    <string name="main_fallback_failed">Could not set the fallback model</string>
+    <string name="main_fallback_is_main">This is the current main model, so it cannot also be its fallback</string>
     <string name="role_vision_hint">Gets screenshots when reading the screen; more accurate on complex screens. Optional: without it Mika reads the screen as text.</string>
     <string name="role_light_hint">Handles small jobs like checking whether a task is done and tidying memory. Cheap and fast is best.</string>
     <string name="models_delete_title">Delete “%1$s”?</string>

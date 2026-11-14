@@ -20,6 +20,9 @@
     <string name="proactive_learn_topic_detail">%1$s · %2$s · дней: %3$d · последний раз %4$s</string>
     <string name="proactive_learn_topic_outcomes">приложений: %1$d · открыто %2$d · смахнуто %3$d</string>
     <string name="proactive_learn_delete">Удалить</string>
+    <string name="proactive_learn_topic_merge">Объединить…</string>
+    <string name="proactive_learn_topic_merge_title">Объединить «%1$s» с</string>
+    <string name="proactive_learn_topic_merge_body">Её дни и счётчики добавятся к выбранной теме, и это название дальше будет учитываться там. Отменить нельзя.</string>
     <string name="proactive_learn_clear_all">Очистить всё, что собрала Mika</string>
     <string name="proactive_learn_clear_all_body">Удалить все темы, контакты и сводки, собранные Mika, и сохранённый текст уведомлений? Отменить нельзя. Дальше Mika начнёт собирать заново по новым уведомлениям.</string>
     <string name="proactive_learn_clear_app">Очистить пришедшее из %1$s</string>

@@ -27,4 +27,6 @@
     <string name="dev_run_log">Registros de execução</string>
     <string name="dev_screen_tables">Compactar elementos de novas telas</string>
     <string name="dev_screen_tables_sub">Na primeira leitura, envia campos repetidos como colunas. Mantém as referências e a árvore completa.</string>
+    <string name="dev_device_files">Importar arquivos do dispositivo</string>
+    <string name="dev_device_files_sub">Permite que o Mika copie arquivos do armazenamento compartilhado do dispositivo para o espaço de trabalho. As alterações valem para novas tarefas.</string>
 </resources>

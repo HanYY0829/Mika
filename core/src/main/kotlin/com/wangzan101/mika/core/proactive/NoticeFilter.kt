@@ -17,6 +17,8 @@ enum class NoticeDecision {
     Category,
     /** 标题和正文都是空的。 */
     Blank,
+    /** Authentication secrets must never reach the inbox, journal or models. */
+    AuthenticationSecret,
 }
 
 /**
@@ -48,6 +50,7 @@ object NoticeFilter {
         val byPackage = decidePackage(record.packageName, whitelist, blocked)
         if (byPackage != NoticeDecision.Keep) return byPackage
         return when {
+            LearnText.sensitive(listOf(record.title, record.text, record.messages.joinToString(" ") { it.text }).joinToString(" ")) -> NoticeDecision.AuthenticationSecret
             record.ongoing -> NoticeDecision.Ongoing
             record.groupSummary -> NoticeDecision.GroupSummary
             record.foregroundService -> NoticeDecision.ForegroundService
@@ -61,6 +64,7 @@ object NoticeFilter {
     /** 清洗:去掉控制字符、双向文字控制符和看不见的格式字符,空白并成一个空格,按长度截断;消息只留最近 [MESSAGES_MAX] 条。 */
     fun sanitize(record: NoticeRecord): NoticeRecord = record.copy(
         title = clean(record.title, TITLE_MAX),
+        conversationTitle = record.conversationTitle?.let { clean(it, TITLE_MAX) }?.ifBlank { null },
         text = clean(record.text, TEXT_MAX),
         messages = record.messages
             .map { m -> m.copy(sender = m.sender?.let { clean(it, TITLE_MAX) }?.ifBlank { null }, text = clean(m.text, TEXT_MAX)) }

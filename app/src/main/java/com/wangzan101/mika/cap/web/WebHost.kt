@@ -8,6 +8,7 @@ import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.Image
 import android.media.ImageReader
+import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
@@ -110,24 +111,28 @@ class WebHost(private val context: Context, widthPx: Int, heightPx: Int, density
             }
         }
 
-        private fun addWindow(display: Display): FrameLayout? = try {
-            val wctx = context.createDisplayContext(display)
-                .createWindowContext(WindowManager.LayoutParams.TYPE_PRIVATE_PRESENTATION, null)
-            val wm = wctx.getSystemService(WindowManager::class.java)
-            val c = FrameLayout(wctx)
-            val lp = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_PRIVATE_PRESENTATION,
-                0,
-                PixelFormat.OPAQUE,
-            )
-            wm.addView(c, lp)
-            windowManager = wm
-            c
-        } catch (e: Exception) {
-            Log.w(TAG, "WindowManager on private display failed, falling back to detached WebView", e)
-            null
+        private fun addWindow(display: Display): FrameLayout? {
+            // createWindowContext 是安卓 11 起才有的;更早的系统退回没有宿主的 WebView(照常渲染、截图)。
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
+            return try {
+                val wctx = context.createDisplayContext(display)
+                    .createWindowContext(WindowManager.LayoutParams.TYPE_PRIVATE_PRESENTATION, null)
+                val wm = wctx.getSystemService(WindowManager::class.java)
+                val c = FrameLayout(wctx)
+                val lp = WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.TYPE_PRIVATE_PRESENTATION,
+                    0,
+                    PixelFormat.OPAQUE,
+                )
+                wm.addView(c, lp)
+                windowManager = wm
+                c
+            } catch (e: Exception) {
+                Log.w(TAG, "WindowManager on private display failed, falling back to detached WebView", e)
+                null
+            }
         }
 
         fun copy(): Bitmap? = synchronized(frameLock) { frame?.let { Bitmap.createBitmap(it, 0, 0, width, height) } }

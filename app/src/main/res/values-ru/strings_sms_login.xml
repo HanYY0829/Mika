@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sms_login_title">Вход по SMS (экспериментально)</string>
+    <string name="sms_login_enable">Разрешить вход по SMS</string>
+    <string name="sms_login_default_off">По умолчанию выключено · локальные профили</string>
+    <string name="sms_login_limits">Автовход в настроенные нативные приложения с проверкой подписи, отправителя, сервиса и аккаунта. Без подтверждения каждого входа. При нехватке разрешений или доказательств — вручную. После проверки чтение текста возобновляется, изображения остаются локальными.</string>
+    <string name="sms_login_permission">Разрешение SMS Android</string>
+    <string name="sms_login_error">Ошибка разрешения или сохранения. Войдите вручную и проверьте разрешения.</string>
+    <string name="sms_login_disclosure">Разрешите только настроенные здесь подписанные приложения и аккаунты. Mika сможет запросить и ввести код, подтвердить вход и проверить аккаунт без повторного вопроса. Без оплаты, восстановления и регистрации. SMS и коды не сохраняются и не передаются модели. Выключите или удалите профиль для отзыва.</string>
+    <string name="sms_login_sender">Точный отправитель SMS</string>
+    <string name="sms_login_signature">Сервис в скобках</string>
+    <string name="sms_login_account">Совпадающие цифры аккаунта (4–11)</string>
+    <string name="sms_login_listening">Автоматический запрос, ввод и проверка настроенного аккаунта. Можно отменить.</string>
+    <string name="sms_login_tool">Вход по SMS</string>
+    <string name="sms_profile_title">Доверенные сервисы и аккаунты</string>
+    <string name="sms_profile_help">Настройте один раз. Сохранение разрешает запрос кода, ввод аккаунта и кода, окончательный вход и проверку аккаунта в приложении с этой подписью. Нужны проверенные нативные ID и однозначный признак вошедшего аккаунта. Один аккаунт на приложение; изменение или удаление отзывает доступ. Локальное шифрование Android Keystore.</string>
+    <string name="sms_profile_accountvalue">Номер аккаунта (только на устройстве)</string>
+    <string name="sms_profile_package">Пакет установленного приложения</string>
+    <string name="sms_profile_accountfield">ID поля аккаунта</string>
+    <string name="sms_profile_codefield">ID поля кода</string>
+    <string name="sms_profile_sendbutton">ID кнопки запроса кода</string>
+    <string name="sms_profile_loginbutton">ID окончательной кнопки входа</string>
+    <string name="sms_profile_successview">ID признака успешного входа</string>
+    <string name="sms_profile_successtext">Точный текст признака входа</string>
+    <string name="sms_profile_successaccount">ID представления вошедшего аккаунта</string>
+</resources>

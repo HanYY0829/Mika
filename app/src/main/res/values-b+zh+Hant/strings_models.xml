@@ -61,6 +61,13 @@
     <string name="role_vision_what">讀取螢幕時看截圖</string>
     <string name="role_light_what">判斷、記東西這類小事</string>
     <string name="role_main_hint">思考和辦事都靠它。選支援工具呼叫的模型，辦事才靠得住。</string>
+    <string name="main_fallback_name">備援模型 %1$d</string>
+    <string name="main_fallback_what">主模型不能用時接手</string>
+    <string name="main_fallback_pick">選一個備援模型</string>
+    <string name="main_fallback_clear">不設定備援</string>
+    <string name="main_fallback_hint">平常用主模型;它額度用完或出錯時,自動換備援模型接手。</string>
+    <string name="main_fallback_failed">備援模型設定失敗</string>
+    <string name="main_fallback_is_main">這個模型就是目前主模型，不能同時當備援</string>
     <string name="role_vision_hint">讀取螢幕時把截圖給它看，介面複雜時更準。不選也能用，只靠文字讀取螢幕。</string>
     <string name="role_light_hint">判斷任務有沒有辦完、整理記憶這類小事用它。選便宜、快的更合適。</string>
     <string name="models_delete_title">刪除「%1$s」？</string>

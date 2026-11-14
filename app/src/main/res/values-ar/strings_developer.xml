@@ -27,4 +27,6 @@
     <string name="dev_run_log">سجلات التشغيل</string>
     <string name="dev_screen_tables">تنسيق عناصر الشاشات الجديدة كجدول</string>
     <string name="dev_screen_tables_sub">عند قراءة الشاشة أول مرة، تُرسل الحقول المتكررة كأعمدة مع الاحتفاظ بمراجع العناصر والشجرة الكاملة.</string>
+    <string name="dev_device_files">استيراد ملفات الجهاز</string>
+    <string name="dev_device_files_sub">السماح لـ Mika بنسخ الملفات من مساحة التخزين المشتركة على الجهاز إلى مساحة العمل. تسري التغييرات على المهام الجديدة.</string>
 </resources>

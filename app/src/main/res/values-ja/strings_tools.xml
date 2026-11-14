@@ -20,6 +20,8 @@
     <string name="tool_find_element">画面上で探す</string>
     <string name="tool_collect">複数の画面にまたがって収集</string>
     <string name="tool_phone_run">スマホの複数の操作</string>
+    <string name="tool_list_device_files">端末のファイルを表示</string>
+    <string name="tool_copy_device_file">端末のファイルをコピー</string>
     <string name="tool_process_files">ファイルを扱う</string>
     <string name="tool_run_script">内蔵スクリプトを実行</string>
     <string name="tool_read_file">ファイルを読む</string>

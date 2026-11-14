@@ -58,8 +58,8 @@ class ConversationTitlerTest {
     /** 在浏览器页上问的第一句:页面说明不交给起标题的模型,只给用户说的话。 */
     @Test fun pageContextIsNotPartOfTheTitleInput() = runBlocking {
         val m = Titler("挑耳机")
-        val first = com.wangzan101.mika.core.cap.web.AttachedPage.compose(
-            com.wangzan101.mika.core.cap.web.AttachedPage.Page("https://shop.example.com/s", "搜索结果"), "挑一个评价最好的")
+        val first = com.wangzan101.mika.core.agent.AttachedPage.compose(
+            com.wangzan101.mika.core.agent.AttachedPage.Page("https://shop.example.com/s", "搜索结果"), "挑一个评价最好的")
         assertEquals("挑耳机", ConversationTitler.generate(listOf(m), first))
         assertTrue(text(m).contains("挑一个评价最好的"))
         assertFalse(text(m).contains("shop.example.com"))

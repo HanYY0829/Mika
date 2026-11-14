@@ -189,6 +189,40 @@ class TopicPoolTest {
         assertEquals(listOf("running shoes"), p.all().map { it.label })
     }
 
+    // 给模型看的只有 limit 个:这一批的 App 自己印证过的排在前面(哪怕弱),不然它再推同样的东西时模型看不到已有的那个,只能另起一个
+    @Test fun theBatchAppsOwnTopicsAreShownFirst() {
+        val p = TopicPool()
+        // 别的 App 的五个话题,各有两天的证据(强)
+        for (i in 0 until 5) {
+            p.apply("com.news", listOf(ev(0, pkg = "com.news")), listOf(new(0, label = "news $i")), t0, zone)
+            p.apply("com.news", listOf(ev(0, at = t0 + day, pkg = "com.news")), listOf(new(0, label = "news $i")), t0 + day, zone)
+        }
+        // 这个 App 的两个话题,各只有一天(弱)
+        p.apply("com.shop", listOf(ev(0), ev(1)), listOf(new(0, label = "running shoes"), new(1, label = "tents")), t0, zone)
+        val now = t0 + day
+        // 不说是哪个 App:只按强度,三个位置全是别的 App 的
+        assertTrue(p.strongest(now, limit = 3).all { it.label.startsWith("news") })
+        // 说了:它自己的两个都在,排在前面;剩下的位置按强度补
+        val shown = p.strongest(now, limit = 3, packageName = "com.shop")
+        assertEquals(setOf("running shoes", "tents"), shown.take(2).map { it.label }.toSet())
+        assertTrue(shown[2].label.startsWith("news"))
+        // 位置够时一个不少
+        assertEquals(7, p.strongest(now, packageName = "com.shop").size)
+        // 没推过东西的 App:和不说一样
+        assertEquals(p.strongest(now, limit = 3), p.strongest(now, limit = 3, packageName = "com.other"))
+        // 自己的话题比位置还多的 App:只占三分之二(挑它自己最强的),剩下的给其余的里最强的,不把别的 App 的全挤出去
+        // (「tents」再添两天,成了最强的)
+        p.apply("com.shop", listOf(ev(0, at = t0 - day)), listOf(new(0, label = "tents")), now, zone)
+        p.apply("com.shop", listOf(ev(0, at = t0 + day)), listOf(new(0, label = "tents")), now, zone)
+        val news = p.strongest(now, limit = 3, packageName = "com.news")
+        assertEquals(listOf(true, true, false), news.map { it.label.startsWith("news") })
+        assertEquals("tents", news[2].label)
+        // 六个位置:它自己的占四个,第五个是别人最强的,最后一个按强度轮到它自己剩下的那个
+        val six = p.strongest(now, limit = 6, packageName = "com.news")
+        assertEquals(listOf(true, true, true, true, false, true), six.map { it.label.startsWith("news") })
+        assertEquals("tents", six[4].label)
+    }
+
     @Test fun dataRoundTrip() {
         val p = TopicPool()
         p.apply("com.shop", listOf(ev(0, outcome = LearnOutcome.Opened)), listOf(new(0)), t0, zone)
@@ -336,11 +370,195 @@ class TopicPoolTest {
     }
 
     // 旧版本存下来的(没有「不再记录」的名单):照样读得出来
+    // ---- 用户把一个话题并进另一个 ----
+
+    /**
+     * 两个说法差不多的话题,返回 (a, b) 的 id。a「trail shoes」:com.shop 两天(昨天、今天),点开 1、划掉 1。
+     * b「running shoes」:com.shop 今天、com.mall 明天,点开 1。
+     */
+    private fun twins(p: TopicPool): Pair<String, String> {
+        p.apply("com.shop", listOf(ev(0, at = t0 - day, outcome = LearnOutcome.Opened)), listOf(new(0, label = "trail shoes")), t0 - day, zone)
+        p.apply("com.shop", listOf(ev(0, outcome = LearnOutcome.Dismissed), ev(1)), listOf(new(0, label = "trail shoes"), new(1)), t0, zone)
+        p.apply("com.mall", listOf(ev(0, at = t0 + day, pkg = "com.mall", outcome = LearnOutcome.Opened)), listOf(new(0)), t0 + day, zone)
+        val (a, b) = p.all()
+        return a.id to b.id
+    }
+
+    @Test fun mergingAddsOneTopicsEvidenceToTheOther() {
+        val p = TopicPool()
+        val (a, b) = twins(p)
+        assertTrue(p.merge(a, b))
+        val t = p.all().single()
+        assertEquals(b, t.id)
+        assertEquals("running shoes", t.label)
+        assertEquals(TopicKind.Shopping, t.kind)
+        // 同一个 App 同一天两边都有的只算一份
+        assertEquals(mapOf("com.shop" to listOf(19_999L, 20_000L), "com.mall" to listOf(20_001L)), t.evidence)
+        assertEquals(3, t.days)
+        assertTrue(t.established)
+        assertEquals(2, t.opened)
+        assertEquals(1, t.dismissed)
+        assertEquals(t0 - day, t.firstSeenMs)
+        assertEquals(t0 + day, t.lastSeenMs)
+        // 已经并掉的、同一个、没有的:什么都不做
+        assertFalse(p.merge(a, b))
+        assertFalse(p.merge(b, b))
+        assertFalse(p.merge(b, "nope"))
+        assertEquals(t, p.all().single())
+        // 并掉不是删掉:名字不进「不再记录」
+        assertEquals(0, p.blockedCount)
+    }
+
+    // 并掉的那个名字,模型之后再新起(不管归到哪一种、大小写和空白怎么写):算引用并进去的那个,不另起
+    @Test fun aMergedAwayNameIsCountedOnTheTopicItWentInto() {
+        val p = TopicPool()
+        val (a, b) = twins(p)
+        p.merge(a, b)
+        val r = p.apply("com.shop", listOf(ev(0, at = t0 + 2 * day), ev(1, at = t0 + 2 * day)),
+            listOf(new(0, kind = TopicKind.Interest, label = " Trail  SHOES "), new(1, label = "tents")), t0 + 2 * day, zone)
+        assertEquals(setOf(b), r.byEvent.getValue(0))
+        assertEquals(2, r.applied)
+        assertEquals(listOf("running shoes", "tents"), p.all().map { it.label })
+        assertEquals(20_002L, p[b]!!.evidence.getValue("com.shop").last())
+        // 并的那一刻在途的请求,回复里引用的还是并掉的那个 id:也算到并进去的那个上,不丢
+        val late = p.apply("com.mall", listOf(ev(0, at = t0 + 3 * day, pkg = "com.mall")), listOf(LearnSignal(listOf(0), topicId = a)), t0 + 3 * day, zone)
+        assertEquals(1, late.applied)
+        assertEquals(0, late.missing)
+        assertEquals(20_003L, p[b]!!.evidence.getValue("com.mall").last())
+        // 存下来的只有指纹,没有并掉的那个名字;存成文件再读回来照样认
+        val data = p.data()
+        assertEquals(mapOf(TopicPool.fingerprint("trail shoes") to b), data.merged)
+        assertFalse(data.toString().contains("trail", ignoreCase = true))
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        val back = TopicPool(json.decodeFromString(TopicPoolData.serializer(), json.encodeToString(TopicPoolData.serializer(), data)))
+        back.apply("com.shop", listOf(ev(0, at = t0 + 4 * day)), listOf(new(0, label = "trail shoes")), t0 + 4 * day, zone)
+        assertEquals(listOf("running shoes", "tents"), back.all().map { it.label })
+        assertEquals(20_004L, back[b]!!.evidence.getValue("com.shop").last())
+        assertEquals(data.merged, back.data().merged)
+    }
+
+    // 并过几回的:名字一路跟到最后并进去的那个;单独删掉并好的那个,并进过它的名字也都不再记
+    @Test fun mergedNamesFollowLaterMergesAndAreBlockedWithTheTopic() {
+        val p = TopicPool()
+        val four = listOf(new(0, label = "a"), new(1, label = "b"), new(2, label = "c"), new(3, label = "d"))
+        p.apply("com.shop", listOf(ev(0), ev(1), ev(2), ev(3)), four, t0, zone)
+        val (a, b, c, d) = p.all().map { it.id }
+        assertTrue(p.merge(a, b))
+        assertTrue(p.merge(b, c))
+        assertEquals(mapOf(TopicPool.fingerprint("a") to c, TopicPool.fingerprint("b") to c), p.data().merged)
+        // 在途的请求引用最早并掉的那个:跟到 c
+        val late = p.apply("com.shop", listOf(ev(0, at = t0 + day)), listOf(LearnSignal(listOf(0), topicId = a)), t0 + day, zone)
+        assertEquals(setOf(c), late.byEvent.getValue(0))
+        // 删掉 c:a、b、c 三个名字都不再记;d 不受影响
+        assertTrue(p.delete(c))
+        assertEquals(3, p.blockedCount)
+        assertTrue(p.data().merged.isEmpty())
+        val r = p.apply("com.shop", listOf(ev(0), ev(1), ev(2), ev(3)), four, t0 + day, zone)
+        assertEquals(3, r.blocked)
+        assertEquals(1, r.applied)
+        assertEquals(listOf(d), p.all().map { it.id })
+        // 重新允许之后可以再学(别名已经没了,是新起的话题)
+        assertTrue(p.allowAgain())
+        p.apply("com.shop", listOf(ev(0)), listOf(new(0, label = "a")), t0 + day, zone)
+        assertEquals(listOf("d", "a"), p.all().map { it.label })
+    }
+
+    // 「不再记录」和并掉是同一个名字上的两种决定,后做的算数;并进去的话题不是单独删掉而是清掉的,那个名字可以重新学
+    @Test fun aNameIsEitherBlockedOrMergedWhicheverTheUserDidLast() {
+        val three = listOf(new(0), new(1, kind = TopicKind.Interest), new(2, label = "tents"))
+        // 同名的两种:删掉一种(名字进了「不再记录」),再把留着的那种并进别的 → 这个名字改成算到那边
+        val p = TopicPool()
+        p.apply("com.shop", listOf(ev(0), ev(1), ev(2)), three, t0, zone)
+        val (shopping, interest, tents) = p.all().map { it.id }
+        assertTrue(p.delete(shopping))
+        assertTrue(p.merge(interest, tents))
+        assertEquals(0, p.blockedCount)
+        val r = p.apply("com.shop", listOf(ev(0, at = t0 + day)), listOf(new(0)), t0 + day, zone)
+        assertEquals(0, r.blocked)
+        assertEquals(setOf(tents), r.byEvent.getValue(0))
+        assertEquals(1, p.all().size)
+        // 反过来:名字并掉之后,同名的另一种被单独删掉 → 这个名字不再记
+        val q = TopicPool()
+        q.apply("com.shop", listOf(ev(0), ev(1), ev(2)), three, t0, zone)
+        val (s2, i2, t2) = q.all().map { it.id }
+        assertTrue(q.merge(s2, t2))
+        // 留着的同名那一种照常用(先认已有的)
+        assertEquals(setOf(i2), q.apply("com.shop", listOf(ev(0)), listOf(new(0, kind = TopicKind.Interest)), t0, zone).byEvent.getValue(0))
+        assertTrue(q.delete(i2))
+        assertTrue(q.data().merged.isEmpty())
+        assertEquals(1, q.apply("com.shop", listOf(ev(0, at = t0 + day)), listOf(new(0)), t0 + day, zone).blocked)
+        assertEquals(listOf(t2), q.all().map { it.id })
+        // 并进去的话题被清掉了(不是单独删):别名跟着不算数,那个名字照常可以再学,也不进「不再记录」
+        val c = TopicPool()
+        val (a, b) = twins(c)
+        c.merge(a, b)
+        assertEquals(setOf(b), c.clearApp("com.shop") + c.clearApp("com.mall"))
+        assertTrue(c.data().merged.isEmpty())
+        assertEquals(0, c.blockedCount)
+        c.apply("com.shop", listOf(ev(0)), listOf(new(0, label = "trail shoes")), t0, zone)
+        assertEquals(listOf("trail shoes"), c.all().map { it.label })
+        // 清空全部也一样
+        val e = TopicPool()
+        val (x, y) = twins(e)
+        e.merge(x, y)
+        e.clear()
+        assertTrue(e.data().merged.isEmpty())
+        e.apply("com.shop", listOf(ev(0)), listOf(new(0, label = "trail shoes")), t0, zone)
+        assertEquals(listOf("trail shoes"), e.all().map { it.label })
+    }
+
+    // 有一个是敏感的,并完就是敏感的(只会变严);每个 App 留的天数、一个话题留的 App 数照旧有上限
+    @Test fun mergingKeepsTheStricterFlagAndTheCaps() {
+        val p = TopicPool()
+        val diabetes = new(0, kind = TopicKind.Interest, label = "Diabetes")
+        p.apply("com.health", listOf(ev(0, pkg = "com.health")), listOf(diabetes.copy(sensitive = true)), t0, zone, allowSensitive = true)
+        p.apply("com.shop", listOf(ev(0)), listOf(new(0)), t0, zone)
+        val (sensitive, plain) = p.all().map { it.id }
+        assertTrue(p.merge(sensitive, plain))
+        assertTrue(p[plain]!!.sensitive)
+        // 「敏感类推断」关着时,并掉的那个名字再来也不加证据(并进去的那个是敏感的了)
+        val r = p.apply("com.health", listOf(ev(0, at = t0 + day, pkg = "com.health")), listOf(diabetes), t0 + day, zone)
+        assertEquals(1, r.missing)
+        assertEquals(2, p[plain]!!.evidenceCount)
+        // 上限:from 有 20 个 App(各一天,越往后越新)和一个共有的 App;into 有 5 个更新的 App 和那个共有的
+        val cap = LearnTuning.APPS_PER_TOPIC
+        val from = ObservedTopic("kx", TopicKind.Shopping, "x", 1, 2,
+            (0 until cap - 1).associate { "com.a$it" to listOf(20_000L + it) } + ("com.same" to (0 until 60).map { 20_000L + it }))
+        val into = ObservedTopic("ky", TopicKind.Shopping, "y", 3, 4,
+            (0 until 5).associate { "com.b$it" to listOf(20_100L + it) } + ("com.same" to (30 until 90).map { 20_000L + it }))
+        val q = TopicPool(TopicPoolData(topics = listOf(from, into)))
+        assertTrue(q.merge("kx", "ky"))
+        val e = q["ky"]!!.evidence
+        assertEquals(cap, e.size)
+        assertEquals((30 until 90).map { 20_000L + it }, e.getValue("com.same"))
+        assertTrue((0 until 5).all { "com.b$it" in e })
+        // from 的 19 个里最旧的 5 个让出位置
+        assertTrue((0 until 5).none { "com.a$it" in e })
+        assertTrue((5 until cap - 1).all { "com.a$it" in e })
+    }
+
+    // 「并入」时列出来的其他话题:名字像的排在前面,其余按强度
+    @Test fun lookAlikeNamesComeFirstWhenPickingWhereToMerge() {
+        val p = TopicPool()
+        p.apply("com.shop", listOf(ev(0), ev(1), ev(2), ev(3)),
+            listOf(new(0, label = "AI 编程工具"), new(1, label = "露营装备"), new(2, label = "ai编程助手"), new(3, label = "编程")), t0, zone)
+        // 「露营装备」多一天证据(最强),名字不像,还是排在像的后面
+        p.apply("com.shop", listOf(ev(0, at = t0 + day)), listOf(new(0, label = "露营装备")), t0 + day, zone)
+        val all = p.all()
+        val of = all.first { it.label == "AI 编程工具" }
+        assertEquals(listOf("ai编程助手", "编程", "露营装备"), TopicPool.mergeCandidates(of, all, t0 + day).map { it.label })
+        // 都不像的:按强度
+        val camping = all.first { it.label == "露营装备" }
+        assertEquals(3, TopicPool.mergeCandidates(camping, all, t0 + day).size)
+        assertFalse(camping in TopicPool.mergeCandidates(camping, all, t0 + day))
+    }
+
     @Test fun olderTopicFilesStillDecode() {
         val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
         // 名单是空的时候不写进文件:这就是旧版本文件的样子
         val old = json.encodeToString(TopicPoolData.serializer(), TopicPoolData(topics = listOf(ObservedTopic("k1", TopicKind.Shopping, "running shoes", 1, 2))))
         assertFalse(old, "blocked" in old)
+        assertFalse(old, "merged" in old)
         val p = TopicPool(json.decodeFromString(TopicPoolData.serializer(), old))
         assertEquals(listOf("running shoes"), p.all().map { it.label })
         assertEquals(0, p.blockedCount)

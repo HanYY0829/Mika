@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jev_title">نموذج القرار · Jev</string>
+    <string name="jev_row_sub">تحديد النية واختيار المسار بشكل اختياري</string>
+    <string name="jev_enabled">استخدام نموذج القرار</string>
+    <string name="jev_privacy">عند التفعيل، يُرسل طلبك وسياق المحادثة الحديثة والمسارات المرشحة إلى مزود الخدمة المحدد لتحديد النية واختيار المسارات. عند الفشل، يستخدم Mika النموذج السابق. تبقى إعدادات النماذج الرئيسي والمرئي والخفيف مستقلة.</string>
+    <string name="jev_provider">مزود الخدمة</string>
+    <string name="jev_endpoint">عنوان الواجهة</string>
+    <string name="jev_model">معرّف النموذج</string>
+    <string name="jev_endpoint_note">أدخل عنوان URL الكامل لواجهة SystemOne. يلزم HTTPS باستثناء خدمات HTTP المحلية. يُحفظ مفتاح API مشفّرًا على هذا الجهاز.</string>
+    <string name="jev_invalid">أدخل عنوان واجهة ومعرّف نموذج صالحين. يتطلب التفعيل أو الاختبار مفتاح API أيضًا.</string>
+    <string name="jev_apply_note">احفظ لتطبيق حالة التفعيل وإعدادات الاتصال على المهام الجديدة.</string>
+    <string name="jev_test">اختبار الاتصال</string>
+    <string name="jev_test_note">يرسل الاختبار تحية ثابتة وخيارين فقط إلى هذه الواجهة. لا يرسل محادثاتك أو شاشاتك أو ذكرياتك، ولا يحفظ التغييرات أو يفعّل الخدمة.</string>
+    <string name="jev_test_success">الاتصال يعمل وكان الاختيار التجريبي صحيحًا.</string>
+    <string name="jev_test_failed">فشل الاختبار. تحقق من عنوان الواجهة والنموذج ومفتاح API والشبكة.</string>
+    <string name="jev_saved">تم الحفظ. ستستخدم المهام الجديدة هذه الإعدادات.</string>
+    <string name="jev_save_failed">تعذر الحفظ. لم تتغير الإعدادات المحفوظة سابقًا.</string>
+</resources>

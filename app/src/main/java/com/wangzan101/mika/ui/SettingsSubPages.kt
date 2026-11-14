@@ -272,6 +272,7 @@ fun DuringWorkScreen(
     externalSchedule: Boolean = false, onExternalSchedule: (Boolean) -> Unit = {},
     stepLimit: Int? = null, onStepLimit: (Int?) -> Unit = {},
     tokenBudget: Long? = null, onTokenBudget: (Long?) -> Unit = {},
+    showTaskCost: Boolean = false, onShowTaskCost: (Boolean) -> Unit = {},
 ) {
     var editingLimit by remember { mutableStateOf(false) }
     var customLimit by remember { mutableStateOf("") }
@@ -306,6 +307,12 @@ fun DuringWorkScreen(
                     editingTokenBudget = true
                 },
             )
+            ListRow(
+                null, stringResource(R.string.settings_show_task_cost), stringResource(R.string.settings_show_task_cost_sub),
+                onClick = { onShowTaskCost(!showTaskCost) },
+            ) {
+                MikaSwitch(showTaskCost, onShowTaskCost, Modifier.testTag("work-show-task-cost"))
+            }
             parallel?.let { ParallelRow(it, onParallelMax) }
         }
         if (editingLimit) StepLimitDialog(

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="proactive_title">Proactivo (experimental)</string>
+    <string name="proactive_title">Proactivo</string>
     <string name="proactive_entry_sub">Lee las notificaciones de las apps que elijas</string>
     <string name="proactive_switch">Activar</string>
     <string name="proactive_listener">Escucha: %1$s</string>

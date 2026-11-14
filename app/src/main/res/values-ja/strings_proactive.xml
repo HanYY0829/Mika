@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="proactive_title">プロアクティブ（実験）</string>
+    <string name="proactive_title">プロアクティブ</string>
     <string name="proactive_entry_sub">選んだアプリの通知を読み取ります</string>
     <string name="proactive_switch">オンにする</string>
     <string name="proactive_listener">リスナー：%1$s</string>

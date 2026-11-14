@@ -20,6 +20,8 @@
     <string name="tool_find_element">Find on screen</string>
     <string name="tool_collect">Collect across screens</string>
     <string name="tool_phone_run">Several phone actions</string>
+    <string name="tool_list_device_files">Browse device files</string>
+    <string name="tool_copy_device_file">Copy device file</string>
     <string name="tool_process_files">Work with files</string>
     <string name="tool_run_script">Run built-in script</string>
     <string name="tool_read_file">Read file</string>

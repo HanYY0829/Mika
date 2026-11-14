@@ -29,6 +29,8 @@ class CallStandbyService : Service() {
     private var runtime: CallRuntime? = null
     private var statusJob: Job? = null
     private var promoted = false
+    private var stopping = false
+    internal val leaseAvailable: Boolean get() = promoted && !stopping
     internal var stickyAutoAnswer = false
         private set
 
@@ -55,20 +57,20 @@ class CallStandbyService : Service() {
         }.isSuccess
         if (!promoted) {
             if (explicit || intent == null) calls?.onStandbyStartFailed(getString(R.string.calls_standby_start_blocked))
-            stopSelf(startId)
+            requestStop(startId)
             return START_NOT_STICKY
         }
         if (calls == null || (intent != null && !explicit)) {
             if (calls != null && stickyAutoAnswer && calls.hasAuthorizedIncomingStandby()) return START_STICKY
-            if (calls?.hasLockedDialForegroundWork() != true || statusJob == null) stopSelf(startId)
+            if (calls?.hasOutgoingForegroundWork() != true || statusJob == null) requestStop(startId)
             return START_NOT_STICKY
         }
         val incoming = calls.hasAuthorizedIncomingStandby() && (intent == null || calls.isIncomingStandbyStartRequested() || stickyAutoAnswer)
-        if (!notificationAllowed || (!incoming && (intent == null || !calls.hasLockedDialForegroundWork()))) {
+        if (!notificationAllowed || !CallStandbyPolicy.acceptsStart(incoming, explicit, calls.hasOutgoingForegroundWork())) {
             calls.onStandbyStartFailed(getString(
                 if (notificationAllowed) R.string.calls_standby_not_ready else R.string.calls_standby_notifications_required,
             ))
-            stopSelf(startId)
+            requestStop(startId)
             return START_NOT_STICKY
         }
 
@@ -76,7 +78,7 @@ class CallStandbyService : Service() {
         calls.onStandbyStarted(this)
         if (statusJob == null) statusJob = scope.launch {
             calls.state.map { state ->
-                val lockedDial = calls.hasLockedDialForegroundWork()
+                val lockedDial = calls.hasOutgoingForegroundWork()
                 val receive = stickyAutoAnswer && calls.hasAuthorizedIncomingStandby()
                 if ((!receive && !lockedDial) || !notificationsAvailable(this@CallStandbyService)) return@map null
                 Notice(when {
@@ -84,17 +86,18 @@ class CallStandbyService : Service() {
                         getString(R.string.calls_standby_locked_dial_preparing, state.lockedDialRemainingSeconds ?: 0)
                     state.lockedDialRequestId != null ->
                         getString(R.string.calls_device_locked_dial_remaining, state.lockedDialRemainingSeconds ?: 0)
-                    lockedDial -> getString(R.string.calls_device_locked_dial_preparing)
+                    lockedDial && state.aiActive -> getString(R.string.calls_standby_ai_active)
+                    lockedDial -> getString(R.string.calls_notification_preparing)
                     state.autoAnswerStage == CallAutoAnswerStage.PAUSED -> getString(R.string.calls_auto_paused)
                     state.backgroundStandbyBlockedReason != null -> getString(R.string.calls_standby_unavailable)
                     state.aiActive -> getString(R.string.calls_standby_ai_active)
                     else -> getString(R.string.calls_standby_running)
                 }, state.lockedDialRequestId)
             }.distinctUntilChanged().collect { notice ->
-                if (notice == null) stopSelf()
+                if (notice == null) requestStop()
                 else if (runCatching {
                     checkNotNull(getSystemService(NotificationManager::class.java)).notify(NOTIFICATION_ID, notification(notice))
-                }.isFailure) stopSelf()
+                }.isFailure) requestStop()
             }
         }
         // A null Intent is only accepted when Android restarts this already opted-in service.
@@ -102,7 +105,14 @@ class CallStandbyService : Service() {
         return if (incoming) START_STICKY else START_NOT_STICKY
     }
 
+    private fun requestStop(startId: Int? = null) {
+        // A queued stop cannot be revoked by reusing this instance for a new outgoing lease.
+        stopping = true
+        if (startId == null) stopSelf() else stopSelf(startId)
+    }
+
     override fun onDestroy() {
+        stopping = true
         scope.cancel()
         runtime?.onStandbyStopped(this)
         runtime = null
@@ -158,30 +168,5 @@ class CallStandbyService : Service() {
             manager.areNotificationsEnabled() &&
                 manager.getNotificationChannel(CHANNEL)?.let { it.importance != NotificationManager.IMPORTANCE_NONE } == true
         }.getOrDefault(false)
-    }
-}
-
-internal object CallStandbyPolicy {
-    fun optedIn(config: CallConfig, userUnlocked: Boolean): Boolean =
-        userUnlocked && config.enabled && config.autoAnswer && config.audioVerified && config.credentialsConfigured
-
-    fun interactiveForeground(visible: Boolean, interactive: Boolean, keyguardShowing: Boolean): Boolean =
-        visible && interactive && !keyguardShowing
-
-    fun allowsAutomaticAnswer(userUnlocked: Boolean, interactiveForeground: Boolean, serviceRunning: Boolean, notificationsAllowed: Boolean): Boolean =
-        userUnlocked && (interactiveForeground || serviceRunning && notificationsAllowed)
-
-    fun activeWakeBudgetMs(maxCallSeconds: Int): Long = maxCallSeconds.coerceIn(15, CallPolicy.MAX_SECONDS) * 1_000L + 10_000L
-}
-
-/** A failed automatic restore must not spin; user retry is always available. */
-internal class CallStandbyResumeGate {
-    private var attemptedWhileVisible = false
-
-    fun take(visible: Boolean, eligible: Boolean): Boolean {
-        if (!visible) attemptedWhileVisible = false
-        if (!visible || !eligible || attemptedWhileVisible) return false
-        attemptedWhileVisible = true
-        return true
     }
 }

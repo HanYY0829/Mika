@@ -83,15 +83,36 @@ class ProactivePrefs(private val prefs: SharedPreferences) : LearnPurges, AllowR
             e.apply()
         }
 
-    /** 话题池上还没做成的删除(见 [LearnPurges])。 */
+    /** 话题池上还没做成的删除、合并(见 [LearnPurges]),按记下的先后。 */
     override var topicPurges: Set<String>
-        get() = prefs.getStringSet(LEARN_PURGE_TOPICS, null)?.toSet().orEmpty()
-        set(v) { prefs.edit().putStringSet(LEARN_PURGE_TOPICS, HashSet(v)).commit() }
+        get() = ordered(LEARN_PURGE_TOPICS)
+        set(v) { prefs.edit().putOrdered(LEARN_PURGE_TOPICS, v).commit() }
 
-    /** 联系人上还没做成的删除。 */
+    /** 联系人上还没做成的,按记下的先后。 */
     override var contactPurges: Set<String>
-        get() = prefs.getStringSet(LEARN_PURGE_CONTACTS, null)?.toSet().orEmpty()
-        set(v) { prefs.edit().putStringSet(LEARN_PURGE_CONTACTS, HashSet(v)).commit() }
+        get() = ordered(LEARN_PURGE_CONTACTS)
+        set(v) { prefs.edit().putOrdered(LEARN_PURGE_CONTACTS, v).commit() }
+
+    /** 两份一次落盘:中间进程没了也不会只记上一半。 */
+    override fun addToTopicsAndContacts(mark: String) {
+        prefs.edit()
+            .putOrdered(LEARN_PURGE_TOPICS, topicPurges - mark + mark)
+            .putOrdered(LEARN_PURGE_CONTACTS, contactPurges - mark + mark)
+            .commit()
+    }
+
+    /**
+     * 按记下的先后读出来。偏好里的字符串集合不保先后,所以先后另存成一行一个的字符串([key] 加 [ORDER]),和集合一起写。
+     * 两样对不上时(只认集合的旧版本后来又改过)只认集合,先后就没有了。
+     */
+    private fun ordered(key: String): Set<String> {
+        val set = prefs.getStringSet(key, null)?.toSet().orEmpty()
+        val order = prefs.getString(key + ORDER, null)?.split('\n')?.filter { it.isNotEmpty() }.orEmpty()
+        return if (order.size == set.size && order.toSet() == set) LinkedHashSet(order) else set
+    }
+
+    private fun SharedPreferences.Editor.putOrdered(key: String, v: Set<String>): SharedPreferences.Editor =
+        putStringSet(key, HashSet(v)).putString(key + ORDER, v.joinToString("\n"))
 
     /** 句子和各级归纳上还没落盘的删除(包名,和单删的记号:句子的编号、某天某周某月的日子)。 */
     override var digestPurges: Set<String>
@@ -122,6 +143,8 @@ class ProactivePrefs(private val prefs: SharedPreferences) : LearnPurges, AllowR
         private const val LEARN_LEVEL = "learn_level"
         private const val LEARN_HIGH = "learn_high"
         private const val LEARN_PURGE_TOPICS = "learn_purge_topics"
+        /** 记着的那些的先后(见 [ordered]):键名是集合的键加上它。 */
+        private const val ORDER = "_order"
         private const val HINT_TALK_ID = "hint_talk_id"
         private const val HINT_TALK_DAY = "hint_talk_day"
         private const val LEARN_PURGE_CONTACTS = "learn_purge_contacts"

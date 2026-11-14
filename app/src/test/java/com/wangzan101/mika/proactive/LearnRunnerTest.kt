@@ -19,6 +19,7 @@ import com.wangzan101.mika.core.proactive.DigestNote
 import com.wangzan101.mika.core.proactive.LearnLevel
 import com.wangzan101.mika.core.proactive.SourceTier
 import com.wangzan101.mika.core.proactive.SpanKind
+import com.wangzan101.mika.core.proactive.TopicPool
 import com.wangzan101.mika.core.proactive.LearnDrop
 import com.wangzan101.mika.core.proactive.DigestPool
 import com.wangzan101.mika.core.proactive.SpanDigest
@@ -188,8 +189,10 @@ class LearnRunnerTest {
     private class MemPurges : LearnPurges {
         /** 写过几次(每写一次就是一次偏好落盘)。 */
         var writes = 0
+        /** 话题那份下一次写上之后要做的事(只做一次):模拟写完这一笔进程就没了。 */
+        var afterTopicWrite: (() -> Unit)? = null
         override var topicPurges: Set<String> = emptySet()
-            set(v) { field = v; writes++ }
+            set(v) { field = v; writes++; afterTopicWrite?.also { afterTopicWrite = null }?.invoke() }
         override var contactPurges: Set<String> = emptySet()
             set(v) { field = v; writes++ }
         override var digestPurges: Set<String> = emptySet()
@@ -645,6 +648,26 @@ class LearnRunnerTest {
         assertTrue(e.model.calls.isEmpty())
     }
 
+    // 池子里的话题比给模型看的位置多:这一批的 App 自己印证过的那个哪怕弱也给模型看(它再推同样的东西时模型才引用得上,
+    // 不然只能另起一个说法差不多的);别的 App 的一批还是只按强度挑,轮不到它
+    @Test fun theAppsOwnTopicsAreShownToTheModelEvenWhenWeak() = runTest {
+        val e = Env(this)
+        val today = 20_000L
+        val old = start - 5 * LearnTuning.DAY_MS
+        e.store.data = TopicPoolData(topics =
+            (0 until LearnTuning.EXISTING_MAX + 10).map {
+                ObservedTopic("kn$it", TopicKind.Interest, "News $it", start, start, mapOf("com.news" to listOf(today - 2, today - 1, today)))
+            } + ObservedTopic("kshop", TopicKind.Shopping, "Tents", old, old, mapOf("com.shop" to listOf(today - 5))))
+        e.post(count = 12)
+        val lines = e.model.input(0).lines()
+        assertEquals(LearnTuning.EXISTING_MAX, lines.count { it.contains("] kind: ") })
+        // 排在第一个(话题名在那一行的下一行,不可信的块里)
+        assertEquals("Tents", lines[lines.indexOfFirst { it.contains("] kind: ") } + 1])
+        e.post(pkg = "com.other", count = 12)
+        assertEquals(listOf("com.shop", "com.other"), e.model.packages())
+        assertFalse(e.model.input(1).contains("Tents"))
+    }
+
     @Test fun lateOutcomeReachesTheTopic() = runTest {
         val e = Env(this)
         e.model.reply = { newTopic("n1") }
@@ -805,6 +828,286 @@ class LearnRunnerTest {
         assertTrue(e.contacts.data.contacts.isEmpty())
         assertTrue(e.store.data.topics.isEmpty())
         assertEquals(0, e.runner.contactsView.value.blocked)
+    }
+
+    // 话题页上把一个话题并进另一个:存下来只剩并进去的那个,证据并过去;联系人上的连接改指它;早先归到并掉的那个上的通知
+    // 之后才被点开,算到它上面;模型再新起并掉的那个名字,不另起。并掉不是删掉:不进「不再记录」,不记待删
+    @Test fun mergingATopicMovesItsEvidenceLinksAndName() = runTest {
+        val e = Env(this)
+        e.model.reply = { aliceReply }
+        repeat(12) { e.runner.capture(NoticeRecord("a$it", "com.chat", e.now(), "Alice", "message $it")) }
+        runCurrent()
+        val hiking = e.store.data.topics.single().id
+        assertEquals(listOf(hiking), e.contacts.data.contacts.single().topics)
+        e.model.reply = { newTopic("n1", label = "Trails") }
+        e.post(count = 12)
+        val trails = e.store.data.topics.single { it.label == "Trails" }.id
+        e.runner.mergeTopic(hiking, trails)
+        val merged = e.store.data.topics.single()
+        assertEquals(trails, merged.id)
+        assertEquals("Trails", merged.label)
+        assertEquals(setOf("com.chat", "com.shop"), merged.evidence.keys)
+        assertEquals(listOf(trails), e.runner.topics.value.map { it.id })
+        assertEquals(listOf(trails), e.contacts.data.contacts.single().topics)
+        assertEquals(listOf(trails), e.runner.contactsView.value.contacts.single().topics)
+        assertTrue(e.store.data.blocked.isEmpty())
+        assertEquals(0, e.runner.topicsBlocked.value)
+        // 两份都存上了:没有记着要补做的
+        assertTrue(e.purges.topicPurges.isEmpty())
+        assertTrue(e.purges.contactPurges.isEmpty())
+        // 归到「Hiking」上的那条聊天通知这时才被点开
+        e.runner.removed("a0", NotificationListenerService.REASON_CLICK)
+        assertEquals(1, e.store.data.topics.single().opened)
+        // 模型再新起「Hiking」:算到「Trails」上
+        e.model.reply = { newTopic("n1") }
+        e.post(count = 12)
+        assertEquals(listOf("Trails"), e.store.data.topics.map { it.label })
+        assertFalse(LearnDrop.Blocked in e.runner.state.value.feed.getValue("com.shop").dropped)
+        // 换一个进程:存下来的就是并好的样子,名字也还认
+        assertEquals(1, e.store.data.merged.size)
+        val again = newProcess(e)
+        again.open()
+        assertEquals(listOf(trails), again.topics.value.map { it.id })
+        // 同一个、已经没有的:什么都不做,也不存
+        val saves = e.store.saves
+        e.runner.mergeTopic(trails, trails)
+        e.runner.mergeTopic(hiking, trails)
+        assertEquals(saves, e.store.saves)
+    }
+
+    /** 两个话题「Hiking」(聊天 App 里 Alice 的会话连着它)和「Trails」。返回两个的 id。 */
+    private fun TestScope.hikingAndTrails(e: Env): Pair<String, String> {
+        e.model.reply = { aliceReply }
+        repeat(12) { e.runner.capture(NoticeRecord("a$it", "com.chat", e.now(), "Alice", "message $it")) }
+        runCurrent()
+        e.model.reply = { newTopic("n1", label = "Trails") }
+        e.post(count = 12)
+        val hiking = e.store.data.topics.single { it.label == "Hiking" }.id
+        assertEquals(listOf(hiking), e.contacts.data.contacts.single().topics)
+        return hiking to e.store.data.topics.single { it.label == "Trails" }.id
+    }
+
+    // 合并没存上(存储满了之类),用户接着把并好的那个删了,也没存上,进程没了。下次读出来:文件里两个话题都还在,
+    // 合并和删除都得补做——只补删除的话,并掉的那个带着它的证据回来了,名字也不在「不再记录」里
+    @Test fun anUnsavedMergeIsRedoneBeforeTheDeleteThatFollowedIt() = runTest {
+        val e = Env(this)
+        val (hiking, trails) = hikingAndTrails(e)
+        e.store.failSave = true
+        e.runner.mergeTopic(hiking, trails)
+        e.runner.deleteTopic(trails)
+        assertEquals(2, e.store.data.topics.size)
+        assertEquals(2, e.purges.topicPurges.size)
+        e.store.failSave = false
+        val again = newProcess(e)
+        again.open()
+        assertTrue(again.topics.value.isEmpty())
+        assertTrue(e.store.data.topics.isEmpty())
+        // 两个名字都进了「不再记录」
+        assertEquals(setOf(TopicPool.fingerprint("Hiking"), TopicPool.fingerprint("Trails")), e.store.data.blocked.toSet())
+        assertTrue(e.purges.topicPurges.isEmpty())
+        // 联系人上不再连着它们
+        assertTrue(e.contacts.data.contacts.single().topics.isEmpty())
+    }
+
+    // 只是合并没存上、进程没了:下次读出来补做,不用用户再并一次;并掉的名字照样认
+    @Test fun anUnsavedMergeIsRedoneWhenThePoolLoadsAgain() = runTest {
+        val e = Env(this)
+        val (hiking, trails) = hikingAndTrails(e)
+        e.store.failSave = true
+        e.runner.mergeTopic(hiking, trails)
+        assertEquals(2, e.store.data.topics.size)
+        e.store.failSave = false
+        val again = newProcess(e)
+        again.open()
+        assertEquals(listOf(trails), e.store.data.topics.map { it.id })
+        assertEquals(setOf("com.chat", "com.shop"), e.store.data.topics.single().evidence.keys)
+        assertEquals(mapOf(TopicPool.fingerprint("Hiking") to trails), e.store.data.merged)
+        assertTrue(e.store.data.blocked.isEmpty())
+        assertEquals(listOf(trails), e.contacts.data.contacts.single().topics)
+        assertTrue(e.purges.topicPurges.isEmpty())
+        // 存上了就不再记着:再换一个进程不会重做,也不多存
+        val saves = e.store.saves
+        newProcess(e).open()
+        assertEquals(saves, e.store.saves)
+    }
+
+    // 合并的那一刻联系人那份读不出来(密钥库一时不可用),话题那份照常并了、存了。联系人读得出来之后:
+    // 连着并掉的那个话题的改连并进去的那个,不被当成指着空处的连接去掉
+    @Test fun contactLinksFollowAMergeMadeWhileContactsWereUnreadable() = runTest {
+        val e = Env(this)
+        val (hiking, trails) = hikingAndTrails(e)
+        e.contacts.failLoad = true
+        val later = newProcess(e)
+        later.open()
+        later.mergeTopic(hiking, trails)
+        assertEquals(listOf(trails), e.store.data.topics.map { it.id })
+        assertEquals(listOf(hiking), e.contacts.data.contacts.single().topics)
+        assertEquals(1, e.purges.contactPurges.size)
+        e.contacts.failLoad = false
+        later.open()
+        assertEquals(listOf(trails), e.contacts.data.contacts.single().topics)
+        assertEquals(listOf(trails), later.contactsView.value.contacts.single().topics)
+        assertTrue(e.purges.contactPurges.isEmpty())
+    }
+
+    // 联系人那份改了却没存上、进程没了:下次读出来补做
+    @Test fun contactLinksFollowAMergeWhoseContactSaveFailed() = runTest {
+        val e = Env(this)
+        val (hiking, trails) = hikingAndTrails(e)
+        e.contacts.failSave = true
+        e.runner.mergeTopic(hiking, trails)
+        assertEquals(listOf(trails), e.store.data.topics.map { it.id })
+        assertEquals(listOf(hiking), e.contacts.data.contacts.single().topics)
+        e.contacts.failSave = false
+        val again = newProcess(e)
+        again.open()
+        assertEquals(listOf(trails), e.contacts.data.contacts.single().topics)
+        assertTrue(e.purges.contactPurges.isEmpty())
+    }
+
+    // 一次合并要记到话题、联系人两份上。记完进程就没了(两份文件都还没改):下次读出来两份都补做,联系人上的连接跟着改指
+    @Test fun aMergeRecordedJustBeforeTheProcessDiedIsRedoneOnBothStores() = runTest {
+        class Died : Error("process death")
+        val e = Env(this)
+        val (hiking, trails) = hikingAndTrails(e)
+        e.purges.afterTopicWrite = { throw Died() }
+        try {
+            e.runner.mergeTopic(hiking, trails)
+            org.junit.Assert.fail("the injected death should interrupt the merge")
+        } catch (_: Died) {}
+        assertEquals(2, e.store.data.topics.size)
+        assertEquals(listOf(hiking), e.contacts.data.contacts.single().topics)
+        val again = newProcess(e)
+        again.open()
+        assertEquals(listOf(trails), e.store.data.topics.map { it.id })
+        assertEquals(listOf(trails), e.contacts.data.contacts.single().topics)
+        assertTrue(e.purges.topicPurges.isEmpty())
+        assertTrue(e.purges.contactPurges.isEmpty())
+    }
+
+    // 同一个名字上「删掉」和「并进别的」是后做的算数,没存上、进程没了之后补做也一样:
+    // 先删了「Tea」(兴趣),后把同名的另一个(在买的)并进「Drinks」→「Tea」算并掉的,不在「不再记录」里
+    @Test fun unsavedDeletesAndMergesAreRedoneInTheOrderTheUserMadeThem() = runTest {
+        fun topic(id: String, kind: TopicKind, label: String) = ObservedTopic(id, kind, label, start, start, mapOf("com.shop" to listOf(20_000L)))
+        val tea = TopicPool.fingerprint("Tea")
+        val e = Env(this)
+        e.store.data = TopicPoolData(topics = listOf(
+            topic("k1", TopicKind.Interest, "Tea"), topic("k3", TopicKind.Shopping, "Tea"), topic("k4", TopicKind.Routine, "Drinks")))
+        e.runner.open()
+        e.store.failSave = true
+        e.runner.deleteTopic("k1")
+        e.runner.mergeTopic("k3", "k4")
+        assertEquals(0, e.runner.topicsBlocked.value)
+        e.store.failSave = false
+        newProcess(e).open()
+        assertEquals(listOf("k4"), e.store.data.topics.map { it.id })
+        assertEquals("k4", e.store.data.merged[tea])
+        assertFalse(tea in e.store.data.blocked)
+        // 反过来:先把一个并掉,后把同名的另一个删了 →「Tea」不再记
+        val f = Env(this)
+        f.store.data = TopicPoolData(topics = listOf(
+            topic("k1", TopicKind.Interest, "Tea"), topic("k3", TopicKind.Shopping, "Tea"), topic("k4", TopicKind.Routine, "Drinks")))
+        f.runner.open()
+        f.store.failSave = true
+        f.runner.mergeTopic("k3", "k4")
+        f.runner.deleteTopic("k1")
+        f.store.failSave = false
+        newProcess(f).open()
+        assertEquals(listOf("k4"), f.store.data.topics.map { it.id })
+        assertTrue(f.store.data.merged.isEmpty())
+        assertTrue(tea in f.store.data.blocked)
+    }
+
+    // 两个同名的话题先后并进两个不同的目标:名字算在后并的那个目标上,正着做、反着做补出来都得对
+    @Test fun theLaterOfTwoSameNameMergesWinsAfterAReplay() = runTest {
+        fun topic(id: String, kind: TopicKind, label: String) = ObservedTopic(id, kind, label, start, start, mapOf("com.shop" to listOf(20_000L)))
+        for (reverse in listOf(false, true)) {
+            val e = Env(this)
+            e.store.data = TopicPoolData(topics = listOf(
+                topic("k1", TopicKind.Interest, "Tea"), topic("k2", TopicKind.Interest, "Coffee"),
+                topic("k3", TopicKind.Shopping, "Tea"), topic("k4", TopicKind.Shopping, "Drinks")))
+            e.runner.open()
+            e.store.failSave = true
+            val ops = listOf("k1" to "k2", "k3" to "k4").let { if (reverse) it.reversed() else it }
+            ops.forEach { (from, into) -> e.runner.mergeTopic(from, into) }
+            e.store.failSave = false
+            newProcess(e).open()
+            assertEquals("reverse=$reverse", ops.last().second, e.store.data.merged[TopicPool.fingerprint("Tea")])
+        }
+    }
+
+    // 目标是刚归纳出来、还没存上的话题(存储满了之类):这时不并。记号里只有两个 id,进程一没目标不在文件里,
+    // 这次合并补不回来;并了的话,用户看到并好了,重启后并掉的那个却回来了、目标没了
+    @Test fun aMergeIntoATopicThatIsNotSavedYetIsNotDone() = runTest {
+        val e = Env(this)
+        e.model.reply = { newTopic("n1") }
+        e.post(count = 12)
+        val hiking = e.store.data.topics.single().id
+        e.store.failSave = true
+        e.model.reply = { newTopic("n1", label = "Trails") }
+        e.post(count = 12)
+        val trails = e.runner.topics.value.single { it.label == "Trails" }.id
+        assertEquals(listOf(hiking), e.store.data.topics.map { it.id })
+        e.runner.mergeTopic(hiking, trails)
+        // 没并:两个都还在,什么都没记
+        assertEquals(setOf(hiking, trails), e.runner.topics.value.map { it.id }.toSet())
+        assertTrue(e.purges.topicPurges.isEmpty())
+        assertTrue(e.purges.contactPurges.isEmpty())
+        // 存得上了:先把话题池存上,再并
+        e.store.failSave = false
+        e.runner.mergeTopic(hiking, trails)
+        assertEquals(listOf(trails), e.store.data.topics.map { it.id })
+        assertEquals(listOf(trails), e.runner.topics.value.map { it.id })
+        assertTrue(e.purges.topicPurges.isEmpty())
+    }
+
+    // 连着并了两回都没存上:补做时照先后来,一路跟到最后并进去的那个
+    @Test fun unsavedMergesInARowEndUpOnTheLastTopic() = runTest {
+        val e = Env(this)
+        val (hiking, trails) = hikingAndTrails(e)
+        e.model.reply = { newTopic("n1", label = "Camping") }
+        e.post(count = 12)
+        val camping = e.store.data.topics.single { it.label == "Camping" }.id
+        e.store.failSave = true
+        e.contacts.failSave = true
+        e.runner.mergeTopic(hiking, trails)
+        e.runner.mergeTopic(trails, camping)
+        assertEquals(3, e.store.data.topics.size)
+        e.store.failSave = false
+        e.contacts.failSave = false
+        val again = newProcess(e)
+        again.open()
+        assertEquals(listOf(camping), e.store.data.topics.map { it.id })
+        assertEquals(mapOf(TopicPool.fingerprint("Hiking") to camping, TopicPool.fingerprint("Trails") to camping), e.store.data.merged)
+        assertEquals(listOf(camping), e.contacts.data.contacts.single().topics)
+        assertTrue(e.purges.topicPurges.isEmpty())
+        assertTrue(e.purges.contactPurges.isEmpty())
+    }
+
+    // 请求在途时用户把它要引用的话题并掉了:回复引用的还是并掉的那个,算到并进去的那个上,不当成「被删了」丢掉
+    @Test fun aReplyCitingATopicMergedMeanwhileCountsOnTheOther() = runTest {
+        val e = Env(this)
+        e.model.reply = { newTopic("n1") }
+        e.post(count = 12)
+        e.model.reply = { newTopic("n1", label = "Trails") }
+        e.post(count = 12)
+        val hiking = e.store.data.topics.single { it.label == "Hiking" }.id
+        val trails = e.store.data.topics.single { it.label == "Trails" }.id
+        wait(LearnTuning.DAY_MS)
+        e.model.gate = CompletableDeferred()
+        e.post(count = 12)
+        assertEquals(3, e.model.calls.size)
+        // 这次给模型看的话题里「Hiking」是第几个
+        val lines = e.model.input(2).lines()
+        val ref = lines[lines.indexOf("Hiking") - 1].substringAfter("[").substringBefore("]")
+        e.model.reply = { """{"signals":[{"ids":["n1"],"topic":"$ref"}]}""" }
+        e.runner.mergeTopic(hiking, trails)
+        e.model.gate!!.complete(Unit)
+        runCurrent()
+        val t = e.store.data.topics.single()
+        assertEquals(trails, t.id)
+        assertEquals(2, t.days)
+        assertFalse(LearnDrop.NotApplied in e.runner.state.value.feed.getValue("com.shop").dropped)
     }
 
     @Test fun unreadableContactStoreDoesNotBlockTopics() = runTest {
@@ -1209,6 +1512,124 @@ class LearnRunnerTest {
         for (left in listOf(e.purges.topicPurges, e.purges.contactPurges, e.purges.journalPurges, e.purges.digestPurges)) assertTrue(left.isEmpty())
     }
 
+    // 单删一个联系人没存上(内存里已经空了,文件里还在),再清空全部:内存是空的也得把文件清掉,不能只把待删划掉
+    @Test fun clearAllAfterAnUnsavedContactDeleteStillCleansTheFile() = runTest {
+        fun seeded() = Env(this).also {
+            it.contacts.data = ContactPoolData(contacts = listOf(ObservedContact("c1", "com.a", "张三", 1L, start, days = listOf(20_000L))))
+        }
+        // 清空时存储已经好了:存上空的,不再记着
+        seeded().let { e ->
+            e.contacts.failSave = true
+            e.runner.deleteContact("c1")
+            assertEquals(setOf(":contact:c1"), e.purges.contactPurges)
+            assertEquals("没存上,文件里还在", 1, e.contacts.data.contacts.size)
+            e.contacts.failSave = false
+            e.runner.clearAll()
+            assertTrue(e.contacts.data.contacts.isEmpty())
+            assertTrue(e.purges.contactPurges.isEmpty())
+            val again = newProcess(e)
+            again.open()
+            assertTrue(again.contactsView.value.contacts.isEmpty())
+        }
+        // 清空时还是存不上:退到删文件
+        seeded().let { e ->
+            e.contacts.failSave = true
+            e.runner.deleteContact("c1")
+            e.runner.clearAll()
+            assertEquals(1, e.contacts.wipes)
+            assertTrue(e.contacts.data.contacts.isEmpty())
+            assertTrue(e.purges.contactPurges.isEmpty())
+        }
+        // 清空时既存不上也删不掉:待删不能丢,记成「全清」;存储好了之后补清
+        seeded().let { e ->
+            e.contacts.failSave = true
+            e.runner.deleteContact("c1")
+            e.contacts.failWipe = true
+            e.runner.clearAll()
+            assertEquals(setOf(":all"), e.purges.contactPurges)
+            assertEquals(1, e.contacts.data.contacts.size)
+            e.contacts.failSave = false
+            e.contacts.failWipe = false
+            val again = newProcess(e)
+            again.open()
+            assertTrue(again.contactsView.value.contacts.isEmpty())
+            assertTrue(e.contacts.data.contacts.isEmpty())
+            assertTrue(e.purges.contactPurges.isEmpty())
+        }
+    }
+
+    // 第一次清空全部时联系人既没存上也没删掉,存储好了之后在同一个进程里再清一次:内存早就空了,这一次也要真的把文件清掉
+    @Test fun aSecondClearAllFinishesWhatTheFirstCouldNot() = runTest {
+        val e = Env(this)
+        e.contacts.data = ContactPoolData(contacts = listOf(ObservedContact("c1", "com.a", "张三", 1L, start, days = listOf(20_000L))))
+        e.contacts.failSave = true
+        e.contacts.failWipe = true
+        e.runner.clearAll()
+        assertEquals(setOf(":all"), e.purges.contactPurges)
+        assertEquals(1, e.contacts.data.contacts.size)
+        e.contacts.failSave = false
+        e.contacts.failWipe = false
+        e.runner.clearAll()
+        assertTrue(e.contacts.data.contacts.isEmpty())
+        assertTrue(e.purges.contactPurges.isEmpty())
+    }
+
+    // 以前按通知键存下来的联系人:读出来时同名的并成一条并存上;记着的、没存上的删除(记的是以前的 id)先补做,删掉的不借着合并回来
+    @Test fun storedContactsAreMergedByConversationNameWhenLoaded() = runTest {
+        fun old(key: String, title: String) = com.wangzan101.mika.core.proactive.ContactIdentity.of(
+            "com.chat", key, title, com.wangzan101.mika.core.proactive.ContactIdStrategy.KeyAndTitle)!!.id
+        val e = Env(this)
+        e.contacts.data = ContactPoolData(contacts = listOf(
+            ObservedContact(old("k1", "家长群"), "com.chat", "家长群", 1L, start, days = listOf(19_998L)),
+            ObservedContact(old("k2", "家长群"), "com.chat", "家长群", 1L, start, days = listOf(19_999L)),
+            ObservedContact(old("k3", "家长群"), "com.chat", "家长群", 1L, start, days = listOf(20_000L)),
+            ObservedContact(old("k4", "删掉的群"), "com.chat", "删掉的群", 1L, start, days = listOf(20_000L)),
+            ObservedContact(old("k5", "删掉的群"), "com.chat", "删掉的群", 1L, start, days = listOf(19_999L)),
+        ))
+        e.purges.contactPurges = setOf(":contact:" + old("k4", "删掉的群"))
+        e.runner.open()
+        val shown = e.runner.contactsView.value.contacts
+        assertEquals(listOf("家长群"), shown.map { it.name })
+        assertEquals(listOf(19_998L, 19_999L, 20_000L), shown.single().days)
+        assertTrue(shown.single().established)
+        // 存上了:文件里也是并好的一条,记着的删除划掉了
+        assertEquals(1, e.contacts.data.contacts.size)
+        assertTrue(e.contacts.data.contacts.single().id.startsWith("t"))
+        assertTrue(e.purges.contactPurges.isEmpty())
+        // 换一个进程再读:不再动
+        val saves = e.contacts.saves
+        val again = newProcess(e)
+        again.open()
+        assertEquals(1, again.contactsView.value.contacts.size)
+        assertEquals(saves, e.contacts.saves)
+    }
+
+    // 换身份之后没存上(存储满了之类),用户删掉了换好的那一条,也没存上,进程没了。下次读出来的还是换之前的文件:
+    // 记着的删除要作数,同名的那几条不能再换一遍身份就回来
+    @Test fun aDeleteMadeAfterAnUnsavedMigrationStillHolds() = runTest {
+        fun old(key: String, title: String) = com.wangzan101.mika.core.proactive.ContactIdentity.of(
+            "com.chat", key, title, com.wangzan101.mika.core.proactive.ContactIdStrategy.KeyAndTitle)!!.id
+        val e = Env(this)
+        e.contacts.data = ContactPoolData(contacts = listOf(
+            ObservedContact(old("k1", "家长群"), "com.chat", "家长群", 1L, start, days = listOf(19_999L)),
+            ObservedContact(old("k2", "家长群"), "com.chat", "家长群", 1L, start, days = listOf(20_000L)),
+        ))
+        e.contacts.failSave = true
+        e.runner.open()
+        val merged = e.runner.contactsView.value.contacts.single()
+        assertTrue(merged.id.startsWith("t"))
+        e.runner.deleteContact(merged.id)
+        assertEquals(2, e.contacts.data.contacts.size)
+        assertEquals(1, e.purges.contactPurges.size)
+        e.contacts.failSave = false
+        val again = newProcess(e)
+        again.open()
+        assertTrue(again.contactsView.value.contacts.isEmpty())
+        assertTrue(e.contacts.data.contacts.isEmpty())
+        assertTrue(merged.id in e.contacts.data.blocked)
+        assertTrue(e.purges.contactPurges.isEmpty())
+    }
+
     // 清空全部正常做完:没有记着的待删(以前记着的也一并划掉)
     @Test fun clearAllLeavesNoPendingDeletionsWhenItWorked() = runTest {
         val e = Env(this)
@@ -1219,6 +1640,130 @@ class LearnRunnerTest {
         e.purges.journalPurges = setOf("com.gone")
         e.runner.clearAll()
         for (left in listOf(e.purges.topicPurges, e.purges.contactPurges, e.purges.journalPurges, e.purges.digestPurges)) assertTrue(left.toString(), left.isEmpty())
+    }
+
+    // 一个通知键被认成反复重发的状态显示(导航播报之类):它刚收进来、还没归纳的那几条去掉,通知原文里的也去掉;别的键不动
+    @Test fun aKeyRecognisedAsAStatusDisplayLosesWhatItJustAdded() = runTest {
+        val e = Env(this)
+        e.digest = true
+        // 同一个键上一小时前的一条正常通知(很多 App 所有推送共用一个通知键):不能跟着丢
+        e.runner.capture(NoticeRecord("nav", "com.maps", e.now(), "常去的地方有新的评价", "点开看看"))
+        wait(3_600_000L)
+        val burst = e.now()
+        repeat(3) { i -> e.runner.capture(NoticeRecord("nav", "com.maps", burst + i * 2_000L, "${300 - i * 10} 米后右转", "某某路")) }
+        e.runner.capture(NoticeRecord("promo", "com.maps", burst + 9, "周边优惠", "满减券到账"))
+        runCurrent()
+        assertEquals(5, e.runner.state.value.journal)
+        e.runner.dropLive("nav", "com.maps", burst + 6_000L - 60_000L)
+        assertEquals(listOf("常去的地方有新的评价", "周边优惠"), e.journal.data!!.entries.map { it.title })
+        assertEquals(2, e.runner.state.value.journal)
+        // 没有这个键的东西时什么都不做
+        val saves = e.journal.saves
+        e.runner.dropLive("nothing", "com.maps", 0)
+        assertEquals(saves, e.journal.saves)
+    }
+
+    // 认出一个键是状态显示时,正在给这个 App 写分段归纳的请求取消:不然回复回来,照着刚去掉的那几条原文写的句子还是进了归纳。
+    // 别的 App 的请求不动
+    @Test fun aNotesRequestInFlightIsCancelledWhenItsAppTurnsOutToPostAStatusDisplay() = runTest {
+        val e = Env(this)
+        e.digest = true
+        e.post(pkg = "com.maps", count = 19)
+        e.model.gate = CompletableDeferred()
+        e.model.notesReply = { oneNote }
+        e.post(pkg = "com.maps")
+        assertTrue(e.runner.requestActive)
+        e.runner.dropLive("x", "com.other", 0)
+        assertTrue(e.runner.requestActive)
+        e.runner.dropLive("k20", "com.maps", e.now() - 60_000L)
+        assertFalse(e.runner.requestActive)
+        e.model.gate!!.complete(Unit)
+        runCurrent()
+        assertTrue(e.digestStore.data.notes.isEmpty())
+        assertEquals(19, e.runner.state.value.journal)
+    }
+
+    // 认出状态显示时,归纳话题的请求正带着它刚收进来的那几条在途:取消,那几条去掉。不然回复回来,照着它们归纳出的话题还是存下了;
+    // 锁屏再取消一次的话,它们回到待归纳,解锁后又发给模型
+    @Test fun aLearnRequestInFlightIsCancelledWhenItCarriesAStatusDisplay() = runTest {
+        val e = Env(this)
+        repeat(9) { i -> e.runner.capture(NoticeRecord("normal-$i", "com.maps", e.now(), "普通通知 $i", "普通内容 $i")) }
+        e.model.gate = CompletableDeferred()
+        e.model.reply = { """{"signals":[{"ids":["n10"],"new":{"kind":"routine","label":"导航播报"}}]}""" }
+        repeat(3) { i -> e.runner.capture(NoticeRecord("nav", "com.maps", e.now() + i * 2_000L, "导航", "NAV_TEXT_$i")) }
+        runCurrent()
+        assertEquals(1, e.model.calls.size)
+        assertTrue(e.runner.requestActive)
+        assertTrue(e.model.input(0).contains("NAV_TEXT_0"))
+        e.runner.dropLive("nav", "com.maps", e.now() - 60_000L)
+        runCurrent()
+        assertFalse(e.runner.requestActive)
+        assertEquals(1, e.model.cancelled)
+        assertEquals(9, e.runner.state.value.pending)
+        e.model.gate!!.complete(Unit)
+        runCurrent()
+        assertTrue(e.store.data.topics.isEmpty())
+        // 剩下的照常再发(到期之后),里面没有那几条
+        e.model.gate = null
+        e.model.reply = { """{"signals":[]}""" }
+        wait(LearnTuning.DUE_AGE_MS + 1)
+        e.post(pkg = "com.other")
+        val resent = e.model.calls.indices.first { it > 0 && e.model.packages()[it] == "com.maps" }
+        assertTrue(e.model.input(resent).contains("普通内容 0"))
+        assertFalse(e.model.input(resent).contains("NAV_TEXT"))
+        // 别的键、这个键更早的事件在途时不取消
+        val f = Env(this)
+        f.model.gate = CompletableDeferred()
+        f.post(pkg = "com.maps", count = 12)
+        assertTrue(f.runner.requestActive)
+        f.runner.dropLive("nav", "com.maps", f.now() - 60_000L)
+        f.runner.dropLive("k1", "com.maps", f.now() + 1)
+        assertTrue(f.runner.requestActive)
+    }
+
+    // 认出状态显示的那一刻通知原文读不出来(密钥库一时不可用):记下来,读得出来时先去掉那一阵的再选批。
+    // 不然它们还算没归纳过,下一次分段归纳又发给模型。同一个键上之后的正常通知不动
+    @Test fun aStatusDisplaysRawTextIsRemovedOnceTheJournalLoadsAgain() = runTest {
+        val e = Env(this)
+        e.digest = true
+        val since = start - 60_000L
+        val keyId = com.wangzan101.mika.core.proactive.NoticeDedup.idOf("nav")
+        e.journal.data = NoticeJournalData(sinceMs = start - 3_600_000L, entries = listOf(
+            NoticeEntry("com.maps", start - 3_000_000L, "更早的正常通知", text = "同一个键", keyId = keyId),
+            NoticeEntry("com.maps", start - 30_000L, "导航", text = "300 米后右转", keyId = keyId),
+            NoticeEntry("com.maps", start - 20_000L, "导航", text = "200 米后右转", keyId = keyId),
+            NoticeEntry("com.maps", start - 10_000L, "周边优惠", text = "另一个键", keyId = "other"),
+            NoticeEntry("com.maps", start + 600_000L, "之后的正常通知", text = "同一个键", keyId = keyId),
+        ))
+        e.journal.failLoad = true
+        e.runner.dropLive("nav", "com.maps", since)
+        assertEquals(1, e.purges.journalPurges.size)
+        assertEquals(5, e.journal.data!!.entries.size)
+        e.journal.failLoad = false
+        e.runner.open()
+        assertEquals(listOf("更早的正常通知", "周边优惠", "之后的正常通知"), e.journal.data!!.entries.map { it.title })
+        assertTrue(e.purges.journalPurges.isEmpty())
+    }
+
+    // 原文去掉了却没存上、进程没了:文件里还是旧的,下次读出来补做
+    @Test fun aStatusDisplaysRawTextRemovalSurvivesAFailedSave() = runTest {
+        val e = Env(this)
+        e.digest = true
+        wait(60_000L)
+        repeat(3) { i -> e.runner.capture(NoticeRecord("nav", "com.maps", e.now() - 6_000L + i * 2_000L, "${300 - i * 10} 米后右转", "某某路")) }
+        e.runner.capture(NoticeRecord("promo", "com.maps", e.now() - 9, "周边优惠", "满减券到账"))
+        runCurrent()
+        lockAndUnlock(e)
+        assertEquals(4, e.journal.data!!.entries.size)
+        e.journal.failSave = true
+        e.runner.dropLive("nav", "com.maps", e.now() - 60_000L)
+        assertEquals(4, e.journal.data!!.entries.size)
+        assertEquals(1, e.purges.journalPurges.size)
+        e.journal.failSave = false
+        val again = newProcess(e)
+        again.open()
+        assertEquals(listOf("周边优惠"), e.journal.data!!.entries.map { it.title })
+        assertTrue(e.purges.journalPurges.isEmpty())
     }
 
     // 每一条清除路径都要把通知原文带走(和「禁用 App 后要清掉排着队的」是同一类)

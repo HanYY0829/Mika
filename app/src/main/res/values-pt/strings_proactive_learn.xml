@@ -20,6 +20,9 @@
     <string name="proactive_learn_topic_detail">%1$s · %2$s · %3$d dias · visto por último %4$s</string>
     <string name="proactive_learn_topic_outcomes">%1$d apps · abertas %2$d · dispensadas %3$d</string>
     <string name="proactive_learn_delete">Excluir</string>
+    <string name="proactive_learn_topic_merge">Mesclar…</string>
+    <string name="proactive_learn_topic_merge_title">Mesclar “%1$s” com</string>
+    <string name="proactive_learn_topic_merge_body">Os dias e as contagens dele são somados ao tema que você escolher, e esse nome passa a contar lá. Não é possível desfazer.</string>
     <string name="proactive_learn_clear_all">Limpar tudo o que o Mika reuniu</string>
     <string name="proactive_learn_clear_all_body">Apagar todos os temas, contatos e resumos que o Mika reuniu, e o texto de notificações guardado? Não dá para desfazer. O Mika voltará a reunir a partir das novas notificações.</string>
     <string name="proactive_learn_clear_app">Limpar o que veio de %1$s</string>

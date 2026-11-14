@@ -73,6 +73,9 @@ class ShellService(
     // Bundle 将嵌套的 PFD 复制到 reply，但不会关掉服务端原件。写完 reply 后关闭，
     // 否则客户端关掉管道时，音频线程永远收不到 EOF。
     private val returnedCallPipes = ThreadLocal<List<ParcelFileDescriptor>>()
+    private data class FilePolicyState(val session: String, val revision: Long, val roots: List<String>, val recursive: List<Boolean>, val policy: DeviceFilePolicy)
+    private val filePolicyLock = Any()
+    @Volatile private var filePolicy: FilePolicyState? = null
     /** Mika 所在的用户:本来那份 App 装在这里;别的用户里的是另一份(分身、工作资料)。 */
     private val myUser = allowedUid / PER_USER_RANGE
 
@@ -1452,6 +1455,45 @@ class ShellService(
         }
     }
 
+    override fun setDeviceFilePolicy(protocol: Int, session: String?, revision: Long, roots: Array<out String>?, recursive: BooleanArray?): Bundle = asCallAudioShell {
+        synchronized(filePolicyLock) {
+            fun reply(status: String) = Bundle().apply { putString("status", status); putInt("protocol", 1); putString("session", session); putLong("revision", revision) }
+            if (protocol != 1 || session.isNullOrBlank() || session.length > 64 || revision < 0 || roots == null || recursive == null) return@synchronized reply("invalid")
+            val previous = filePolicy?.takeIf { it.session == session }
+            val paths = roots.toList()
+            val flags = recursive.toList()
+            if (previous != null && (revision < previous.revision || (revision == previous.revision && (paths != previous.roots || flags != previous.recursive)))) {
+                return@synchronized reply("stale_policy")
+            }
+            if (previous != null && revision == previous.revision) return@synchronized reply("ok")
+            val policy = try { DeviceFilePolicy.create(roots, recursive, myUser) } catch (_: Exception) { return@synchronized reply("invalid") }
+            filePolicy = FilePolicyState(session, revision, paths, flags, policy)
+            reply("ok")
+        }
+    }
+
+    private inline fun deviceFileCall(block: (DeviceFilePolicy) -> Bundle): Bundle = asCallAudioShell {
+        val snapshot = filePolicy ?: return@asCallAudioShell Bundle().apply { putString("status", "policy_unsynced") }
+        val response = block(snapshot.policy)
+        synchronized(filePolicyLock) {
+            if (filePolicy !== snapshot) {
+                response.getParcelable<ParcelFileDescriptor>("fd")?.close()
+                Bundle().apply { putString("status", "policy_changed") }
+            } else {
+                response.getParcelable<ParcelFileDescriptor>("fd")?.let { returnedCallPipes.set(listOf(it)) }
+                response
+            }
+        }
+    }
+
+    override fun listFiles(path: String?, afterName: String?, limit: Int): Bundle =
+        deviceFileCall { ShellFiles.list(path, afterName, limit, myUser, it) }
+
+    override fun searchFiles(path: String?, name: String?, extension: String?, modifiedAfter: Long, modifiedBefore: Long, maxDepth: Int, maxEntries: Int, timeoutMs: Int): Bundle =
+        deviceFileCall { ShellFiles.search(path, name, extension, modifiedAfter, modifiedBefore, maxDepth, maxEntries, timeoutMs, myUser, it) }
+
+    override fun openFile(path: String?): Bundle = deviceFileCall { ShellFiles.open(path, myUser, it) }
+
     override fun probeCallAudio(mode: Int): Bundle = asCallAudioShell { callAudio.probe(mode) }
 
     override fun openCallAudio(mode: Int, owner: IBinder): Bundle = asCallAudioShell {
@@ -1556,6 +1598,7 @@ class ShellService(
     }
 
     override fun releaseAll() {
+        synchronized(filePolicyLock) { filePolicy = null }
         asCallAudioShell { callAudio.stopAll() }
         restoreClip()
         synchronized(muted) { muted.packages() }.forEach { key ->

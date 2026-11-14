@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugins_title">Plugins</string>
+    <string name="plugins_install">Instalar plugin</string>
+    <string name="plugins_installing">Instalando…</string>
+    <string name="plugins_empty">Aún no hay plugins</string>
+    <string name="plugins_empty_sub">Instala un zip de plugin para añadir habilidades que Mika pueda leer. Un plugin no puede cambiar los ajustes de la app ni leer tus otros datos.</string>
+    <string name="plugins_enabled">Activado</string>
+    <string name="plugins_disabled">Desactivado</string>
+    <string name="plugins_skills">Habilidades</string>
+    <string name="plugins_no_skills">Sin habilidades</string>
+    <string name="plugins_permissions">Permisos</string>
+    <string name="plugins_none">Ninguno</string>
+    <string name="plugins_version">Versión %1$s</string>
+    <string name="plugins_uninstall">Desinstalar</string>
+    <string name="plugins_uninstall_body">¿Quitar este plugin y sus habilidades? Las conversaciones y los recuerdos no se ven afectados.</string>
+    <string name="plugins_install_failed">Error de instalación: %1$s</string>
+    <string name="plugins_unsupported_in_version">Esta versión solo admite plugins que contienen habilidades.</string>
+    <string name="plugins_error_too_new">Este plugin necesita una versión más reciente de Mika.</string>
+    <string name="plugins_error_unsafe">El paquete contiene una ruta no segura y fue rechazado.</string>
+    <string name="plugins_error_too_large">El paquete es demasiado grande.</string>
+    <string name="plugins_error_missing_manifest">El paquete no tiene manifest.json en su raíz.</string>
+    <string name="plugins_error_invalid">El paquete no es un plugin válido.</string>
+    <plurals name="plugins_skill_count">
+        <item quantity="one">%1$d habilidad</item>
+        <item quantity="many">%1$d habilidades</item>
+        <item quantity="other">%1$d habilidades</item>
+    </plurals>
+    <plurals name="plugins_count">
+        <item quantity="one">%1$d plugin</item>
+        <item quantity="many">%1$d plugins</item>
+        <item quantity="other">%1$d plugins</item>
+    </plurals>
+</resources>

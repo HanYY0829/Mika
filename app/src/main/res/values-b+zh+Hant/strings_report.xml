@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="report_title">任務報告</string>
+    <string name="report_entry_hint">任務結果 · 詳細說明 · 關鍵截圖</string>
+    <string name="report_no_answer">本次任務沒有儲存最終回答。</string>
+    <string name="report_screens">關鍵畫面</string>
+    <string name="report_view_step">第 %1$d 步 · 查看對應回放</string>
+    <string name="report_local_note">記錄儲存在本機，截圖可能包含頁面內容；沿用最近 30 次任務的保留規則。</string>
+    <string name="playback_title">操作回放</string>
+    <string name="playback_empty">本次任務沒有記錄截圖。</string>
+    <string name="playback_legacy">舊記錄僅有截圖，沒有操作標記。</string>
+    <string name="playback_approximate">箭頭表示捲動方向，不代表實際觸點。</string>
+    <string name="playback_marks">紅圈：點擊位置 · 箭頭：滑動方向</string>
+    <string name="playback_progress">回放進度</string>
+    <string name="playback_pause">暫停</string>
+    <string name="playback_play">播放回放</string>
+    <string name="playback_previous">上一步</string>
+    <string name="playback_next">下一步</string>
+    <string name="playback_image">任務記錄截圖</string>
+    <string name="playback_missing">截圖未儲存或已被清理</string>
+    <string name="report_export">匯出</string>
+    <string name="report_saved">報告已儲存</string>
+    <string name="report_save_failed">儲存失敗，請檢查記錄及儲存位置後重試。</string>
+    <string name="report_close">關閉</string>
+    <string name="report_final_page">結束時頁面</string>
+    <string name="playback_stage_start">開始任務</string>
+    <string name="playback_stage_input">輸入與搜尋</string>
+    <string name="playback_skipped">已略過 %1$d 張無法使用的截圖。</string>
+    <string name="playback_no_mark">本次操作未儲存位置標記。</string>
+    <string name="playback_error_unknown">出錯：未記錄具體原因。</string>
+    <string name="playback_result">操作結果</string>
+    <string name="playback_element_click">紅圈為元素位置示意，不代表實際觸點。</string>
+</resources>

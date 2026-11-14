@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sms_login_title">Login SMS (eksperimental)</string>
+    <string name="sms_login_enable">Izinkan login SMS</string>
+    <string name="sms_login_default_off">Nonaktif bawaan · profil lokal tepercaya</string>
+    <string name="sms_login_limits">Login otomatis untuk aplikasi asli yang dikonfigurasi dengan kecocokan tanda tangan, pengirim, layanan, dan akun. Tanpa konfirmasi tiap login. Jika izin atau bukti kurang, gunakan cara manual. Teks layar dilanjutkan setelah verifikasi; gambar tetap lokal.</string>
+    <string name="sms_login_permission">Izin SMS Android</string>
+    <string name="sms_login_error">Izin atau penyimpanan gagal. Login manual dan periksa izin sistem.</string>
+    <string name="sms_login_disclosure">Izinkan hanya aplikasi bertanda tangan dan akun yang dikonfigurasi di sini. Mika dapat meminta, mengisi, mengirim login tanpa bertanya lagi lalu memverifikasi akun secara lokal. Bukan untuk pembayaran, pemulihan, atau pendaftaran. SMS dan kode tidak disimpan atau dikirim ke model. Nonaktifkan atau hapus profil untuk mencabut.</string>
+    <string name="sms_login_sender">Pengirim SMS tepat</string>
+    <string name="sms_login_signature">Nama layanan dalam kurung</string>
+    <string name="sms_login_account">Digit akun yang cocok (4–11)</string>
+    <string name="sms_login_listening">Meminta, mengisi, dan memverifikasi akun terkonfigurasi secara otomatis. Dapat dibatalkan.</string>
+    <string name="sms_login_tool">Login SMS</string>
+    <string name="sms_profile_title">Layanan dan akun tepercaya</string>
+    <string name="sms_profile_help">Konfigurasi sekali. Menyimpan mengizinkan permintaan kode, pengisian akun dan kode, menekan login akhir, dan verifikasi akun pada aplikasi bertanda tangan ini. Perlu ID sumber daya asli yang ditinjau serta penanda akun masuk yang jelas. Satu akun per aplikasi; ubah atau hapus untuk mencabut. Dienkripsi lokal dengan Android Keystore.</string>
+    <string name="sms_profile_accountvalue">Nomor akun (hanya di perangkat ini)</string>
+    <string name="sms_profile_package">Paket aplikasi terpasang</string>
+    <string name="sms_profile_accountfield">ID sumber daya kolom akun</string>
+    <string name="sms_profile_codefield">ID sumber daya kolom kode</string>
+    <string name="sms_profile_sendbutton">ID tombol meminta kode</string>
+    <string name="sms_profile_loginbutton">ID tombol login akhir</string>
+    <string name="sms_profile_successview">ID penanda sudah masuk</string>
+    <string name="sms_profile_successtext">Teks tepat penanda sudah masuk</string>
+    <string name="sms_profile_successaccount">ID tampilan akun yang masuk</string>
+</resources>

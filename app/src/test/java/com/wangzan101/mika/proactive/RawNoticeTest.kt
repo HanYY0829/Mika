@@ -32,6 +32,25 @@ class RawNoticeTest {
         assertFalse(plain.groupSummary || plain.foregroundService || plain.ongoing)
     }
 
+    // 会话名、是不是群:只有带会话样式的才往下传
+    @Test fun conversationNameAndGroupOnlyComeFromMessagingStyle() {
+        val styled = raw.copy(messagingStyle = true, title = "爬山群: 张三", conversationTitle = "爬山群", groupConversation = true).toRecord()
+        assertEquals("爬山群", styled.conversationTitle)
+        assertEquals(true, styled.group)
+        val plain = raw.copy(conversationTitle = "爬山群", groupConversation = true).toRecord()
+        assertEquals(null, plain.conversationTitle)
+        assertEquals(null, plain.group)
+    }
+
+    // 重要程度在「默认」以下的是不出声的;拿不到重要程度时当会出声
+    @Test fun lowImportanceMeansSilent() {
+        assertFalse(raw.toRecord().silent)
+        assertTrue(raw.copy(importance = 2).toRecord().silent)
+        assertTrue(raw.copy(importance = 1).toRecord().silent)
+        assertFalse(raw.copy(importance = 3).toRecord().silent)
+        assertFalse(raw.copy(importance = 4).toRecord().silent)
+    }
+
     @Test fun conversationFromStyleOrMessages() {
         assertFalse(raw.toRecord().conversation)
         assertTrue(raw.copy(messagingStyle = true).toRecord().conversation)

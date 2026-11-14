@@ -83,7 +83,11 @@ internal class ShellCallAudio(private val context: Context) {
         if (!owner.isBinderAlive) return failure("Call audio owner is gone.")
         val capability = probe(mode)
         if (!capability.getBoolean("ready")) return rejected(owner, capability)
-        if (!inPstnCall()) return rejected(owner, failure("Cellular call audio is not active."))
+        if (!inPstnCall()) return rejected(owner, failure("Cellular call audio is not active.").apply {
+            // This is the only retryable rejection: no AudioRecord, AudioTrack or pipe exists yet.
+            // Telecom ACTIVE can arrive before AudioManager has entered its cellular mode.
+            putString("errorCode", "cellular_audio_not_ready")
+        })
         val modes = candidates(mode, capability.getBoolean("direct"), capability.getBoolean("redirect"))
         val errors = ArrayList<String>(modes.size)
         for (backend in modes) {
@@ -319,6 +323,8 @@ internal class ShellCallAudio(private val context: Context) {
             else observationTime(nowMs) - zeroSinceMs
     }
 
+    internal enum class UplinkFlushStage { NONE, DRAIN, PAUSE, FLUSH, PLAY, PRIME, DONE }
+
     private inner class Session(
         val owner: IBinder,
         private val backend: Int,
@@ -344,6 +350,7 @@ internal class ShellCallAudio(private val context: Context) {
         private var upOffset = 0
         private var downStalledSince = 0L
         private var routeMissingSince = 0L
+        private var flushStage = UplinkFlushStage.NONE
         private val downBuffer = ByteArray(CAPTURE_RATE / 50 * 2)
         private val upBuffer = ByteArray(PLAY_RATE / 50 * 2)
         private val checkUp = StructPollfd().apply { fd = up.fileDescriptor }
@@ -360,30 +367,40 @@ internal class ShellCallAudio(private val context: Context) {
         fun establishRoute() {
             // AudioFlinger may not activate the output until the start threshold has data.
             // Only silence is allowed to leave the track until the route has been inspected.
-            primePlayback()
-            val deadline = SystemClock.elapsedRealtime() + ROUTE_TIMEOUT_MS
-            do {
-                check(owner.isBinderAlive && inPstnCall()) { "Cellular call or its owner ended." }
-                updateRoutes()
-                if (txDevice == AudioDeviceInfo.TYPE_TELEPHONY || backend == REDIRECT) return
-                SystemClock.sleep(20)
-            } while (SystemClock.elapsedRealtime() < deadline)
-            error("Uplink telephony route was not confirmed.")
+            awaitStartupRoute(backend, SystemClock::elapsedRealtime, SystemClock::sleep,
+                ensureActive = {
+                    check(!closed && owner.isBinderAlive && inPstnCall()) { "Cellular call or its owner ended." }
+                    requireCallMicrophoneMute()
+                },
+                sampleRoutes = {
+                    updateRoutes(checkDevices = false)
+                    rxDevice to txDevice
+                },
+                primeSilence = { startupGuard -> primePlayback(startupGuard) },
+            )
         }
 
-        private fun primePlayback() {
+        private fun primePlayback(startupGuard: (() -> Unit)? = null) {
             val initialFrames = if (Build.VERSION.SDK_INT >= 31) {
                 track.setStartThresholdInFrames(minOf(PLAY_RATE / 50, track.bufferSizeInFrames).coerceAtLeast(1))
             } else track.bufferSizeInFrames
             val silence = ByteArray(initialFrames.coerceIn(1, PLAY_RATE / 4) * 2)
-            val accepted = track.write(silence, 0, silence.size, AudioTrack.WRITE_NON_BLOCKING)
-            check(accepted > 0) {
-                "Uplink track did not accept its initial silence."
-            }
+            val accepted = writePlaybackPrime(silence.size,
+                nowMs = SystemClock::elapsedRealtime,
+                awaitRetry = { SystemClock.sleep(it) },
+                ensureActive = {
+                    if (startupGuard != null) startupGuard() else {
+                        check(!closed && owner.isBinderAlive && inPstnCall()) { "Cellular call or its owner ended." }
+                        check(manager.isMicrophoneMute) { "Handset microphone was unmuted." }
+                        updateRoutes()
+                    }
+                },
+                write = { offset, size -> track.write(silence, offset, size, AudioTrack.WRITE_NON_BLOCKING) },
+            )
             playbackDiagnostics.recordPrime(accepted)
         }
 
-        private fun updateRoutes() {
+        private fun updateRoutes(checkDevices: Boolean = true) {
             rxDevice = record.routedDevice?.type ?: -1
             txDevice = track.routedDevice?.type ?: -1
             val observation = try {
@@ -410,12 +427,7 @@ internal class ShellCallAudio(private val context: Context) {
                 clientSilencedEver = clientSilencedEver || observation.silenced
             }
             val captureSilenced = captureSilence.observe(observation?.silenced, SystemClock.elapsedRealtime())
-            check(rxDevice < 0 || rxDevice == AudioDeviceInfo.TYPE_TELEPHONY) {
-                "Downlink unexpectedly routed to device type $rxDevice."
-            }
-            check(txDevice < 0 || txDevice == AudioDeviceInfo.TYPE_TELEPHONY) {
-                "Uplink unexpectedly routed to device type $txDevice."
-            }
+            if (checkDevices) requireTelephonyRoutes(rxDevice, txDevice)
             check(!captureSilenced) { "Android silenced the cellular audio capture." }
         }
 
@@ -512,6 +524,7 @@ internal class ShellCallAudio(private val context: Context) {
                 check(!closed)
                 playbackDiagnostics.endZeroStreak(SystemClock.elapsedRealtime())
                 try {
+                    flushStage = UplinkFlushStage.DRAIN
                     // Remove bytes already waiting in the kernel as well as AudioTrack's queue.
                     // The app invalidates its corresponding model generation before invoking this.
                     upOffset = 0
@@ -523,12 +536,17 @@ internal class ShellCallAudio(private val context: Context) {
                         drained += n
                         check(drained <= MAX_FLUSH_BYTES) { "Uplink writer kept sending during the interruption." }
                     } while (n > 0)
+                    flushStage = UplinkFlushStage.PAUSE
                     track.pause()
+                    flushStage = UplinkFlushStage.FLUSH
                     track.flush()
                     playbackDiagnostics.recordTrackFlush()
                     txDevice = -1
+                    flushStage = UplinkFlushStage.PLAY
                     track.play()
+                    flushStage = UplinkFlushStage.PRIME
                     primePlayback()
+                    flushStage = UplinkFlushStage.DONE
                 } finally {
                     playbackDiagnostics.recordFlush(SystemClock.elapsedRealtime() - started)
                 }
@@ -566,6 +584,7 @@ internal class ShellCallAudio(private val context: Context) {
                 putBoolean("upPlaybackHeadFresh", headFresh)
                 putBoolean("upPlaybackRouteReady", playbackActive && playbackRouteReady())
                 putLong("upFlushMaxMs", playbackDiagnostics.flushMaxMs)
+                putString("upFlushStage", flushStage.name)
                 putInt("downPeak", downPeak)
                 putInt("rxDevice", rxDevice)
                 putInt("txDevice", txDevice)
@@ -672,6 +691,71 @@ internal class ShellCallAudio(private val context: Context) {
         private const val MAX_UPLINK_WRITE_STALL_MS = 1_500L
         private const val MAX_FLUSH_BYTES = 256 * 1024
         private val PIPE_CLOSED get() = OsConstants.POLLERR or OsConstants.POLLHUP or OsConstants.POLLNVAL
+
+        internal fun writePlaybackPrime(
+            bytes: Int,
+            nowMs: () -> Long,
+            awaitRetry: (Long) -> Unit,
+            ensureActive: () -> Unit,
+            write: (Int, Int) -> Int,
+        ): Int {
+            require(bytes > 0 && bytes % 2 == 0)
+            val deadline = nowMs() + 100L
+            var accepted = 0
+            while (accepted < bytes) {
+                ensureActive()
+                val count = write(accepted, bytes - accepted)
+                check(count >= 0) { "Uplink prime write failed ($count)." }
+                check(count <= bytes - accepted && count % 2 == 0) { "Uplink prime returned an invalid byte count ($count)." }
+                accepted += count
+                if (accepted == bytes) return accepted
+                // Zero and short transfers are valid for WRITE_NON_BLOCKING. Queue the full
+                // silence threshold before waiting for the telephony route, without turning
+                // a single temporary zero into a failed interruption or waiting indefinitely.
+                val remaining = deadline - nowMs()
+                check(remaining > 0L) { "Uplink track did not accept its initial silence within 100 ms." }
+                if (count == 0) awaitRetry(minOf(5L, remaining))
+            }
+            return accepted
+        }
+
+        internal fun requireTelephonyRoutes(rxDevice: Int, txDevice: Int) {
+            check(rxDevice < 0 || rxDevice == AudioDeviceInfo.TYPE_TELEPHONY) {
+                "Downlink unexpectedly routed to device type $rxDevice."
+            }
+            check(txDevice < 0 || txDevice == AudioDeviceInfo.TYPE_TELEPHONY) {
+                "Uplink unexpectedly routed to device type $txDevice."
+            }
+        }
+
+        /** Startup only: private pipes and silence priming permit a bounded TX migration. */
+        internal fun awaitStartupRoute(
+            backend: Int,
+            nowMs: () -> Long,
+            awaitRetry: (Long) -> Unit,
+            ensureActive: () -> Unit,
+            sampleRoutes: () -> Pair<Int, Int>,
+            primeSilence: (() -> Unit) -> Unit,
+        ) {
+            fun guardedSample(): Pair<Int, Int> {
+                ensureActive()
+                return sampleRoutes().also { (rx, _) ->
+                    // Capture already runs and can buffer frames before the pipes are exposed.
+                    // Never tolerate a known wrong RX; those frames could otherwise leak later.
+                    requireTelephonyRoutes(rx, -1)
+                }
+            }
+            primeSilence { guardedSample() }
+            val deadline = nowMs() + ROUTE_TIMEOUT_MS
+            do {
+                val (_, tx) = guardedSample()
+                // A redirection track may hide its physical sink; a known speaker is never ready.
+                if (tx == AudioDeviceInfo.TYPE_TELEPHONY || backend == REDIRECT && tx < 0) return
+                val remaining = deadline - nowMs()
+                check(remaining > 0L) { "Uplink telephony route was not confirmed." }
+                awaitRetry(minOf(20L, remaining))
+            } while (true)
+        }
 
         internal fun candidates(mode: Int, direct: Boolean, redirect: Boolean): List<Int> = when (mode) {
             AUTO -> buildList { if (direct) add(DIRECT); if (redirect) add(REDIRECT) }

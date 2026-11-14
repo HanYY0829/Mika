@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jev_title">判断モデル · Jev</string>
+    <string name="jev_row_sub">任意の意図判定とルート選択</string>
+    <string name="jev_enabled">判断モデルを使う</string>
+    <string name="jev_privacy">有効にすると、意図の判定とルートの選択のため、依頼、最近の会話の文脈、候補ルートが設定したプロバイダーに送信されます。失敗時は従来のモデルを使います。メイン・画像・軽量モデルの設定は独立しています。</string>
+    <string name="jev_provider">プロバイダー</string>
+    <string name="jev_endpoint">接続先</string>
+    <string name="jev_model">モデル ID</string>
+    <string name="jev_endpoint_note">SystemOne の完全なエンドポイント URL を入力してください。ローカルの HTTP サービス以外は HTTPS が必要です。API キーは端末内に暗号化して保存します。</string>
+    <string name="jev_invalid">有効な接続先とモデル ID を入力してください。有効化やテストには API キーも必要です。</string>
+    <string name="jev_apply_note">保存すると、新しいタスクに有効・無効と接続設定が適用されます。</string>
+    <string name="jev_test">接続をテスト</string>
+    <string name="jev_test_note">テストでは固定の挨拶と二つの選択肢のみをこの接続先に送信します。会話・画面・記憶の送信、変更の保存、サービスの有効化は行いません。</string>
+    <string name="jev_test_success">接続できました。テストの選択も正解でした。</string>
+    <string name="jev_test_failed">テストに失敗しました。接続先、モデル、API キー、ネットワークを確認してください。</string>
+    <string name="jev_saved">保存しました。新しいタスクから適用されます。</string>
+    <string name="jev_save_failed">保存できませんでした。保存済みの設定は変わりません。</string>
+</resources>

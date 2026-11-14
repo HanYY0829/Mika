@@ -200,6 +200,8 @@
     <string name="mcp_servers_status_fail">Falha na conexão: %1$s</string>
     <string name="mcp_servers_refresh_all">Testar tudo</string>
     <string name="mcp_servers_allowlist">Ferramentas permitidas (separadas por vírgulas, vazio = todas)</string>
+    <string name="settings_show_task_cost">Mostrar custo da tarefa</string>
+    <string name="settings_show_task_cost_sub">Estima em yuans o custo da API da DeepSeek para novas tarefas.</string>
     <string name="quit_title">Sair do Mika completamente</string>
     <string name="quit_row_sub">Interrompe as tarefas em segundo plano e oculta a cápsula flutuante</string>
     <string name="quit_confirm_body">As tarefas em andamento serão interrompidas, e a cápsula flutuante e as notificações desaparecerão. Ao abrir o Mika de novo, tudo volta.</string>

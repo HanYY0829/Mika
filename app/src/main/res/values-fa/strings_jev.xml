@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jev_title">مدل تصمیم · Jev</string>
+    <string name="jev_row_sub">انتخاب اختیاری قصد و مسیر</string>
+    <string name="jev_enabled">استفاده از مدل تصمیم</string>
+    <string name="jev_privacy">هنگام فعال‌سازی، درخواست شما، بافت گفتگوی اخیر و مسیرهای نامزد به ارائه‌دهندهٔ پیکربندی‌شده ارسال می‌شود تا قصد را تشخیص دهد و مسیرها را برگزیند. در صورت خطا، Mika از مدل قبلی استفاده می‌کند. تنظیمات مدل اصلی، تصویری و سبک جداگانه می‌مانند.</string>
+    <string name="jev_provider">ارائه‌دهنده</string>
+    <string name="jev_endpoint">نقطه اتصال</string>
+    <string name="jev_model">شناسه مدل</string>
+    <string name="jev_endpoint_note">نشانی کامل نقطه اتصال SystemOne را وارد کنید. HTTPS الزامی است مگر برای خدمات HTTP محلی. کلید API به‌صورت رمزنگاری‌شده روی این دستگاه ذخیره می‌شود.</string>
+    <string name="jev_invalid">یک نقطه اتصال و شناسه مدل معتبر وارد کنید. فعال‌سازی یا تست به کلید API نیز نیاز دارد.</string>
+    <string name="jev_apply_note">برای اعمال کلید و تنظیمات اتصال روی کارهای جدید ذخیره کنید.</string>
+    <string name="jev_test">تست اتصال</string>
+    <string name="jev_test_note">تست فقط یک سلام ثابت و دو گزینه را به این نقطه اتصال می‌فرستد. گفتگوها، صفحه‌ها یا خاطرات شما را نمی‌فرستد، تغییرات را ذخیره نمی‌کند و سرویس را فعال نمی‌کند.</string>
+    <string name="jev_test_success">اتصال برقرار است و انتخاب آزمایشی درست بود.</string>
+    <string name="jev_test_failed">تست ناموفق بود. نقطه اتصال، مدل، کلید API و شبکه را بررسی کنید.</string>
+    <string name="jev_saved">ذخیره شد. کارهای جدید از این تنظیمات استفاده خواهند کرد.</string>
+    <string name="jev_save_failed">ذخیره ممکن نشد. تنظیمات ذخیره‌شدهٔ قبلی شما تغییری نکرده است.</string>
+</resources>

@@ -20,6 +20,9 @@
     <string name="proactive_learn_topic_detail">%1$s · %2$s · %3$d روز · آخرین بار %4$s</string>
     <string name="proactive_learn_topic_outcomes">%1$d برنامه · باز شده %2$d · رد شده %3$d</string>
     <string name="proactive_learn_delete">حذف</string>
+    <string name="proactive_learn_topic_merge">ادغام…</string>
+    <string name="proactive_learn_topic_merge_title">ادغام «%1$s» در</string>
+    <string name="proactive_learn_topic_merge_body">روزها و شمارش‌هایش به موضوعی که انتخاب می‌کنید افزوده می‌شود و از این پس این نام هم همان‌جا شمرده می‌شود. قابل بازگشت نیست.</string>
     <string name="proactive_learn_clear_all">پاک‌کردن همهٔ آنچه Mika گردآورده</string>
     <string name="proactive_learn_clear_all_body">همهٔ موضوع‌ها، مخاطبان و خلاصه‌هایی که Mika گردآورده و متن ذخیره‌شدهٔ اعلان‌ها پاک شود؟ این کار برگشت‌پذیر نیست. Mika دوباره از اعلان‌های تازه گردآوری را آغاز می‌کند.</string>
     <string name="proactive_learn_clear_app">پاک کردن آنچه از %1$s آمده</string>

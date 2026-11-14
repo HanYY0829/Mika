@@ -411,6 +411,14 @@ class ConversationStore(
     @Synchronized
     fun turns(conversationId: String): List<Turn> = records(conversationId).map { it.first }
 
+    /** 最近一轮和文件更新时间，供语音判断刚结束的对话是否仍在等用户补充。 */
+    @Synchronized
+    fun latestTurn(conversationId: String): Pair<Turn, Long>? {
+        val f = file(conversationId).takeIf { it.isFile } ?: return null
+        val last = read(f)?.lastOrNull()?.first ?: return null
+        return last to f.lastModified()
+    }
+
     /** 每一轮连同这一轮导出的文件(文件卡片)。 */
     @Synchronized
     fun records(conversationId: String): List<Pair<Turn, List<SharedFile>>> {
@@ -496,6 +504,7 @@ class ConversationStore(
             // 损坏的文件挪到一边留着,不拿新内容覆盖掉
             f.renameTo(File(dir, "${f.name}.corrupt-${System.currentTimeMillis()}"))
         }
+        // 新的一轮记下存进来的时刻;带时间戳的(分支复制、恢复)照原样保留
         val stored = if (turn.atMs == null) turn.copy(atMs = clock()) else turn
         write(conversationId, prior.orEmpty() + (stored to files))
     }

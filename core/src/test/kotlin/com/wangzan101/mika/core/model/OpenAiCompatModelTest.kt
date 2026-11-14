@@ -176,9 +176,9 @@ class OpenAiCompatModelTest {
         assertTrue(errorFor(MockResponse().setResponseCode(400).setBody("""{"error":"Trying to keep the first 15857 tokens when context the overflows. However, the model is loaded with context length of only 4096 tokens, which is not enough. Try to load the model with a larger context length, or provide a shorter input. Error Data: n/a, Additional Data: n/a"}""")) is ModelError.ContextTooLong)
         assertTrue(errorFor(MockResponse().setResponseCode(400).setBody("""{"error":"The number of tokens to keep from the initial prompt is greater than the context length. Try to load the model with a larger context length, or provide a shorter input. Error Data: n/a, Additional Data: n/a"}""")) is ModelError.ContextTooLong)
         // 提到 context、说的却不是超长:照旧;报错里回显了请求里的「context window」也不算
-        assertTrue(errorFor(MockResponse().setResponseCode(400).setBody("""{"error":{"message":"Invalid value for 'context': expected a string"}}""")) is ModelError.BadResponse)
-        assertTrue(errorFor(MockResponse().setResponseCode(400).setBody("""{"error":{"message":"Invalid type for 'messages[1].content': expected a string","input":"how big is your context window?"}}""")) is ModelError.BadResponse)
-        assertTrue(errorFor(MockResponse().setResponseCode(400).setBody("""{"error":{"message":"Invalid 'tools[3].function.name': string too long. Expected a string with maximum length 64, but got a string with length 67 instead."}}""")) is ModelError.BadResponse)
+        assertTrue(errorFor(MockResponse().setResponseCode(400).setBody("""{"error":{"message":"Invalid value for 'context': expected a string"}}""")) is ModelError.Server)
+        assertTrue(errorFor(MockResponse().setResponseCode(400).setBody("""{"error":{"message":"Invalid type for 'messages[1].content': expected a string","input":"how big is your context window?"}}""")) is ModelError.Server)
+        assertTrue(errorFor(MockResponse().setResponseCode(400).setBody("""{"error":{"message":"Invalid 'tools[3].function.name': string too long. Expected a string with maximum length 64, but got a string with length 67 instead."}}""")) is ModelError.Server)
         assertEquals("m", (errorFor(MockResponse().setResponseCode(404)) as ModelError.ModelNotFound).model)
         // 网关回的 404 不一定是模型名不对:带上它 JSON 里的原话;HTML 页不当原话
         val gateway = errorFor(MockResponse().setResponseCode(404).setBody("""{"error":{"type":"not_found_error","message":"none of group/rpa's models is ready"}}""")) as ModelError.ModelNotFound

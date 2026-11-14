@@ -1,4 +1,4 @@
-package com.wangzan101.mika.core.cap.web
+package com.wangzan101.mika.core.agent
 
 /**
  * 用户在 Mika 的浏览器里、对着正看的那一页问 Mika 时,这句话怎么写:最前面一段说明是哪一页(固定的英文,模型一看就懂;

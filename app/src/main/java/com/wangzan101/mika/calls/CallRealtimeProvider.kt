@@ -14,6 +14,9 @@ interface CallRealtimeSession : AutoCloseable {
 }
 
 interface CallRealtimeProvider {
+    /** Local validation only: invalid config must fail before an outgoing carrier call is placed. */
+    fun validate(profile: CallVoiceProfile, systemPrompt: String) {}
+
     suspend fun connect(
         profile: CallVoiceProfile,
         credentials: VolcRealtimeCredentials,
@@ -22,16 +25,20 @@ interface CallRealtimeProvider {
 }
 
 class VolcRealtimeProvider : CallRealtimeProvider {
+    private fun config(profile: CallVoiceProfile, systemPrompt: String): VolcRealtimeConfig {
+        require(profile.protocol == CallVoiceProtocol.VOLC_DUPLEX) { "不支持的实时语音协议" }
+        return VolcRealtimeConfig(systemPrompt = systemPrompt, speaker = profile.speaker, model = profile.model)
+    }
+
+    override fun validate(profile: CallVoiceProfile, systemPrompt: String) {
+        config(profile, systemPrompt)
+    }
+
     override suspend fun connect(
         profile: CallVoiceProfile,
         credentials: VolcRealtimeCredentials,
         systemPrompt: String,
     ): CallRealtimeSession {
-        require(profile.protocol == CallVoiceProtocol.VOLC_DUPLEX) { "不支持的实时语音协议" }
-        return VolcRealtimeClient(endpoint = profile.endpoint).connect(credentials, VolcRealtimeConfig(
-            systemPrompt = systemPrompt,
-            speaker = profile.speaker,
-            model = profile.model,
-        ))
+        return VolcRealtimeClient(endpoint = profile.endpoint).connect(credentials, config(profile, systemPrompt))
     }
 }

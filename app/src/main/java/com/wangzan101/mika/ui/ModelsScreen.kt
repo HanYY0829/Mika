@@ -195,14 +195,19 @@ internal fun fixedChoices(role: ModelRole): List<RoleChoice> = when (role) {
  * 标签只作参考,不按能力过滤或置灰;每家下面都能手动填模型名(列表里没有、或这家不提供列表),手填的标「手填」。点一下就生效并返回。
  */
 @Composable
-fun RolePickerContent(ui: ModelSetupUi, role: ModelRole, actions: RolePickerActions, onBack: () -> Unit) {
+fun RolePickerContent(ui: ModelSetupUi, role: ModelRole, actions: RolePickerActions, onBack: () -> Unit,
+    titleOverride: String? = null, hintOverride: String? = null,
+    pickedOverride: ((String, String) -> Boolean)? = null,
+    exclude: ((String, String) -> Boolean)? = null,
+    clearAction: (() -> Unit)? = null, clearSelected: Boolean = false,
+) {
     val c = MikaTheme.colors
     var filter by rememberSaveable { mutableStateOf("") }
     val groups = ui.providers.map { it to ui.options(it) }
     val total = groups.sumOf { it.second.size }
     val q = filter.trim()
-    Page(ModelsCopy.roleName(role), onBack) {
-        Text(ModelsCopy.roleHint(role), Modifier.padding(top = 4.dp, bottom = 12.dp), fontSize = 14.5.sp, lineHeight = 22.sp, color = c.ink2)
+    Page(titleOverride ?: ModelsCopy.roleName(role), onBack) {
+        Text(hintOverride ?: ModelsCopy.roleHint(role), Modifier.padding(top = 4.dp, bottom = 12.dp), fontSize = 14.5.sp, lineHeight = 22.sp, color = c.ink2)
         val fixed = fixedChoices(role)
         if (fixed.isNotEmpty()) {
             GroupCard {
@@ -214,6 +219,11 @@ fun RolePickerContent(ui: ModelSetupUi, role: ModelRole, actions: RolePickerActi
                 }
             }
         }
+        if (clearAction != null) {
+            GroupCard {
+                RadioRow(ModelsCopy.FALLBACK_CLEAR, selected = clearSelected, onClick = clearAction, first = true)
+            }
+        }
         if (total > FILTER_FROM) {
             GroupLabel(ModelsCopy.PICK_FROM, Modifier.padding(top = 8.dp))
             Box(Modifier.padding(bottom = 4.dp)) {
@@ -222,7 +232,7 @@ fun RolePickerContent(ui: ModelSetupUi, role: ModelRole, actions: RolePickerActi
         }
         var anyShown = false
         groups.forEach { (p, options) ->
-            val shown = options.filter { q.isEmpty() || it.id.contains(q, ignoreCase = true) }
+            val shown = options.filter { (q.isEmpty() || it.id.contains(q, ignoreCase = true)) && exclude?.invoke(p.id, it.id) != true }
             // 这家列不出模型:手填是唯一的选法
             val noList = p.models?.isEmpty() == true
             if (q.isNotEmpty() && shown.isEmpty()) return@forEach
@@ -232,7 +242,7 @@ fun RolePickerContent(ui: ModelSetupUi, role: ModelRole, actions: RolePickerActi
             GroupCard {
                 shown.take(PICK_AT_MOST).forEachIndexed { i, o ->
                     RadioRow(
-                        o.id, selected = ui.picked(role, p.id, o.id), onClick = { actions.pick(p.id, o.id) }, first = i == 0,
+                        o.id, selected = pickedOverride?.invoke(p.id, o.id) ?: ui.picked(role, p.id, o.id), onClick = { actions.pick(p.id, o.id) }, first = i == 0,
                         titleStyle = ModelIdStyle, below = { Tags(o, forVision = role == ModelRole.Vision) },
                     )
                 }
@@ -844,6 +854,18 @@ object ModelsCopy {
         val s = SpeechOptions.summary(ui.speech, ui.systemSpeech, ui.providers)
         val unset = s.title == UNSET
         return RoleLine(s.title, s.sub.orEmpty(), isModel = !unset && (ui.speech is SpeechChoice.Provider || ui.speech is SpeechChoice.Doubao || ui.speech is SpeechChoice.FunAsr || ui.speech is SpeechChoice.Bailian), unset = unset, subtitleOk = s.subOk)
+    }
+
+    /** 主模型备援(项目 3)的卡片图标、名字和右边两行:和用途卡同一套说法。 */
+    val FALLBACK_ICON: ImageVector get() = MikaIcons.Refresh
+    val FALLBACK_CLEAR: String get() = tr(R.string.main_fallback_clear)
+
+    fun fallbackLabel(slot: Int) = "${tr(R.string.main_fallback_name, slot + 1)} · ${tr(R.string.main_fallback_what)}"
+
+    fun fallbackLine(ui: ModelSetupUi, slot: Int): RoleLine {
+        val cfg = ui.roles.mainFallbacks.getOrNull(slot)?.let { id -> ui.configs.firstOrNull { it.id == id } }
+        return if (cfg != null) RoleLine(cfg.model, ui.providerOf(cfg)?.let(::providerName) ?: cfg.name, isModel = true)
+        else RoleLine(UNSET, tr(R.string.main_fallback_pick), unset = true)
     }
 
     fun roleIcon(role: ModelRole): ImageVector = when (role) {

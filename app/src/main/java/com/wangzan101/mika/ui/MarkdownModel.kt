@@ -62,11 +62,12 @@ object MarkdownModel {
     private val LINK_SCHEMES = setOf("http", "https", "mailto", "tel")
 
     /** 行内代码和链接的样式;颜色跟着深浅色,由显示的地方按当前配色给。 */
-    class Styles(val code: SpanStyle, val link: TextLinkStyles) {
+    class Styles(val code: SpanStyle, val link: TextLinkStyles, val strong: FontWeight = FontWeight.SemiBold) {
         companion object {
-            fun of(c: MikaColors) = Styles(
+            fun of(c: MikaColors, strong: FontWeight = FontWeight.SemiBold) = Styles(
                 code = SpanStyle(fontFamily = FontFamily.Monospace, background = c.fill),
                 link = TextLinkStyles(SpanStyle(color = c.accent)),
+                strong = strong,
             )
 
             val Light = of(LightColors)
@@ -157,7 +158,7 @@ object MarkdownModel {
             is SoftLineBreak, is HardLineBreak -> append('\n')
             is Code -> withStyle(s.code) { append(n.literal) }
             is Emphasis -> withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { appendInlines(n, s) }
-            is StrongEmphasis -> withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { appendInlines(n, s) }
+            is StrongEmphasis -> withStyle(SpanStyle(fontWeight = s.strong)) { appendInlines(n, s) }
             is Strikethrough -> withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) { appendInlines(n, s) }
             is Link -> link(n.destination, s) { appendInlines(n, s) }
             // 聊天里不显示图片,只留替代文字(有可打开的地址就做成链接)

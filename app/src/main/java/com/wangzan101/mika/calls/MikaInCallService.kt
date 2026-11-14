@@ -19,6 +19,8 @@ class MikaInCallService : InCallService() {
     private val attached = mutableSetOf<Call>()
     private val muteState = TelecomMuteState(Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     internal val telecomMuted: Boolean? get() = muteState.value
+    internal var muteObservationRevision: Long = 0
+        private set
     private var muteDebugEvents = 0
 
     @Suppress("DEPRECATION")
@@ -44,6 +46,7 @@ class MikaInCallService : InCallService() {
 
     private fun reportMute(source: TelecomMuteState.Source, muted: Boolean) {
         val update = muteState.update(source, muted)
+        if (update != TelecomMuteState.Update.IGNORED_LEGACY) muteObservationRevision++
         val debugSource = when {
             update == TelecomMuteState.Update.IGNORED_LEGACY -> "legacy_ignored"
             source == TelecomMuteState.Source.LEGACY_AUDIO -> "legacy_audio"
@@ -88,6 +91,7 @@ class MikaInCallService : InCallService() {
         val removing = attached.toList()
         attached.clear()
         muteState.reset()
+        muteObservationRevision++
         muteDebugEvents = 0
         removing.forEach { call ->
             call.unregisterCallback(callback)

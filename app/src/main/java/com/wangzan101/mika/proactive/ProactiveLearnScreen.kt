@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,6 +54,7 @@ import com.wangzan101.mika.core.proactive.ObservedTopic
 import com.wangzan101.mika.core.proactive.SpanDigest
 import com.wangzan101.mika.core.proactive.SpanKind
 import com.wangzan101.mika.core.proactive.TopicKind
+import com.wangzan101.mika.core.proactive.TopicPool
 import com.wangzan101.mika.core.proactive.TriageGate
 import com.wangzan101.mika.core.proactive.TriageTarget
 import com.wangzan101.mika.core.usage.ProactiveBudget
@@ -195,6 +198,7 @@ fun ProactiveLearnScreen(onBack: () -> Unit) {
     val contactsView by runtime.learnContactsView.collectAsState()
     val contacts = contactsView.contacts
     var editRelation by remember { mutableStateOf<ObservedContact?>(null) }
+    var merging by remember { mutableStateOf<ObservedTopic?>(null) }
     // 模型配置和用量账本只在主动能力开着时才碰(和主动能力页一样);话题和删除关着时也能用
     var usageTick by remember { mutableStateOf(0) }
     val budgetOut = remember(enabled, state, limit, usageTick) {
@@ -270,7 +274,7 @@ fun ProactiveLearnScreen(onBack: () -> Unit) {
         is KnowPage.DayLine -> DayLinePage(ui, page)
         is KnowPage.SpanLine -> SpanLinePage(ui, page)
         is KnowPage.Note -> NotePage(ui, page)
-        KnowPage.Topics -> TopicsPage(ui, topics, level, state.status == LearnStatus.StoreUnavailable)
+        KnowPage.Topics -> TopicsPage(ui, topics, level, state.status == LearnStatus.StoreUnavailable) { merging = it }
         KnowPage.Contacts -> ContactsPage(ui, contacts, topics) { editRelation = it }
         KnowPage.Clear -> ClearPage(
             ui, remember(topics, contacts, notes, days, weeks, months, state.journalApps, labels) {
@@ -318,6 +322,33 @@ fun ProactiveLearnScreen(onBack: () -> Unit) {
             // 点一项就设好并关掉,所以只有「取消」一个按钮。它要放在 confirmButton 上:MikaDialog 总会画出那一格,
             // 放在 dismissButton 上的话旁边会多出一个没有字的蓝色按钮(和「应用访问」里改分类的弹窗同一个写法)
             confirmButton = { TextButton({ editRelation = null }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+    merging?.let { t ->
+        // 把这个话题并进另一个:列出其他话题(名字像的排在前面),点一个就并好并关掉。并了分不开,弹窗里写明。
+        // 话题可以有几百个:列表限高、能滚。
+        // 先后只在弹窗打开时排一次:开着的时候话题池会变(来了一批归纳、有通知被点开),跟着重排的话,
+        // 手指落下去的那一行可能已经换成了别的话题,而点一下就并了、分不开。中途没了的话题从列表里去掉
+        val order = remember(t.id) { TopicPool.mergeCandidates(t, topics, System.currentTimeMillis()).map { it.id } }
+        val others = remember(order, topics) { topics.associateBy { it.id }.let { now -> order.mapNotNull(now::get) } }
+        MikaDialog(
+            onDismissRequest = { merging = null },
+            title = { Text(stringResource(R.string.proactive_learn_topic_merge_title, t.label)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.proactive_learn_topic_merge_body))
+                    LazyColumn(Modifier.heightIn(max = 320.dp).testTag("merge_targets")) {
+                        items(others, key = { it.id }) { other ->
+                            TextButton({
+                                runtime.onLearn { mergeTopic(t.id, other.id) }
+                                merging = null
+                            }) { Text(other.label + " · " + stringResource(kindLabel(other.kind))) }
+                        }
+                    }
+                }
+            },
+            // 只有「取消」一个按钮,放在 confirmButton 上(同上面改关系的弹窗)
+            confirmButton = { TextButton({ merging = null }) { Text(stringResource(R.string.cancel)) } },
         )
     }
     confirmClearApp?.let { pkg ->
@@ -725,7 +756,9 @@ private fun NotePage(ui: KnowUi, page: KnowPage.Note) {
 // ---- 话题、联系人、清除 ----
 
 @Composable
-private fun TopicsPage(ui: KnowUi, topics: List<ObservedTopic>, level: LearnLevel, storeUnavailable: Boolean) {
+private fun TopicsPage(ui: KnowUi, topics: List<ObservedTopic>, level: LearnLevel, storeUnavailable: Boolean, onMerge: (ObservedTopic) -> Unit) {
+    // 只有一个话题时没有可并的对象,不给「并入」
+    val merge: ((ObservedTopic) -> Unit)? = if (topics.size > 1) onMerge else null
     // 几天算已确立跟着激进程度走。只在话题变了的时候重排,不是每次重组都排一遍
     val (sure, unsure) = remember(topics, level) {
         val now = System.currentTimeMillis()
@@ -736,12 +769,12 @@ private fun TopicsPage(ui: KnowUi, topics: List<ObservedTopic>, level: LearnLeve
             if (sure.isEmpty()) note {
                 EmptyNote(stringResource(if (storeUnavailable) R.string.proactive_learn_state_store else R.string.proactive_learn_empty))
             }
-            sure.forEach { t -> row(t.id) { first -> TopicRow(t, first, ui.label, ui.dateFormat) { ui.runtime.onLearn { deleteTopic(t.id) } } } }
+            sure.forEach { t -> row(t.id) { first -> TopicRow(t, first, ui.label, ui.dateFormat, merge?.let { { it(t) } }) { ui.runtime.onLearn { deleteTopic(t.id) } } } }
         }
         if (unsure.isNotEmpty()) {
             label("unsure") { stringResource(R.string.proactive_learn_unsure) }
             card("unsure") {
-                unsure.forEach { t -> row(t.id) { first -> TopicRow(t, first, ui.label, ui.dateFormat) { ui.runtime.onLearn { deleteTopic(t.id) } } } }
+                unsure.forEach { t -> row(t.id) { first -> TopicRow(t, first, ui.label, ui.dateFormat, merge?.let { { it(t) } }) { ui.runtime.onLearn { deleteTopic(t.id) } } } }
             }
         }
     }
@@ -805,7 +838,9 @@ private fun ClearPage(
 
 /** 一个话题:名字(纯文字)、种类、哪些 App 在几天里印证过、上次出现、点开/划掉几次;右边删掉。 */
 @Composable
-private fun TopicRow(t: ObservedTopic, first: Boolean, label: (String) -> String, dateFormat: java.text.DateFormat, onDelete: () -> Unit) {
+private fun TopicRow(
+    t: ObservedTopic, first: Boolean, label: (String) -> String, dateFormat: java.text.DateFormat, onMerge: (() -> Unit)?, onDelete: () -> Unit,
+) {
     val apps = t.evidence.keys.joinToString(", ", transform = label)
     // 话题名按纯文字显示;敏感的在后面加一个纯文字的小标记
     ListRow(
@@ -814,7 +849,10 @@ private fun TopicRow(t: ObservedTopic, first: Boolean, label: (String) -> String
         first = first,
         detail = stringResource(R.string.proactive_learn_topic_outcomes, t.apps, t.opened, t.dismissed),
     ) {
-        Row { TextButton(onDelete) { Text(stringResource(R.string.proactive_learn_delete)) } }
+        Row {
+            if (onMerge != null) TextButton(onMerge) { Text(stringResource(R.string.proactive_learn_topic_merge)) }
+            TextButton(onDelete) { Text(stringResource(R.string.proactive_learn_delete)) }
+        }
     }
 }
 
@@ -873,6 +911,7 @@ private fun kindLabel(k: TopicKind): Int = when (k) {
 
 /**
  * 「清空来自它的」列哪些 App:话题上有它的证据、有它的联系人,分段归纳、当日(周、月)归纳里有依据过它的句子,
+ * 某一份归纳的概述是照着它的句子写的(概述还在时才算;分段归纳到期之后,它可能只剩在概述里),
  * 或者还留着它的通知原文([raw])——刚来了几条通知、还没归纳出任何东西的 App 只有原文,不列它就只能全部清空。
  */
 internal fun clearableApps(
@@ -886,8 +925,15 @@ internal fun clearableApps(
     topics.forEach { addAll(it.evidence.keys) }
     contacts.forEach { add(it.packageName) }
     notes.forEach { add(it.packageName) }
-    days.forEach { d -> d.lines.forEach { addAll(it.apps) } }
-    spans.forEach { s -> s.lines.forEach { addAll(it.apps) } }
+    // 概述清掉之后来源记录可能还留着:只在概述还有字时才算,不然列出来的 App 其实已经没东西可清
+    days.forEach { d ->
+        d.lines.forEach { addAll(it.apps) }
+        if (d.brief.isNotEmpty()) addAll(d.briefApps)
+    }
+    spans.forEach { s ->
+        s.lines.forEach { addAll(it.apps) }
+        if (s.brief.isNotEmpty()) addAll(s.briefApps)
+    }
     addAll(raw)
 }
 

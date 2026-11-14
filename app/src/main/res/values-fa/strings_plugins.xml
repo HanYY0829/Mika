@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugins_title">افزونه‌ها</string>
+    <string name="plugins_install">نصب افزونه</string>
+    <string name="plugins_installing">در حال نصب…</string>
+    <string name="plugins_empty">هنوز افزونه‌ای نیست</string>
+    <string name="plugins_empty_sub">یک فایل zip افزونه نصب کنید تا مهارت‌هایی که Mika می‌تواند بخواند اضافه شود. افزونه نمی‌تواند تنظیمات برنامه را تغییر دهد یا داده‌های دیگر شما را بخواند.</string>
+    <string name="plugins_enabled">فعال</string>
+    <string name="plugins_disabled">غیرفعال</string>
+    <string name="plugins_skills">مهارت‌ها</string>
+    <string name="plugins_no_skills">بدون مهارت</string>
+    <string name="plugins_permissions">مجوزها</string>
+    <string name="plugins_none">هیچ</string>
+    <string name="plugins_version">نسخه %1$s</string>
+    <string name="plugins_uninstall">حذف نصب</string>
+    <string name="plugins_uninstall_body">این افزونه و مهارت‌هایش حذف شود؟ گفتگوها و خاطره‌ها تحت تأثیر قرار نمی‌گیرند.</string>
+    <string name="plugins_install_failed">نصب ناموفق بود: %1$s</string>
+    <string name="plugins_unsupported_in_version">این نسخه فقط از افزونه‌هایی که حاوی مهارت هستند پشتیبانی می‌کند.</string>
+    <string name="plugins_error_too_new">این افزونه به نسخه جدیدتری از Mika نیاز دارد.</string>
+    <string name="plugins_error_unsafe">بسته حاوی مسیر ناامن است و رد شد.</string>
+    <string name="plugins_error_too_large">بسته بیش از حد بزرگ است.</string>
+    <string name="plugins_error_missing_manifest">بسته در ریشه خود manifest.json ندارد.</string>
+    <string name="plugins_error_invalid">بسته یک افزونه معتبر نیست.</string>
+    <plurals name="plugins_skill_count">
+        <item quantity="one">%1$d مهارت</item>
+        <item quantity="other">%1$d مهارت</item>
+    </plurals>
+    <plurals name="plugins_count">
+        <item quantity="one">%1$d افزونه</item>
+        <item quantity="other">%1$d افزونه</item>
+    </plurals>
+</resources>

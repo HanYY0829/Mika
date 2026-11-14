@@ -121,6 +121,7 @@ internal fun AttachPanelHost(
     selected: List<PendingAttachment>,
     onPicked: (List<String>) -> Unit,
     onToggle: (PendingAttachment) -> Boolean,
+    onDeviceFiles: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -189,6 +190,7 @@ internal fun AttachPanelHost(
         },
         onAlbum = openAlbum,
         onFiles = { files.launch(arrayOf("*/*")) },
+        onDeviceFiles = onDeviceFiles,
         onToggle = { if (!onToggle(it)) Toast.makeText(context, AttachCopy.FULL, Toast.LENGTH_SHORT).show() },
         onGrant = {
             val activity = context.findActivity()
@@ -218,6 +220,7 @@ internal fun AttachPanel(
     onToggle: (PendingAttachment) -> Unit,
     onGrant: () -> Unit,
     modifier: Modifier = Modifier,
+    onDeviceFiles: (() -> Unit)? = null,
 ) {
     val c = MikaTheme.colors
     Column(modifier.fillMaxSize().testTag("attach-panel").padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 8.dp)) {
@@ -225,6 +228,7 @@ internal fun AttachPanel(
             Tile(MikaIcons.PhotoCamera, AttachCopy.CAMERA, onCamera)
             Tile(MikaIcons.Photo, AttachCopy.ALBUM, onAlbum)
             Tile(MikaIcons.Paperclip, AttachCopy.FILES, onFiles)
+            if (onDeviceFiles != null) Tile(MikaIcons.Paperclip, stringResource(R.string.device_browser_title), onDeviceFiles)
         }
         if (access == PhotoAccess.None) {
             Column(

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="proactive_title">Proaktif (eksperimental)</string>
+    <string name="proactive_title">Proaktif</string>
     <string name="proactive_entry_sub">Membaca notifikasi dari aplikasi pilihan Anda</string>
     <string name="proactive_switch">Aktifkan</string>
     <string name="proactive_listener">Pendengar: %1$s</string>

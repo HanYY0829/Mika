@@ -63,6 +63,8 @@ sealed interface VolcRealtimeEvent {
         val isFinal: Boolean,
         /** Only a complete, non-blank provider final can authorize call control. */
         val isCompleteFinal: Boolean = isFinal,
+        /** A late identified final is history, never control of the current speaking turn. */
+        val isCurrentTurn: Boolean = true,
     ) : VolcRealtimeEvent
     data object UserSpeechEnded : VolcRealtimeEvent
     /** Provider observations only; these do not start, stop, or retry a turn. */
@@ -136,9 +138,18 @@ class VolcRealtimeSession internal constructor(
     private var muted = false
     private var currentUserItem: String? = null
     private var userText = StringBuilder()
+    private var userTurnActive = false
+    private class UserItemState {
+        val text = StringBuilder()
+        var started = false
+        var ended = false
+        var finalEmitted = false
+    }
+    private val userItems = LinkedHashMap<String, UserItemState>()
     private var audioActive = false
     private var audioId: String? = null
-    private var interruptedAudioId: String? = null
+    private val retiredResponseIds = LinkedHashSet<String>()
+    private var lastResponseId: String? = null
     private var waitForAudioStart = false
     private val ready = CompletableDeferred<Unit>()
     private val closed = CompletableDeferred<Unit>()
@@ -263,48 +274,86 @@ class VolcRealtimeSession internal constructor(
         when (type) {
             VolcRealtimeProtocol.INPUT_AUDIO_COMMITTED -> publish(VolcRealtimeEvent.InputAudioCommitted)
             VolcRealtimeProtocol.USER_STARTED -> {
-                currentUserItem = frame.string("item_id")?.takeIf { it.isNotEmpty() }
-                userText = StringBuilder()
+                val itemId = frame.string("item_id")?.takeIf { it.isNotBlank() }
+                val item = itemId?.let(::userItem)
+                if (item?.ended == true || item?.started == true) return
+                item?.started = true
+                currentUserItem = itemId
+                userText = item?.text ?: StringBuilder()
+                userTurnActive = true
                 interruptAudio()
                 publish(VolcRealtimeEvent.UserSpeaking)
             }
             VolcRealtimeProtocol.USER_DELTA -> {
-                val itemId = frame.string("item_id")?.takeIf { it.isNotEmpty() }
-                if (itemId != null && itemId != currentUserItem) {
-                    currentUserItem = itemId
-                    userText = StringBuilder()
-                }
+                val itemId = frame.string("item_id")?.takeIf { it.isNotBlank() }
+                val isNewItem = itemId != null && itemId !in userItems
+                val item = itemId?.let(::userItem)
+                if (item?.ended == true) return
                 val delta = frame.string("delta") ?: return
-                val remaining = MAX_TRANSCRIPT_CHARS - userText.length
-                if (remaining > 0 && delta.isNotEmpty()) {
-                    userText.append(delta, 0, minOf(remaining, delta.length))
-                    publish(VolcRealtimeEvent.UserTranscript(userText.toString(), isFinal = false))
+                if (isNewItem) {
+                    // Adopt an explicitly new ID, including a current anonymous turn. Known parked
+                    // items can keep accumulating history but must never reclaim the current lane.
+                    if (currentUserItem == null && userTurnActive && userText.isNotEmpty()) {
+                        item!!.text.append(userText)
+                    }
+                    currentUserItem = itemId
+                    userText = item!!.text
+                }
+                val text = item?.text ?: userText
+                val remaining = MAX_TRANSCRIPT_CHARS - text.length
+                if (remaining > 0 && delta.isNotEmpty()) text.append(delta, 0, minOf(remaining, delta.length))
+                // Unidentified events retain the legacy in-order current lane; never guess an ID by delay.
+                if (itemId == null || itemId == currentUserItem) {
+                    userTurnActive = true
+                    if (delta.isNotEmpty()) publish(VolcRealtimeEvent.UserTranscript(text.toString(), isFinal = false))
                 }
             }
             VolcRealtimeProtocol.USER_COMPLETED -> {
+                val itemId = frame.string("item_id")?.takeIf { it.isNotBlank() }
+                val item = itemId?.let(::userItem)
+                if (item?.finalEmitted == true) return
+                val isCurrent = itemId == null || itemId == currentUserItem
                 val explicitFinal = (frame.string("transcript") ?: frame.string("text"))?.takeIf { it.isNotBlank() }
-                val transcript = explicitFinal ?: userText.toString()
-                currentUserItem = null
-                userText = StringBuilder()
+                val transcript = explicitFinal ?: (item?.text ?: userText).toString()
                 if (transcript.isNotBlank()) publish(VolcRealtimeEvent.UserTranscript(
                     transcript.take(MAX_TRANSCRIPT_CHARS),
                     isFinal = true,
                     isCompleteFinal = explicitFinal != null && explicitFinal.length <= MAX_TRANSCRIPT_CHARS,
+                    isCurrentTurn = isCurrent,
                 ))
-                publish(VolcRealtimeEvent.UserSpeechEnded)
-                if (transcript.isBlank()) publish(VolcRealtimeEvent.UserTranscriptionEmpty)
+                (item ?: currentUserItem?.let(userItems::get))?.let {
+                    it.ended = true
+                    it.finalEmitted = transcript.isNotBlank()
+                    it.text.clear()
+                }
+                if (isCurrent) {
+                    finishCurrentUser()
+                    publish(VolcRealtimeEvent.UserSpeechEnded)
+                    if (transcript.isBlank()) publish(VolcRealtimeEvent.UserTranscriptionEmpty)
+                }
             }
             VolcRealtimeProtocol.USER_FAILED -> {
-                currentUserItem = null
-                userText = StringBuilder()
-                publish(VolcRealtimeEvent.UserSpeechEnded)
+                val itemId = frame.string("item_id")?.takeIf { it.isNotBlank() }
+                val item = itemId?.let(::userItem)
+                if (item?.ended == true) return
+                (item ?: currentUserItem?.let(userItems::get))?.let { it.ended = true }
+                if (itemId == null || itemId == currentUserItem) {
+                    finishCurrentUser()
+                    publish(VolcRealtimeEvent.UserSpeechEnded)
+                }
                 publish(VolcRealtimeEvent.UserTranscriptionFailed)
             }
-            VolcRealtimeProtocol.TEXT_DELTA -> frame.string("delta")?.takeIf { it.isNotEmpty() }?.let {
+            VolcRealtimeProtocol.TEXT_DELTA -> if (!isRetiredResponse(responseId)) frame.string("delta")?.takeIf { it.isNotEmpty() }?.let {
+                acceptResponseIdentity(responseId)
                 publish(VolcRealtimeEvent.AssistantTranscript(it))
             }
-            VolcRealtimeProtocol.TEXT_DONE -> publish(VolcRealtimeEvent.AssistantTextEnded)
-            VolcRealtimeProtocol.AUDIO_STARTED -> if (responseId == null || responseId != interruptedAudioId) {
+            VolcRealtimeProtocol.TEXT_DONE -> if (!isRetiredResponse(responseId)) {
+                acceptResponseIdentity(responseId)
+                publish(VolcRealtimeEvent.AssistantTextEnded)
+            }
+            VolcRealtimeProtocol.AUDIO_STARTED -> if (!isRetiredResponse(responseId)) {
+                acceptResponseIdentity(responseId)
+                if (responseId != null && audioId != null && responseId != audioId) retireResponse(audioId)
                 waitForAudioStart = false
                 if (!audioActive || (responseId != null && responseId != audioId)) {
                     audioId = responseId
@@ -313,17 +362,21 @@ class VolcRealtimeSession internal constructor(
                 }
             }
             VolcRealtimeProtocol.AUDIO_DELTA -> {
-                if (waitForAudioStart || (responseId != null && responseId == interruptedAudioId)) return
+                if (waitForAudioStart || isRetiredResponse(responseId)) return
                 val pcm = VolcRealtimeProtocol.pcm(frame) ?: run { invalidFrame(); return }
                 if (pcm.isEmpty()) return
+                acceptResponseIdentity(responseId)
                 if (!audioActive) {
                     audioActive = true
                     publish(VolcRealtimeEvent.AssistantAudioStarted)
                 }
-                if (responseId != null) audioId = responseId
+                if (responseId != null) {
+                    if (audioId != null && responseId != audioId) retireResponse(audioId)
+                    audioId = responseId
+                }
                 publish(VolcRealtimeEvent.Audio(pcm))
             }
-            VolcRealtimeProtocol.AUDIO_DONE -> if (audioActive && (responseId == null || responseId == audioId || audioId == null)) {
+            VolcRealtimeProtocol.AUDIO_DONE -> if (!isRetiredResponse(responseId) && audioActive && (responseId == null || responseId == audioId || audioId == null)) {
                 audioActive = false
                 audioId = null
                 publish(VolcRealtimeEvent.AssistantAudioEnded)
@@ -331,7 +384,7 @@ class VolcRealtimeSession internal constructor(
             VolcRealtimeProtocol.CANCELED -> {
                 // A late cancellation for an older response must not flush the replacement.
                 val currentId = audioId
-                if (responseId != null && (responseId == interruptedAudioId ||
+                if (responseId != null && (isRetiredResponse(responseId) ||
                         (currentId != null && responseId != currentId))) return
                 interruptAudio()
                 publish(VolcRealtimeEvent.AssistantInterrupted)
@@ -339,9 +392,41 @@ class VolcRealtimeSession internal constructor(
         }
     }
 
+    private fun userItem(id: String): UserItemState {
+        userItems[id]?.let { return it }
+        if (userItems.size >= MAX_TRACKED_USER_ITEMS) {
+            val oldest = userItems.keys.firstOrNull { it != currentUserItem } ?: userItems.keys.first()
+            userItems.remove(oldest)
+        }
+        return UserItemState().also { userItems[id] = it }
+    }
+
+    private fun finishCurrentUser() {
+        currentUserItem = null
+        userText = StringBuilder()
+        userTurnActive = false
+    }
+
+    private fun isRetiredResponse(id: String?): Boolean = id != null && id in retiredResponseIds
+
+    private fun acceptResponseIdentity(id: String?) {
+        if (id == null) return
+        if (lastResponseId != null && id != lastResponseId) retireResponse(lastResponseId)
+        lastResponseId = id
+    }
+
+    private fun retireResponse(id: String?) {
+        if (id == null) return
+        retiredResponseIds.add(id)
+        if (retiredResponseIds.size > MAX_RETIRED_RESPONSES) retiredResponseIds.remove(retiredResponseIds.first())
+    }
+
     private fun interruptAudio() {
+        // Text can arrive before synthesis starts. Retire that observed identity too.
+        retireResponse(lastResponseId)
+        lastResponseId = null
         if (!audioActive) return
-        interruptedAudioId = audioId
+        retireResponse(audioId)
         audioActive = false
         audioId = null
         waitForAudioStart = true
@@ -407,6 +492,8 @@ class VolcRealtimeSession internal constructor(
     private companion object {
         const val MAX_SEND_QUEUE_BYTES = 32 * 1024 // Well below OkHttp's 16 MiB default WebSocket queue.
         const val MAX_TRANSCRIPT_CHARS = 16_384
+        const val MAX_TRACKED_USER_ITEMS = 64
+        const val MAX_RETIRED_RESPONSES = 64
         val cleanupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }
 }

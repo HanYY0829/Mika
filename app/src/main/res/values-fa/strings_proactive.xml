@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="proactive_title">پیش‌دستی (آزمایشی)</string>
+    <string name="proactive_title">پیش‌دستی</string>
     <string name="proactive_entry_sub">اعلان‌های برنامه‌هایی را که انتخاب می‌کنید می‌خواند</string>
     <string name="proactive_switch">روشن کردن</string>
     <string name="proactive_listener">شنونده: %1$s</string>

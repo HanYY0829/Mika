@@ -283,6 +283,9 @@
     <string name="pip_closed_hint">Закрыто для этой задачи. Нажмите «Показать экран» справа внизу или откройте «Фоновые экраны» в боковом меню.</string>
     <string name="chat_conversation_tokens">Этот чат: %1$s</string>
     <string name="chat_conversation_tokens_partial">Этот чат: не меньше %1$s</string>
+    <string name="chat_task_cost_estimate">Около %1$s</string>
+    <string name="chat_task_cost_partial">%1$s (частично)</string>
+    <string name="chat_task_cost_unavailable">Не удалось оценить стоимость</string>
     <string name="follow_up_steer">Направить</string>
     <string name="follow_up_queue">В очередь</string>
     <string name="follow_up_steer_hint">Следующий шаг учтёт это в текущей задаче</string>

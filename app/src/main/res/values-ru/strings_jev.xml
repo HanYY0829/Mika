@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jev_title">Модель решений · Jev</string>
+    <string name="jev_row_sub">Необязательная оценка намерений и выбор маршрутов</string>
+    <string name="jev_enabled">Использовать модель решений</string>
+    <string name="jev_privacy">При включении ваш запрос, контекст недавнего разговора и возможные маршруты отправляются настроенному провайдеру для определения намерения и выбора маршрута. При сбое Mika использует прежнюю модель. Основная, визуальная и лёгкая модели настраиваются отдельно.</string>
+    <string name="jev_provider">Провайдер</string>
+    <string name="jev_endpoint">Адрес API</string>
+    <string name="jev_model">ID модели</string>
+    <string name="jev_endpoint_note">Введите полный URL конечной точки SystemOne. Требуется HTTPS, кроме локальных HTTP-сервисов. Ключ API хранится на устройстве в зашифрованном виде.</string>
+    <string name="jev_invalid">Введите корректный адрес API и ID модели. Для включения или проверки также нужен ключ API.</string>
+    <string name="jev_apply_note">Сохраните настройки, чтобы включение и параметры подключения применялись к новым задачам.</string>
+    <string name="jev_test">Проверить подключение</string>
+    <string name="jev_test_note">Проверка отправляет на этот адрес только фиксированное приветствие и два варианта ответа. Она не отправляет разговоры, экраны или воспоминания, не сохраняет изменения и не включает сервис.</string>
+    <string name="jev_test_success">Подключение работает, тестовый выбор верен.</string>
+    <string name="jev_test_failed">Проверка не удалась. Проверьте адрес API, модель, ключ API и сеть.</string>
+    <string name="jev_saved">Сохранено. Новые задачи будут использовать эти настройки.</string>
+    <string name="jev_save_failed">Не удалось сохранить. Ранее сохранённые настройки не изменились.</string>
+</resources>

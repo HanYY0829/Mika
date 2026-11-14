@@ -162,7 +162,7 @@ class GeminiModelTest {
 
     @Test fun mapsErrors() = runTest {
         assertTrue(errorOf(400, err(400, "INVALID_ARGUMENT", "The input token count (2000000) exceeds the maximum number of tokens allowed (1048576).")) is ModelError.ContextTooLong)
-        assertTrue(errorOf(400, err(400, "INVALID_ARGUMENT", "bad field")) is ModelError.BadResponse)
+        assertTrue(errorOf(400, err(400, "INVALID_ARGUMENT", "bad field")) is ModelError.Server)
         assertTrue(errorOf(401, err(401, "UNAUTHENTICATED", "no")) is ModelError.Auth)
         assertTrue(errorOf(403, err(403, "PERMISSION_DENIED", "no")) is ModelError.Auth)
         val rl = errorOf(429, err(429, "RESOURCE_EXHAUSTED", "slow down"), "Retry-After" to "3")

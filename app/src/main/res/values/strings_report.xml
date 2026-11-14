@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="report_title">Task report</string>
+    <string name="report_entry_hint">Results · Details · Screenshots</string>
+    <string name="report_no_answer">No final answer was saved for this task.</string>
+    <string name="report_screens">Key screenshots</string>
+    <string name="report_view_step">Step %1$d · Open replay</string>
+    <string name="report_local_note">Saved locally with the run record. Screenshots may contain page content; only the latest 30 runs are retained.</string>
+    <string name="playback_title">Operation replay</string>
+    <string name="playback_empty">No screenshots were recorded for this task.</string>
+    <string name="playback_legacy">Older record: screenshots only, without action markers.</string>
+    <string name="playback_approximate">Arrow indicates scroll direction, not exact touch points.</string>
+    <string name="playback_marks">Red circle: tap · Arrow: swipe</string>
+    <string name="playback_progress">Replay progress</string>
+    <string name="playback_pause">Pause</string>
+    <string name="playback_play">Play</string>
+    <string name="playback_previous">Previous</string>
+    <string name="playback_next">Next</string>
+    <string name="playback_image">Recorded task screenshot</string>
+    <string name="playback_missing">Screenshot unavailable</string>
+    <string name="report_export">Export</string>
+    <string name="report_saved">Report saved</string>
+    <string name="report_save_failed">Could not save. Check the record and destination, then retry.</string>
+    <string name="report_close">Close</string>
+    <string name="report_final_page">Final recorded page</string>
+    <string name="playback_stage_start">Start</string>
+    <string name="playback_stage_input">Input and search</string>
+    <string name="playback_skipped">Unavailable frames skipped: %1$d.</string>
+    <string name="playback_no_mark">No action marker was recorded for this operation.</string>
+    <string name="playback_error_unknown">Error: no specific reason was recorded.</string>
+    <string name="playback_result">Operation result</string>
+    <string name="playback_element_click">Circle shows the estimated element location, not an actual touch point.</string>
+</resources>

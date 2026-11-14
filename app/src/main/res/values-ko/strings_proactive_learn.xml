@@ -20,6 +20,9 @@
     <string name="proactive_learn_topic_detail">%1$s · %2$s · %3$d일 · 마지막 %4$s</string>
     <string name="proactive_learn_topic_outcomes">앱 %1$d개 · 열어 봄 %2$d · 지움 %3$d</string>
     <string name="proactive_learn_delete">삭제</string>
+    <string name="proactive_learn_topic_merge">합치기…</string>
+    <string name="proactive_learn_topic_merge_title">“%1$s”을(를) 합칠 주제</string>
+    <string name="proactive_learn_topic_merge_body">이 주제의 날짜와 횟수가 선택한 주제에 더해지고, 앞으로 이 이름도 그쪽으로 셉니다. 되돌릴 수 없습니다.</string>
     <string name="proactive_learn_clear_all">Mika가 모은 내용 모두 지우기</string>
     <string name="proactive_learn_clear_all_body">Mika가 모은 모든 주제, 연락처, 요약과 저장된 알림 텍스트를 삭제할까요? 되돌릴 수 없습니다. 이후 새 알림에서 다시 모으기 시작합니다.</string>
     <string name="proactive_learn_clear_app">%1$s에서 온 것 지우기</string>

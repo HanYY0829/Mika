@@ -28,10 +28,14 @@ import com.wangzan101.mika.shell.IMikaShell
  * 由 [com.wangzan101.mika.cap.phone.PhoneServices] 建一份(助手只认一个进程里的一个落点),
  * [BuiltinShellConnection] 和看门狗都看它的 [shell]。
  */
-class HelperHub(context: Context) {
+class HelperHub internal constructor(
+    context: Context,
+    private val directoryStore: com.wangzan101.mika.settings.DeviceDirectoryStore = com.wangzan101.mika.settings.DeviceDirectoryStore.get(context),
+    initialShell: IMikaShell? = null,
+) {
     private val app = context.applicationContext
 
-    private val _shell = MutableStateFlow<IMikaShell?>(null)
+    private val _shell = MutableStateFlow<IMikaShell?>(initialShell)
     /** 现在手里的助手接口;助手进程死了就变回 null。 */
     val shell: StateFlow<IMikaShell?> = _shell.asStateFlow()
 
@@ -49,6 +53,54 @@ class HelperHub(context: Context) {
         val sh = shell.value ?: throw IOException("phone helper is not running")
         return sh.openDevtoolsSocket(endpoint)
     }
+
+    private val deviceFilesLock = Any()
+    private val deviceFilesSession = java.util.UUID.randomUUID().toString()
+
+    /** Synchronize on every call, including after helper reconnection; never fall back to an old policy. */
+    fun syncDeviceFiles(): Boolean = synchronized(deviceFilesLock) {
+        val sh = shell.value ?: run { directoryStore.clearSync(); return@synchronized false }
+        val snapshot = try { directoryStore.authorizationSnapshot() } catch (_: Exception) {
+            directoryStore.clearSync(); return@synchronized false
+        }
+        syncDeviceFilesLocked(sh, snapshot)
+    }
+
+    private fun syncDeviceFilesLocked(sh: IMikaShell, snapshot: com.wangzan101.mika.settings.DeviceDirectoryAuthorizationSnapshot): Boolean {
+        return try {
+            val result = sh.setDeviceFilePolicy(1, deviceFilesSession, snapshot.revision, snapshot.directories.map { it.path }.toTypedArray(),
+                snapshot.directories.map { it.includeSubdirectories }.toBooleanArray())
+            val ok = result?.getString("status") == "ok" && result.getInt("protocol") == 1 &&
+                result.getString("session") == deviceFilesSession && result.getLong("revision", -1) == snapshot.revision &&
+                shell.value === sh && directoryStore.acknowledgeSynced(snapshot.revision)
+            if (!ok) directoryStore.clearSync()
+            ok
+        } catch (_: Exception) { directoryStore.clearSync(); false }
+    }
+
+    private inline fun deviceFileCall(block: (IMikaShell) -> Bundle): Bundle = synchronized(deviceFilesLock) {
+        val sh = shell.value ?: return@synchronized Bundle().apply { putString("status", "policy_unsynced") }
+        val snapshot = try { directoryStore.authorizationSnapshot() } catch (_: Exception) {
+            directoryStore.clearSync(); return@synchronized Bundle().apply { putString("status", "policy_unsynced") }
+        }
+        if (!syncDeviceFilesLocked(sh, snapshot)) return@synchronized Bundle().apply { putString("status", "policy_unsynced") }
+        val response = block(sh)
+        val revision = try { directoryStore.authorizationSnapshot().revision } catch (_: Exception) { null }
+        if (shell.value !== sh || revision != snapshot.revision) {
+            response.getParcelable<ParcelFileDescriptor>("fd")?.close()
+            directoryStore.clearSync()
+            Bundle().apply { putString("status", "policy_changed") }
+        } else response
+    }
+
+    /** 以助手的 shell 权限列目录;字段及错误见 IMikaShell.listFiles。 */
+    fun listFiles(path: String, afterName: String?, limit: Int): Bundle = deviceFileCall { it.listFiles(path, afterName, limit) }
+
+    fun searchFiles(path: String, name: String?, extension: String?, after: Long, before: Long, depth: Int, entries: Int, timeout: Int): Bundle =
+        deviceFileCall { it.searchFiles(path, name, extension, after, before, depth, entries, timeout) }
+
+    /** 成功时调用方须关闭返回的 fd。 */
+    fun openFile(path: String): Bundle = deviceFileCall { it.openFile(path) }
 
     /** 交给助手的本进程令牌:Mika 进程一死,助手就从它的死亡通知得知,撤掉 Mika 留下的改动。 */
     private val token = Binder()
@@ -70,7 +122,10 @@ class HelperHub(context: Context) {
     fun forget() {
         nonces.clear()
         handoffDiagnostics.clear()
-        _shell.value = null
+        synchronized(deviceFilesLock) {
+            _shell.value = null
+            directoryStore.clearSync()
+        }
     }
 
     /**
@@ -99,13 +154,16 @@ class HelperHub(context: Context) {
         }
         val next = gate.accept(nonce) ?: return reject(callingUid, HelperHandoff.Reject.BadNonce)
         try {
-            binder.linkToDeath({ _shell.compareAndSet(shell, null) }, 0)
+            binder.linkToDeath({ synchronized(deviceFilesLock) { if (_shell.compareAndSet(shell, null)) directoryStore.clearSync() } }, 0)
         } catch (e: Exception) {
             return reject(callingUid, HelperHandoff.Reject.NoBinder)
         }
         // 换了新的助手:旧的随后会被新的结束,它的死亡通知因为不是当前这个而被忽略
         handoffDiagnostics.clear()
-        _shell.value = shell
+        synchronized(deviceFilesLock) {
+            directoryStore.clearSync()
+            _shell.value = shell
+        }
         if (extras?.containsKey(HelperHandoff.KEY_RESTORED_AT) == true) {
             _restores.value = HelperRestoreReport(
                 extras.getLong(HelperHandoff.KEY_RESTORED_AT), extras.getInt(HelperHandoff.KEY_RESTORES), extras.getLong(HelperHandoff.KEY_GAVE_UP_AT),

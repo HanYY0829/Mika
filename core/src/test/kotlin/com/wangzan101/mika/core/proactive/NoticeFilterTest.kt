@@ -14,6 +14,13 @@ class NoticeFilterTest {
     private fun decide(r: NoticeRecord, whitelist: Set<String> = white, blocked: Set<String> = emptySet()) =
         NoticeFilter.decide(r, whitelist, blocked)
 
+    @Test fun authenticationMessagesNeverEnterTheNotificationInbox() {
+        for (text in listOf("【示例服务】账户7788登录验证码：246810", "Your login code is 246810", "OTP: 246810")) {
+            assertEquals(NoticeDecision.AuthenticationSecret, decide(base.copy(text = text)))
+            assertEquals(NoticeDecision.AuthenticationSecret, decide(base.copy(text = "", messages = listOf(NoticeMessage(null, text, 1)))))
+        }
+    }
+
     @Test fun keepsAnOrdinaryWhitelistedMessage() = assertEquals(NoticeDecision.Keep, decide(base))
 
     @Test fun emptyWhitelistDropsEverything() = assertEquals(NoticeDecision.NotWhitelisted, decide(base, emptySet()))

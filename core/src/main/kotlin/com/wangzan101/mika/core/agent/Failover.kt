@@ -1,0 +1,30 @@
+package com.wangzan101.mika.core.agent
+
+import com.wangzan101.mika.core.model.ModelError
+
+/**
+ * 主模型链的切换决策(项目 3):主模型这一步失败后,要不要换链上的下一个、换哪一个。纯函数,便于单测。
+ * 原则:错误出在这个模型或账号身上(Key、额度、模型名、没开通、不支持工具、套餐资格)重试也没用,立刻换;
+ * 一时的故障(限流、5xx、网络、流断、代理连不上)先由 [RetryPolicy] 在同一个模型上重试,
+ * [ModelCaller.complete] 放弃之后到这里,同样换下一个。本任务预算用完换谁都没用,不换;
+ * 服务商的每日预算只挡那一家:换不同家的才有用,同家的跳过。内容被拒、回复解析不了、思考强度被拒不换
+ * (换个模型多半一样;上下文超长另有压缩处理),原样交出,失败说法和没有备援时一致。
+ */
+internal object Failover {
+    /**
+     * [e] 是链上第 [fromIndex] 个模型失败的错误;[tags] 与链平行,是各自的服务商名
+     * (与 [ModelError.DailyBudgetExceeded.providerName] 同源),可为空表。返回下一个要试的下标,不换为 null。
+     */
+    fun nextIndex(e: ModelError, fromIndex: Int, tags: List<String?>, chainSize: Int): Int? = when (e) {
+        is ModelError.TaskBudgetExceeded -> null
+        is ModelError.DailyBudgetExceeded ->
+            (fromIndex + 1 until chainSize).firstOrNull { tags.getOrNull(it) != null && tags[it] != e.providerName }
+        is ModelError.QuotaExceeded, is ModelError.Auth, is ModelError.ModelNotFound, is ModelError.ModelNotAvailable,
+        is ModelError.ToolsUnsupported, is ModelError.SignInExpired, is ModelError.AccountPlanNotAllowed,
+        is ModelError.ChatGptLimitReached, is ModelError.ChatGptNotEligible,
+        is ModelError.RateLimited, is ModelError.Network, is ModelError.StreamCut,
+        is ModelError.Server, is ModelError.Proxy ->
+            (fromIndex + 1).takeIf { it < chainSize }
+        else -> null
+    }
+}

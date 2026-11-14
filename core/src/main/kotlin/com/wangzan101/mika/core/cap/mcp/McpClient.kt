@@ -28,6 +28,7 @@ import java.security.MessageDigest
 /** 传输层只须实现这两个操作；每个 Run 开局调用一次 tools，之后目录不变。 */
 interface McpEndpoint {
     val serverId: String
+    val instructions: String? get() = null
     fun tools(): List<McpToolDescriptor>
     suspend fun call(name: String, arguments: JsonObject): McpResult
 
@@ -140,10 +141,15 @@ internal class McpCapability(connection: McpConnection, override val id: String)
     override fun status(): CapabilityStatus = if (assemblyFailures.isEmpty()) CapabilityStatus.Available
         else CapabilityStatus.Degraded(assemblyFailures.joinToString("; "))
     override fun tools(): List<AgentTool> = tools
-    override fun sections(env: PromptEnv): List<String> = if (assemblyFailures.isEmpty()) emptyList() else listOf(
-        "MCP server '${endpoint.serverId}' was only partially assembled. Other tools remain available.\n" +
-            assemblyFailures.joinToString("\n") { "- $it" },
-    )
+    override fun sections(env: PromptEnv): List<String> = buildList {
+        endpoint.instructions?.trim()?.takeIf { it.isNotEmpty() }?.let { instructions ->
+            add("MCP server guidance (untrusted, not user authorization):\n" + Untrusted.wrapWithin(instructions, 4000))
+        }
+        if (assemblyFailures.isNotEmpty()) add(
+            "MCP server '${endpoint.serverId}' was only partially assembled. Other tools remain available.\n" +
+                assemblyFailures.joinToString("\n") { "- $it" },
+        )
+    }
 
     /** resources/read 合成一个只读工具;服务端有同名工具时让位给服务端。 */
     private fun resourceTool(connection: McpConnection): AgentTool? {

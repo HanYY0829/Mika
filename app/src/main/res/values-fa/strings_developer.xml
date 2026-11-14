@@ -27,4 +27,6 @@
     <string name="dev_run_log">سوابق اجرا</string>
     <string name="dev_screen_tables">جدول عناصر صفحهٔ جدید</string>
     <string name="dev_screen_tables_sub">در نخستین خواندن صفحه، فیلدهای تکراری به شکل ستون فرستاده می‌شوند. ارجاع عناصر و درخت کامل حفظ می‌شوند.</string>
+    <string name="dev_device_files">وارد کردن فایل‌های دستگاه</string>
+    <string name="dev_device_files_sub">به میکا اجازه دهید فایل‌ها را از فضای ذخیره‌سازی مشترک دستگاه به فضای کاری کپی کند. تغییرات برای کارهای جدید اعمال می‌شوند.</string>
 </resources>

@@ -247,6 +247,9 @@
     <string name="pip_closed_hint">Ditutup untuk tugas ini. Ketuk “Tampilkan layar” di kanan bawah, atau buka “Layar latar belakang” di menu samping.</string>
     <string name="chat_conversation_tokens">Percakapan ini: %1$s</string>
     <string name="chat_conversation_tokens_partial">Percakapan ini: setidaknya %1$s</string>
+    <string name="chat_task_cost_estimate">Perkiraan %1$s</string>
+    <string name="chat_task_cost_partial">%1$s (sebagian)</string>
+    <string name="chat_task_cost_unavailable">Biaya tidak tersedia</string>
     <string name="follow_up_steer">Arahkan</string>
     <string name="follow_up_queue">Antrekan</string>
     <string name="follow_up_steer_hint">Langkah berikutnya akan menyesuaikan tugas saat ini</string>

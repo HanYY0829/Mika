@@ -20,6 +20,8 @@
     <string name="tool_find_element">العثور على عنصر على الشاشة</string>
     <string name="tool_collect">الجمع عبر الشاشات</string>
     <string name="tool_phone_run">تنفيذ عدة إجراءات على الهاتف</string>
+    <string name="tool_list_device_files">تصفح ملفات الجهاز</string>
+    <string name="tool_copy_device_file">نسخ ملف من الجهاز</string>
     <string name="tool_process_files">العمل مع الملفات</string>
     <string name="tool_run_script">تشغيل نص برمجي مضمّن</string>
     <string name="tool_read_file">قراءة ملف</string>

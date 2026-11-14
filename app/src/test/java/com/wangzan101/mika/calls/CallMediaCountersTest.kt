@@ -85,6 +85,17 @@ class CallMediaCountersTest {
         assertFalse(report.supportSummary().contains("private"))
     }
 
+    @Test fun lateFinalIsCountedAsHistoryWithoutReclassifyingCurrentSpeech() {
+        val counters = CallMediaCounters(measureInputSignal = false)
+        counters.eventReceived(VolcRealtimeEvent.UserSpeaking)
+        counters.eventReceived(VolcRealtimeEvent.UserTranscript("late historical final", isFinal = true, isCurrentTurn = false))
+        assertEquals(1L, counters.recordReport()?.completeTranscripts)
+        assertEquals(CallAudioReport.Turn.SPEECH_DETECTED, counters.recordReport()?.lastObservedTurn)
+        counters.eventReceived(VolcRealtimeEvent.UserTranscript("current final", isFinal = true))
+        assertEquals(2L, counters.recordReport()?.completeTranscripts)
+        assertEquals(CallAudioReport.Turn.TRANSCRIPT_RECEIVED, counters.recordReport()?.lastObservedTurn)
+    }
+
     @Test fun inputAfterTheLatestReplyIsMeasuredSeparatelyFromEarlierSpeechAndRecognitionFailures() {
         val counters = CallMediaCounters()
         counters.inputAccepted(pcm(400, -400), 100_000_000L)

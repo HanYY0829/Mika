@@ -45,14 +45,50 @@ class LearnPrefsTest {
         assertEquals(emptySet<String>(), p.topicPurges)
         assertEquals(emptySet<String>(), p.contactPurges)
         assertEquals(emptySet<String>(), p.digestPurges)
-        p.topicPurges = setOf(LearnRunner.PURGE_SENSITIVE, "com.chat")
-        p.contactPurges = setOf("com.chat")
+        // 记着的合并(两个话题 id,中间一个 >)也原样存、原样读
+        val merge = ":merge:k0123456789ab>kba9876543210"
+        p.topicPurges = setOf(LearnRunner.PURGE_SENSITIVE, "com.chat", merge)
+        p.contactPurges = setOf("com.chat", merge)
         p.digestPurges = setOf("com.chat", "com.shop")
         val back = ProactivePrefs(raw)
-        assertEquals(setOf(LearnRunner.PURGE_SENSITIVE, "com.chat"), back.topicPurges)
-        assertEquals(setOf("com.chat"), back.contactPurges)
+        assertEquals(setOf(LearnRunner.PURGE_SENSITIVE, "com.chat", merge), back.topicPurges)
+        assertEquals(setOf("com.chat", merge), back.contactPurges)
         assertEquals(setOf("com.chat", "com.shop"), back.digestPurges)
         back.topicPurges = emptySet()
         assertEquals(emptySet<String>(), ProactivePrefs(raw).topicPurges)
+    }
+
+    // 话题、联系人上记着的要照先后补做:先后也得存下来(偏好里的字符串集合自己不保先后)
+    @Test fun pendingPurgesKeepTheirOrder() {
+        val raw = FeatureFlagsCapsuleTest.MemoryPrefs()
+        val p = ProactivePrefs(raw)
+        val marks = (0 until 40).map { ":topic:k%012d".format((it * 7919) % 1000) } + listOf("com.chat", ":merge:kaaaaaaaaaaaa>kbbbbbbbbbbbb")
+        var set = emptySet<String>()
+        for (m in marks) { set = set - m + m; p.topicPurges = set }
+        assertEquals(marks, ProactivePrefs(raw).topicPurges.toList())
+        // 划掉几个之后剩下的先后不变
+        val struck = setOf(marks[3], marks[17])
+        p.topicPurges = p.topicPurges - struck
+        assertEquals(marks - struck, ProactivePrefs(raw).topicPurges.toList())
+        // 只认集合的旧版本写的(没有先后那一项):照常读得出来,只是不分先后
+        val old = FeatureFlagsCapsuleTest.MemoryPrefs()
+        old.edit().putStringSet("learn_purge_topics", setOf("com.a", ":topic:k1")).commit()
+        assertEquals(setOf("com.a", ":topic:k1"), ProactivePrefs(old).topicPurges)
+        // 旧版本后来又改过集合、先后那一项对不上了:只认集合
+        raw.edit().putStringSet("learn_purge_topics", setOf("com.z")).commit()
+        assertEquals(setOf("com.z"), ProactivePrefs(raw).topicPurges)
+    }
+
+    // 一次合并两份都要记:一次写上,排在各自的末尾
+    @Test fun aMergeIsRecordedOnBothListsAtOnce() {
+        val raw = FeatureFlagsCapsuleTest.MemoryPrefs()
+        val p = ProactivePrefs(raw)
+        p.topicPurges = setOf(":topic:k1")
+        p.contactPurges = setOf("com.chat")
+        val merge = ":merge:k0123456789ab>kba9876543210"
+        p.addToTopicsAndContacts(merge)
+        val back = ProactivePrefs(raw)
+        assertEquals(listOf(":topic:k1", merge), back.topicPurges.toList())
+        assertEquals(listOf("com.chat", merge), back.contactPurges.toList())
     }
 }

@@ -5,6 +5,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NoticeHintsTest {
+    // 认出来是状态显示的通知:提醒拿掉,但不是用户处理掉的,不记「没看就处理了」
+    @Test fun aWithdrawnHintIsNotCountedAsDismissedUnseen() {
+        val h = NoticeHints()
+        val a = rec("a", pkg = "p1")
+        h.sync(listOf(a), surface(a), triageOn = true)
+        assertEquals(1, h.state.value.list.size)
+        h.withdraw("a")
+        assertTrue(h.state.value.list.isEmpty())
+        assertEquals(0, h.state.value.dismissedUnseenTotal)
+        h.withdraw("nothing")
+    }
+
     private fun rec(key: String, posted: Long = 1, pkg: String = "p", text: String = "x") = NoticeRecord(key, pkg, posted, "t-$key", text)
     private fun done(posted: Long, d: TriageDecision, reason: String = "why") = TriageMark.Done(posted, TriageVerdict(d, reason))
     private fun surface(vararg rs: NoticeRecord) = rs.associate { it.key to done(it.postedAtMs, TriageDecision.Surface) }

@@ -421,6 +421,27 @@ class ContractTests(unittest.TestCase):
         connect.assert_not_called()
         self.assertFalse(error.exception.uncertain)
 
+    def test_tls_validates_the_address_it_dials_not_the_setup_one(self):
+        # HTTPSConnection.connect dials through its own super(), which here resolves to
+        # PrivateHTTPConnection.connect, so the checked dial must still be the one that runs
+        # after setup. Reordering the bases or overriding connect would silently skip it.
+        host, port = "phone.example.test", self.server.server_port
+        resolve, answers = socket.getaddrinfo, iter(("127.0.0.1", "203.0.113.9"))
+
+        def changing_dns(name, port, *args, **kwargs):
+            return resolve(next(answers, "203.0.113.9") if name == host else name, port, *args, **kwargs)
+
+        with patch.object(socket, "getaddrinfo", side_effect=changing_dns):
+            api = MikaApi(f"https://{host}:{port}", "test-token")  # setup resolves a private address
+        public = [(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", ("203.0.113.9", port))]
+        with patch.object(socket, "getaddrinfo", return_value=public), \
+                patch.object(socket.socket, "connect") as connect:
+            with self.assertRaises(ApiError) as error:
+                api.request("GET")
+        connect.assert_not_called()
+        self.assertEqual("invalid_private_address", error.exception.code)
+        self.assertFalse(error.exception.uncertain)
+
     def test_tls_keeps_original_hostname_after_address_validation(self):
         host = "phone.example.test"
         port = self.server.server_port

@@ -60,6 +60,8 @@ class DocsConsistencyTest {
     private val notIdentifier = Regex("""[\s<>*…{}()=:"'$,;|#]""")
     private val pathExtensions = setOf("kt", "kts", "java", "md", "json", "xml", "txt", "yml", "yaml", "gradle", "toml", "properties", "py", "sh", "js", "html", "pro", "aidl", "cpp", "h")
     private val tool = Regex("""[a-z][a-z0-9]*(_[a-z0-9]+)+""")
+    // 状态码不是模型工具名,即使其前缀与工具相同。
+    private val nonToolNames = setOf("copy_not_found", "copy_not_opened")
     private val classLike = Regex("""[A-Z][A-Za-z0-9]*""")
 
     private val toolNames: Set<String> by lazy { knownToolNames() }
@@ -125,7 +127,7 @@ class DocsConsistencyTest {
             if (notIdentifier.containsMatchIn(s)) return@mapNotNull null
             when {
                 isPath(s) -> if (pathExists(s)) null else "$rel: 路径 `$s` 在仓库里找不到"
-                tool.matches(s) -> if (s in remoteApiNames || s.substringBefore('_') !in toolPrefixes || s in toolNames) null else "$rel: 工具名 `$s` 不在现有工具里"
+                tool.matches(s) -> if (s in remoteApiNames || s in nonToolNames || s.substringBefore('_') !in toolPrefixes || s in toolNames) null else "$rel: 工具名 `$s` 不在现有工具里"
                 classLike.matches(s) && s.count { it.isUpperCase() } >= 2 && s.any { it.isLowerCase() } ->
                     if (classExists(s) || importedFromOutside(s)) null else "$rel: 类名 `$s` 在 core/app 的源码里找不到"
                 else -> null

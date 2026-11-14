@@ -27,4 +27,6 @@
     <string name="dev_run_log">執行記錄</string>
     <string name="dev_screen_tables">新畫面元素表格</string>
     <string name="dev_screen_tables_sub">首次讀取畫面時，將重複欄位寫成表格；保留元素參照和完整介面樹。</string>
+    <string name="dev_device_files">匯入手機檔案</string>
+    <string name="dev_device_files_sub">允許 Mika 將手機共用儲存空間中的檔案複製到工作區。變更對新任務生效。</string>
 </resources>

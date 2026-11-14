@@ -247,6 +247,9 @@
     <string name="pip_closed_hint">這個任務不再浮出小畫面。點右下角「顯示畫面」，或在側欄「背景螢幕」裡看。</string>
     <string name="chat_conversation_tokens">本對話共 %1$s</string>
     <string name="chat_conversation_tokens_partial">本對話至少 %1$s</string>
+    <string name="chat_task_cost_estimate">約 %1$s</string>
+    <string name="chat_task_cost_partial">%1$s（部分）</string>
+    <string name="chat_task_cost_unavailable">暫無法估算費用</string>
     <string name="follow_up_steer">引導</string>
     <string name="follow_up_queue">排隊</string>
     <string name="follow_up_steer_hint">下一步就按這句話調整</string>

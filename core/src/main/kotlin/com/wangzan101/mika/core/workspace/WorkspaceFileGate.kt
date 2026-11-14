@@ -51,6 +51,33 @@ class WorkspaceFileGate(private val sys: FdSys) {
         open(root, rel, under, OpenHow.READ, createDirs = false).use { it.delete() }
     }
 
+    /** Publish a complete private file without replacing any existing entry. */
+    fun publishNoReplace(stagingRoot: File, stagingRel: String, expected: FdStat, root: File, rel: String) {
+        val source = segments(stagingRel)
+        val dest = segments(rel)
+        if (source.isEmpty() || dest.isEmpty()) throw notAFile()
+        fun same(a: FdStat?, b: FdStat) = a != null && a.kind == FdStat.Kind.FILE && a.dev == b.dev && a.ino == b.ino
+        anchored(stagingRoot, source.dropLast(1), create = false) { sourceRoot, sourceDir ->
+            file(sourceDir, source.last(), OpenHow.READ).use { staged ->
+                val initial = verify(staged, sourceRoot, sourceDir, source.last())
+                if (!same(initial, expected) || !same(sys.lstat(sourceDir, source.last()), initial)) {
+                    throw IOException("staged file changed")
+                }
+                anchored(root, dest.dropLast(1), create = false) { rootReal, targetDir ->
+                    val expectedDir = if (dest.size == 1) rootReal else rootReal.trimEnd('/') + "/" + dest.dropLast(1).joinToString("/")
+                    if (targetDir.realPath() != expectedDir) throw outside()
+                    try { sys.link(sourceDir, source.last(), targetDir, dest.last()) }
+                    catch (e: FdSysException) { throw map(e, dirStep = false) }
+                    sys.remove(sourceDir, source.last())
+                    file(targetDir, dest.last(), OpenHow.READ).use { published ->
+                        val actual = verify(published, rootReal, targetDir, dest.last())
+                        if (!same(actual, initial) || targetDir.realPath() != expectedDir) throw IOException("published file changed")
+                    }
+                }
+            }
+        }
+    }
+
     /** 建好目录(逐段,不跟随链接)。 */
     fun mkdirs(root: File, rel: String) {
         anchored(root, segments(rel), create = true) { _, _ -> }
@@ -117,6 +144,8 @@ class WorkspaceFileGate(private val sys: FdSys) {
         val st = sys.lstat(dir, name) ?: return
         if (st.kind == FdStat.Kind.DIR) {
             if (depth > MAX_DEPTH) throw IOException("directory tree too deep to delete")
+            // 打开前先按名字把目录改成可写(不打开、不跟链接):只读目录也能打开再删,而不是卡在 EACCES(#629)。
+            runCatching { sys.chmodAt(dir, name, 448 /* 0700 */) }
             val sub = try { sys.openDir(dir, name, create = false) } catch (e: FdSysException) { null }
             if (sub != null) sub.use {
                 // 删的过程中被挪到根目录外面的,不跟着删

@@ -147,7 +147,7 @@ class ToolGroupsTest {
         // 带着工作区里的文件(附件一行写着 /workspace/ 下的路径)
         assertEquals(listOf("sandbox"), all().preload("总结一下\n附件:/workspace/inbox/a.pdf(12 KB)", emptyList()))
         // 从浏览器页上对着一页问的:那一页已是当前标签
-        val page = com.wangzan101.mika.core.cap.web.AttachedPage.compose(com.wangzan101.mika.core.cap.web.AttachedPage.Page("https://shop.example.com/", "店"), "挑一个")
+        val page = com.wangzan101.mika.core.agent.AttachedPage.compose(com.wangzan101.mika.core.agent.AttachedPage.Page("https://shop.example.com/", "店"), "挑一个")
         assertEquals(listOf("web"), all().preload(page, emptyList()))
         // 设备不支持沙箱:不展开
         val none = toolDispatcher(FakeScreen(), sandbox = FakeSandbox(SandboxStatus.Unsupported("x86")), workspace = { "w" })

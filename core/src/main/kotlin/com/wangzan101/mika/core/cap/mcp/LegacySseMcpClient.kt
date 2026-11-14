@@ -52,7 +52,7 @@ class LegacySseMcpEndpoint private constructor(
     private val prompts: List<McpPromptDescriptor>,
     private val post: suspend (String) -> Response,
     val serverName: String?,
-    val instructions: String?,
+    override val instructions: String?,
 ) : McpEndpoint, Closeable {
 
     override fun tools(): List<McpToolDescriptor> = tools

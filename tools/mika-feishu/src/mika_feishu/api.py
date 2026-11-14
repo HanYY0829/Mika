@@ -62,7 +62,9 @@ class PrivateHTTPConnection(http.client.HTTPConnection):
 
 
 class PrivateHTTPSConnection(http.client.HTTPSConnection, PrivateHTTPConnection):
-    # HTTPSConnection wraps the checked socket, with the original hostname for SNI and verification.
+    # HTTPSConnection.connect calls super().connect(), which resolves against this instance's MRO
+    # to PrivateHTTPConnection.connect, so the per-connect address check still runs; it then wraps
+    # the checked socket with the original hostname for SNI and verification.
     pass
 
 

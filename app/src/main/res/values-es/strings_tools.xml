@@ -20,6 +20,8 @@
     <string name="tool_find_element">Buscar en la pantalla</string>
     <string name="tool_collect">Recopilar de varias pantallas</string>
     <string name="tool_phone_run">Varias acciones en el teléfono</string>
+    <string name="tool_list_device_files">Explorar archivos del dispositivo</string>
+    <string name="tool_copy_device_file">Copiar archivo del dispositivo</string>
     <string name="tool_process_files">Trabajar con archivos</string>
     <string name="tool_run_script">Ejecutar script integrado</string>
     <string name="tool_read_file">Leer archivo</string>

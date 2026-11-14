@@ -20,6 +20,8 @@
     <string name="tool_find_element">查找界面控件</string>
     <string name="tool_collect">采集多屏内容</string>
     <string name="tool_phone_run">连续操作手机</string>
+    <string name="tool_list_device_files">查看设备文件</string>
+    <string name="tool_copy_device_file">复制设备文件</string>
     <string name="tool_process_files">处理文件</string>
     <string name="tool_run_script">运行自带脚本</string>
     <string name="tool_read_file">读文件</string>

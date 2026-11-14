@@ -48,4 +48,42 @@ class OverlayMotionTest {
         }
         assertTrue(finished)
     }
+
+    @Test fun reducedMotionSkipsTheOpenAnimation() = runTest {
+        var animated = false
+        runOverlayOpen(reduceMotion = true) { animated = true }
+        assertFalse(animated)
+    }
+
+    @Test fun normalAnimationFinishesBeforeOpenTimeout() = runTest {
+        val events = mutableListOf<String>()
+        runOverlayOpen(reduceMotion = false) {
+            events += "start"
+            delay(100)
+            events += "end"
+        }
+        events += "settled"
+        assertEquals(listOf("start", "end", "settled"), events)
+    }
+
+    @Test fun missingFramesCannotKeepTheOverlayOpeningForever() = runTest {
+        var returned = false
+        runOverlayOpen(reduceMotion = false) { awaitCancellation() }
+        returned = true
+        assertTrue("浮层拿不到下一帧时也要回到调用方就位", returned)
+    }
+
+    @Test fun openSystemSlowMotionGetsEnoughTimeToFinish() = runTest {
+        var finished = false
+        val slow = object : MotionDurationScale {
+            override val scaleFactor = 10f
+        }
+        withContext(slow) {
+            runOverlayOpen(reduceMotion = false) {
+                delay(1_000)
+                finished = true
+            }
+        }
+        assertTrue(finished)
+    }
 }

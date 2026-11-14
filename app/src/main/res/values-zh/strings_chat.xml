@@ -247,6 +247,9 @@
     <string name="pip_closed_hint">这个任务不再浮出小画面。点右下角「显示画面」，或在侧栏「后台屏」里看。</string>
     <string name="chat_conversation_tokens">本对话共 %1$s</string>
     <string name="chat_conversation_tokens_partial">本对话至少 %1$s</string>
+    <string name="chat_task_cost_estimate">约 %1$s</string>
+    <string name="chat_task_cost_partial">%1$s（部分）</string>
+    <string name="chat_task_cost_unavailable">费用暂不可估</string>
     <string name="follow_up_steer">引导</string>
     <string name="follow_up_queue">排队</string>
     <string name="follow_up_steer_hint">下一步就按这句话调整</string>

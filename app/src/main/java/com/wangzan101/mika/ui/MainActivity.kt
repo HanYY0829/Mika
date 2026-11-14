@@ -80,6 +80,7 @@ import com.wangzan101.mika.ui.theme.MikaTheme
 import com.wangzan101.mika.ui.theme.animationsOff
 import com.wangzan101.mika.ui.theme.appearanceDark
 import com.wangzan101.mika.ui.theme.systemBarsFor
+import com.wangzan101.mika.voice.WakeWordService
 
 class MainActivity : ComponentActivity() {
     private lateinit var monitor: SystemStatusMonitor
@@ -246,6 +247,7 @@ class MainActivity : ComponentActivity() {
         monitor.refresh()
         // 回到前台时按最新设置查一次自动归档(启动时也查过,这里照顾长期不退出的进程)
         (application as MikaApp).autoArchiveNow()
+        WakeWordService.restoreIfRequested(this)
     }
 
     override fun onStop() {
@@ -398,6 +400,8 @@ private fun MikaRoot(
         }
     }
     var runId by rememberSaveable { mutableStateOf<String?>(null) }
+    var reportRunId by rememberSaveable { mutableStateOf<String?>(null) }
+    var playbackScreenshotId by rememberSaveable { mutableStateOf<Int?>(null) }
     var sourceRunId by rememberSaveable { mutableStateOf<String?>(null) }
     var sourceLegacyText by rememberSaveable { mutableStateOf<String?>(null) }
     val status by monitor.status.collectAsState()
@@ -576,6 +580,8 @@ private fun MikaRoot(
                             onOpenFiles = { filesFromDrawer = false; filesConversation = app.chat.ui.value.conversationId; nav.push(Route.Files) },
                             openSettings = { nav.push(Route.Settings) },
                             openRun = { runId = it; nav.push(Route.Run) },
+                            openReport = { reportRunId = it; nav.push(Route.Report) },
+                            openPlayback = { reportRunId = it; playbackScreenshotId = null; nav.push(Route.Playback) },
                             phoneSetupNeeded = phoneSetupNeeded && status.builtinShell != BuiltinShellStatus.Running,
                             openPhoneSetup = { onFix(Fix.OpenPhoneSetup) },
                             loadSource = { id ->
@@ -712,6 +718,15 @@ private fun MikaRoot(
                     alive = { run -> app.taskState.runs.value.any { r -> r.runId.value == run } },
                 ) } }
             if (vm != null) RunTimelineScreen(vm, back) else LaunchedEffect(Unit) { nav.back() }
+        }
+        Route.Report, Route.Playback -> {
+            val id = reportRunId
+            val vm = remember(id) { id?.let { TaskReportViewModel(RunStore(context), it) } }
+            if (vm == null) LaunchedEffect(Unit) { nav.back() }
+            else if (nav.current == Route.Report) TaskReportScreen(vm, back,
+                onReplay = { playbackScreenshotId = it; nav.push(Route.Playback) },
+                onTimeline = { runId = id; nav.push(Route.Run) })
+            else TaskPlaybackScreen(vm, playbackScreenshotId, back)
         }
         Route.Source -> {
             val vm = remember(sourceRunId, sourceLegacyText) {

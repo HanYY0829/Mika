@@ -1,0 +1,15 @@
+<resources>
+    <string name="device_browser_title">Файлы устройства</string>
+    <string name="device_browser_roots">Разрешённые папки</string>
+    <string name="device_browser_back">Назад</string>
+    <string name="device_browser_retry">Не удалось загрузить. Нажмите, чтобы повторить</string>
+    <string name="device_browser_empty">Нет файлов или разрешённых папок</string>
+    <string name="device_browser_more">Загрузить ещё</string>
+    <string name="device_browser_add">Добавить выбранные (%1$d)</string>
+    <string name="device_browser_cancel">Отмена</string>
+    <string name="device_browser_history">Импорт в этом диалоге</string>
+    <string name="device_browser_show_files">Просмотр файлов</string>
+    <string name="device_browser_history_hint">Копии из истории могли быть удалены. Проверьте библиотеку файлов.</string>
+    <string name="device_browser_search">Поиск файлов</string>
+    <string name="device_browser_truncated">Поиск достиг ограничения глубины, времени или числа файлов; результаты могут быть неполными.</string>
+</resources>

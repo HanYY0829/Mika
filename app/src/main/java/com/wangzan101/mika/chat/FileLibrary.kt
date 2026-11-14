@@ -2,7 +2,7 @@ package com.wangzan101.mika.chat
 
 import com.wangzan101.mika.core.agent.AttachmentLines
 import com.wangzan101.mika.core.agent.QuoteMessage
-import com.wangzan101.mika.core.cap.web.AttachedPage
+import com.wangzan101.mika.core.agent.AttachedPage
 
 /** 已保存消息里的文件记录。只读对话，不检查文件是否仍可打开。 */
 class FileLibrary(private val conversations: ConversationStore) {

@@ -37,6 +37,10 @@ internal class ModelCaller(
     private val now: () -> Long,
     private val autonomous: Boolean = false,
     private val trace: RunTrace? = null,
+    /** 主模型的备援(项目 3):主模型这一步失败且 [Failover] 说换,就按序接手;默认没有,行为和原来一样。 */
+    private val fallbacks: List<ChatModel> = emptyList(),
+    /** 与主模型链平行的服务商名(和 [ModelError.DailyBudgetExceeded.providerName] 同源),只给每日预算判断跨不跨服务商;可为空。 */
+    private val chainTags: List<String?> = emptyList(),
 ) {
     /** 每个模型一份压缩状态:各自的上下文、各自发出的那份历史,轻量模型那次压缩不连累主模型的请求前缀。 */
     private val compressors = java.util.IdentityHashMap<ChatModel, ContextCompressor>()
@@ -47,6 +51,18 @@ internal class ModelCaller(
     /** 本任务里已为重试等过的时间(对着 [RetryPolicy.taskWaitBudgetMs])。 */
     private var taskRetryWaitMs = 0L
 
+    /** 主模型链:[model] 加上备援。切过去之后本任务余下都用它(和轻量模型停用一个道理),[reset] 回到主模型。 */
+    private val chain: List<ChatModel> = listOf(model) + fallbacks
+    private var chainIndex = 0
+
+    /** 本任务里主模型最初的错误、和每个链上模型先犯的错误(整条链失败时的说法用,MK-1 第 2 批);[reset] 清空。 */
+    private var headError: ModelError? = null
+    private val trialLog = ArrayList<Pair<Int, ModelError>>()
+
+    /** 最近一次主模型调用实际用的模型:切到备援后就是备援;[routed] 按它记账。 */
+    var lastMainUsed: ChatModel = model
+        private set
+
     /** 本任务的系统提示词:开工时按发给模型的同一份工具列表拼([SystemPrompt.assemble]),任务内不变。 */
     var systemPrompt: String = ""
 
@@ -54,8 +70,8 @@ internal class ModelCaller(
     var lastRetryWaitMs = 0L
         private set
 
-    /** 本任务里轻量模型给出、已进历史的回复;换模型时按它去掉别家模型的私有数据。 */
-    private val lightReplies: MutableSet<Message> = java.util.Collections.newSetFromMap(java.util.IdentityHashMap())
+    /** 每条已进历史的回复是哪个模型给的(按消息身份);换模型时按它去掉别家模型的私有数据。没记到的(任务开始前就在历史里的)视同主模型给的。 */
+    private val replyOrigin = java.util.IdentityHashMap<Message, ChatModel>()
 
     /** 带真实用量的回复(按消息身份)和给出它的模型,是量请求大小的锚点([UsageMeter]);压缩改写前缀后清空。 */
     private val anchors = java.util.IdentityHashMap<Message, Pair<ChatModel, UsageMeter.Anchor>>()
@@ -66,15 +82,19 @@ internal class ModelCaller(
         systemPrompt = prompt
         compactions.clear()
         taskRetryWaitMs = 0
+        chainIndex = 0
+        headError = null
+        trialLog.clear()
+        lastMainUsed = model
         compressors.values.forEach { it.forget() }
-        lightReplies.clear()
+        replyOrigin.clear()
         anchors.clear()
         lastOverhead.clear()
     }
 
-    /** 回复进了历史:是轻量模型给的就记下;有真实 usage 的记成上下文大小的锚点。 */
+    /** 回复进了历史:记下是哪个模型给的;有真实 usage 的记成上下文大小的锚点。 */
     fun noteReply(m: Message, used: ChatModel, usage: Usage?) {
-        if (router?.isLight(used) == true) lightReplies += m
+        replyOrigin[m] = used
         val overhead = lastOverhead[used]
         if (usage != null && overhead != null) anchors[m] = used to UsageMeter.Anchor(usage, overhead)
     }
@@ -100,9 +120,9 @@ internal class ModelCaller(
         history: List<Message>, specs: List<ToolSpec>, track: StepTrack, step: Int, restarted: (Long) -> Unit,
         onText: ((String) -> Unit)? = null,
     ): Pair<ModelReply, ChatModel> {
-        val r = router?.takeIf { routing } ?: return ask(history, specs, step, onText = onText) to model
+        val r = router?.takeIf { routing } ?: return ask(history, specs, step, onText = onText) to lastMainUsed
         val picked = r.pick(track.context(step, history.any { m -> m.parts.any { it is Part.Image } }))
-        if (!r.isLight(picked)) return ask(history, specs, step, onText = onText) to model
+        if (!r.isLight(picked)) return ask(history, specs, step, onText = onText) to lastMainUsed
         // 轻量模型的上下文可能更小:它报超长、它那次折叠多少,都不连累主模型(压缩状态按模型分开记)
         val asked = now()
         val light = try {
@@ -132,26 +152,60 @@ internal class ModelCaller(
         emit(RunEvent.State(now(), "light_to_main", first?.name ?: if (light == null) "light_error" else "no_tool"))
         onText?.invoke("")
         restarted(now())
-        return ask(history, specs, step, onText = onText) to model
+        return ask(history, specs, step, onText = onText) to lastMainUsed
     }
 
     private fun needsMain(call: Part.ToolCall): Boolean =
         ModelRouter.mainOnly(call.name, tools.verb(call.name)) ||
             (!autonomous && ConfirmDecision.mayBeIrreversible(tools, call.name, parseArgs(call.argsJson)))
 
-    /** 问 [using](默认主模型):发出的是给它看的那份历史([viewFor])压缩后的副本。 */
-    suspend fun ask(history: List<Message>, specs: List<ToolSpec>, step: Int, using: ChatModel = model, onText: ((String) -> Unit)? = null): ModelReply =
-        complete(viewFor(history, using), specs, using, retry, step, onText)
+    /**
+     * 问 [using](默认主模型):发出的是给它看的那份历史([viewFor])压缩后的副本。
+     * 问主模型时走主模型链:[complete] 放弃(重试耗尽或不可重试)且 [Failover] 说换,就换链上下一个再问;
+     * 链用完、或 [Failover] 说不换,原样抛出,失败说法和没有备援时一样。问别的模型照旧单发。
+     */
+    suspend fun ask(history: List<Message>, specs: List<ToolSpec>, step: Int, using: ChatModel = model, onText: ((String) -> Unit)? = null): ModelReply {
+        if (using !== model) return complete(viewFor(history, using), specs, using, retry, step, onText)
+        // 整条链都失败时的说法(MK-1 第 2 批):以主模型最初的错误为主、附每个备援错在哪(见 [terminalError]);
+        // 只试过一个模型就原样交出,和没有备援时一致。每步先把错误记进 [trialLog]:切过去之后,
+        // 后面的步直接由备援起问,主模型的错不在手边,靠这份记录才拼得回整条链的说法。
+        while (true) {
+            val current = chain[chainIndex]
+            try {
+                val reply = complete(viewFor(history, current), specs, current, retry, step, onText)
+                lastMainUsed = current
+                return reply
+            } catch (e: ModelError) {
+                if (trialLog.none { it.first == chainIndex }) trialLog += chainIndex to e
+                if (chainIndex == 0 && headError == null) headError = e
+                val next = Failover.nextIndex(e, chainIndex, chainTags, chain.size) ?: throw terminalError(e)
+                onText?.invoke("")
+                emit(RunEvent.State(now(), "model_switch", "${current.name} -> ${chain[next].name} ${RetryPolicy.label(e)}"))
+                chainIndex = next
+            }
+        }
+    }
+
+    /** 链上不再换了,决定交出哪个错误:预算错误原样;只试过一个模型原样;试过整条链包成 [ModelError.ChainFailed]。 */
+    private fun terminalError(e: ModelError): ModelError {
+        // 当前错误就是预算错误时以它为准;否则链上较早的预算错误优先于包装(审 T-1112-74a8f2 D1):预算错误不包 ChainFailed,原样交出
+        if (e is ModelError.TaskBudgetExceeded || e is ModelError.DailyBudgetExceeded) return e
+        trialLog.map { it.second }.firstOrNull {
+            it is ModelError.TaskBudgetExceeded || it is ModelError.DailyBudgetExceeded
+        }?.let { return it }
+        return if (trialLog.size < 2) e
+        else ModelError.ChainFailed(headError ?: e, trialLog.map { (index, err) -> chain[index].name to err })
+    }
 
     /**
-     * 发给 [to] 的历史:别的模型给出的回复去掉思考内容和调用上的私有数据(这些只能原样回给产生它的那个模型)。
-     * 只看字段在不在,不分服务商。
+     * 发给 [to] 的历史:不是 [to] 给出的回复去掉思考内容和调用上的私有数据(这些只能原样回给产生它的那个模型)。
+     * 没记到来源的回复视同主模型给的:发给主模型时留着,发给轻量模型或备援时都剥。只看字段在不在,不分服务商。
      */
     private fun viewFor(history: List<Message>, to: ChatModel): List<Message> {
-        val toLight = router?.isLight(to) == true
-        if (!toLight && lightReplies.isEmpty()) return history
+        if (replyOrigin.isEmpty() && to === model) return history
         return history.map { m ->
-            val foreign = m.role == Role.Assistant && (m in lightReplies) != toLight
+            val origin = replyOrigin[m]
+            val foreign = m.role == Role.Assistant && (origin?.let { it !== to } ?: (to !== model))
             if (!foreign || m.parts.none { it is Part.Thinking || (it is Part.ToolCall && it.opaque != null) }) m
             else m.copy(parts = m.parts.mapNotNull { p ->
                 when {

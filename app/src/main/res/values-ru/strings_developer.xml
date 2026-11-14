@@ -27,4 +27,6 @@
     <string name="dev_run_log">Журнал запусков</string>
     <string name="dev_screen_tables">Таблицы элементов новых экранов</string>
     <string name="dev_screen_tables_sub">При первом чтении повторяющиеся поля передаются как столбцы. Ссылки на элементы и полное дерево сохраняются.</string>
+    <string name="dev_device_files">Импорт файлов устройства</string>
+    <string name="dev_device_files_sub">Разрешить Mika копировать файлы из общего хранилища устройства в рабочее пространство. Изменения применяются к новым задачам.</string>
 </resources>

@@ -86,11 +86,22 @@ fun TriggerDefinition.toCopyPlanDraft(nowMs: Long): PlanDraft {
     val draft = toPlanDraft()
     val firstAt = when {
         draft.repeat == PlanRepeat.Daily || draft.repeat == PlanRepeat.Weekly -> draft.firstAt
-        nextAtMs > nowMs -> Instant.ofEpochMilli(nextAtMs).toString()
-        intervalMs != null -> Instant.ofEpochMilli(upcoming(this, nowMs + 1, 1).single()).toString()
+        nextAtMs > nowMs -> copyFirstAt(nextAtMs, draft.zone)
+        intervalMs != null -> copyFirstAt(upcoming(this, nowMs + 1, 1).single(), draft.zone)
         else -> newPlanDraft(nowMs, ZoneId.of(draft.zone)).firstAt
     }
     return draft.copy(firstAt = firstAt, enabled = false)
+}
+
+/**
+ * 复制时「首次执行」用页面上的当地时间格式;带秒的计划向上取整到下一分钟,
+ * 免得截掉秒后落到当前时刻之前,保存时被判成「时间不在将来」。
+ */
+private fun copyFirstAt(atMs: Long, zone: String): String {
+    val time = Instant.ofEpochMilli(atMs).atZone(ZoneId.of(zone))
+    val rounded = if (time.second == 0 && time.nano == 0) atMs
+        else time.withSecond(0).withNano(0).plusMinutes(1).toInstant().toEpochMilli()
+    return formatPlanEditorTime(rounded, zone)
 }
 
 /**
@@ -122,10 +133,16 @@ fun editedTrigger(
     var calendarDays: List<Int> = emptyList()
     when (draft.repeat) {
         PlanRepeat.Once, PlanRepeat.Interval -> {
-            nextAt = try {
+            val firstAt = draft.firstAt.trim()
+            // 表单只显示到分钟；当地时间和时区未修改时保留原计划的秒与毫秒。
+            val originalTime = original?.takeIf {
+                it.calendarTime == null && zone.id == (it.calendarZone ?: ZoneId.systemDefault().id) &&
+                    firstAt == formatPlanEditorTime(it.nextAtMs, zone.id)
+            }?.nextAtMs
+            nextAt = originalTime ?: try {
                 // 模型沿用 ISO 时间以保留秒和偏移；页面继续使用当地 yyyy-MM-dd HH:mm。
-                runCatching { Instant.parse(draft.firstAt.trim()).toEpochMilli() }.getOrElse {
-                    LocalDateTime.parse(draft.firstAt.trim(), EDIT_TIME).atZone(zone).toInstant().toEpochMilli()
+                runCatching { Instant.parse(firstAt).toEpochMilli() }.getOrElse {
+                    LocalDateTime.parse(firstAt, EDIT_TIME).atZone(zone).toInstant().toEpochMilli()
                 }
             } catch (e: Exception) {
                 invalid(PlanValidation.InvalidFirstTime)

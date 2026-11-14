@@ -122,11 +122,11 @@ internal class CallMediaCounters(private val measureInputSignal: Boolean = true)
                     userTranscriptFinalEvents++
                     if (event.isCompleteFinal) {
                         completeUserTranscripts++
-                        lastObservedTurn = CallAudioReport.Turn.TRANSCRIPT_RECEIVED
+                        if (event.isCurrentTurn) lastObservedTurn = CallAudioReport.Turn.TRANSCRIPT_RECEIVED
                     }
                 } else {
                     userTranscriptPartialEvents++
-                    lastObservedTurn = CallAudioReport.Turn.SPEECH_DETECTED
+                    if (event.isCurrentTurn) lastObservedTurn = CallAudioReport.Turn.SPEECH_DETECTED
                 }
             }
             VolcRealtimeEvent.AssistantAudioStarted -> assistantAudioStartedEvents++

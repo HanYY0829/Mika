@@ -19,7 +19,7 @@ import com.wangzan101.mika.core.run.RunInbox
 import com.wangzan101.mika.core.run.RunInput
 import com.wangzan101.mika.core.run.RunSpec
 import com.wangzan101.mika.core.tool.FakeScreen
-import com.wangzan101.mika.core.cap.web.AttachedPage
+import com.wangzan101.mika.core.agent.AttachedPage
 import com.wangzan101.mika.core.cap.web.FakeWebPort
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first

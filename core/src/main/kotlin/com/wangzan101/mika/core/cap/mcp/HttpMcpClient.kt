@@ -56,7 +56,7 @@ class HttpMcpEndpoint private constructor(
     private val prompts: List<McpPromptDescriptor>,
     private val timeoutSec: Int,
     val serverName: String?,
-    val instructions: String?,
+    override val instructions: String?,
 ) : McpEndpoint, Closeable {
     private val json = Json { ignoreUnknownKeys = true }
     // MCP 端点不应该靠重定向跳转;禁止重定向,避免把请求(含认证头)带去别的主机

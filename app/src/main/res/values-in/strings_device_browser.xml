@@ -1,0 +1,15 @@
+<resources>
+    <string name="device_browser_title">File perangkat</string>
+    <string name="device_browser_roots">Folder yang diizinkan</string>
+    <string name="device_browser_back">Kembali</string>
+    <string name="device_browser_retry">Gagal memuat. Ketuk untuk mencoba lagi</string>
+    <string name="device_browser_empty">Tidak ada file atau folder yang diizinkan</string>
+    <string name="device_browser_more">Muat lainnya</string>
+    <string name="device_browser_add">Tambahkan pilihan (%1$d)</string>
+    <string name="device_browser_cancel">Batal</string>
+    <string name="device_browser_history">Impor percakapan ini</string>
+    <string name="device_browser_show_files">Jelajahi file</string>
+    <string name="device_browser_history_hint">Salinan dalam riwayat mungkin telah dihapus. Lihat pustaka file.</string>
+    <string name="device_browser_search">Cari file</string>
+    <string name="device_browser_truncated">Pencarian mencapai batas kedalaman, waktu, atau jumlah file; hasil mungkin tidak lengkap.</string>
+</resources>

@@ -16,6 +16,26 @@ The first three roles: the **main model** (does the work; must support tool call
 
 Whether a model can see images: if the provider's model list says, Mika goes by that; if it doesn't (many relays and self-hosted services don't), the preset's initial value applies, and a custom provider is assumed not to see. Tap a model on the provider's page and the sheet has a "Can see images" switch: what you set wins, even over the list. When the main model can see, screenshots go straight to it instead of costing a separate vision call. Picking the main model itself as the vision model (or choosing "use main model") also counts as saying the main model can see; switching away undoes it.
 
+## Check task cost
+
+When using the official DeepSeek API, turn on **Show task cost** under **Settings › Task running**. After a new task ends, the estimate appears in Chinese yuan next to the token count. Mika uses the official price table and the usage recorded for the task. It shows a range during possible weekday peak hours and marks estimates as partial when some requests cannot be priced. Check your DeepSeek bill for the final charge.
+
+## Jev decision model (optional)
+
+Configure it separately in **Settings › Models › Decision model · Jev**. It is off by default and does not change your main, vision or light model selections.
+
+| Provider | Complete request URL | Default model ID |
+|---|---|---|
+| TypeSafe | `https://api.typesafe.ai/v1/systemone` | `jev-1.14.0` |
+| OpenRouter | `https://openrouter.ai/api/v1/systemone` | `typesafe/jev-1.14` |
+| Custom | A complete System One-compatible endpoint | As specified by the provider |
+
+Enter that provider's API key, enable the switch and choose **Save**. Changes apply to the next task. Selecting a different provider preset clears the previous key. **Test connection** classifies a fixed greeting without sending conversations or screenshots, saving settings, or enabling the service. The provider may charge for this test. Custom endpoints require HTTPS, except for local or LAN services; a chat `/chat/completions` endpoint is not compatible.
+
+When enabled, Jev classifies intent at the chat entry point (discussion, reading or action), and selects saved routes when experience replay is enabled. Intent classification sends the current request and a small amount of recent conversation. Route selection sends the request, candidate templates and parameters extracted from the user's exact words. The API key and settings are encrypted on the phone. The main model still plans, generates text and calls tools; Jev never operates the phone directly or replaces confirmation gates.
+
+Missing candidates, ambiguous parameters, low probabilities, errors and timeouts fall back to the existing model flow. A confident choice not to reuse a route skips replay and lets the main model plan. Disable and save to stop Jev calls in new tasks; tasks already running keep their starting configuration. Usage is recorded by model name, and `jev_intent` / `jev_route` run events identify selection, skipped replay or fallback. This version does not use images, Box grounding, per-step UI action selection or memory generation.
+
 ## Speech to text
 
 The fourth role, used when you hold to talk; pick it under Settings › Models › Speech to text. By default it uses the phone's built-in speech recognition, which shows words as you speak and costs nothing. If the phone has none, or it is not accurate enough, pick a provider's speech model: it transcribes after you finish speaking and uses your quota. The list only shows models whose names look like speech models; for anything else, type the model name in by hand under that provider. Picking runs a short test transcription of silence and only selects the model if it works; otherwise you see why right away. If the phone's recognizer never responds when you hold to talk, Mika tells you and points you here; it never switches to a paid model by itself.

@@ -112,7 +112,23 @@ class ModelAccessErrorsTest {
         assertTrue(ModelHttp.openAiError(403, null, """{"error":{"message":"Your API key is not supported for this endpoint"}}""", "gpt-x") is ModelError.Auth)
     }
 
+    /** 没有更具体说法的 HTTP 错误按状态码归类(MK-1 第 2 批):>= 400 归 Server,备援链接得住。 */
+    @Test fun unmappedHttpErrorsBecomeServer() {
+        val e = ModelHttp.openAiError(400, null, "Bad Request", "m")
+        assertTrue(e is ModelError.Server)
+        assertEquals(400, (e as ModelError.Server).status)
+        assertTrue(ModelHttp.geminiError(400, null, "{}", "m") is ModelError.Server)
+        // 更具体的说法优先:上下文超长照旧先认出来,不被状态码归类盖掉
+        assertTrue(ModelHttp.openAiError(400, null, "This model's maximum context length is 8192 tokens", "m") is ModelError.ContextTooLong)
+    }
+
     /** Key、额度、请求本身不对的不认;401 一律不看。 */
+    @Test fun unmappedHttpErrorKeepsProviderDetailForDiagnostics() {
+        val e = ModelHttp.openAiError(400, null, """{"error":{"type":"MissingSessionID"}}""", "m")
+        assertTrue(e is ModelError.Server)
+        assertTrue(e.message.orEmpty(), e.message.orEmpty().contains("MissingSessionID"))
+    }
+
     @Test fun otherErrorsAreLeftToTheAdapter() {
         assertNull(ModelAccessErrors.of(401, """{"error":{"message":"not activated"}}""", "m"))
         assertNull(ModelAccessErrors.of(400, """{"error":{"message":"Invalid parameter: messages"}}""", "m"))

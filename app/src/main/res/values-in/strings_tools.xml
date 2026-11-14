@@ -20,6 +20,8 @@
     <string name="tool_find_element">Cari di layar</string>
     <string name="tool_collect">Kumpulkan dari beberapa layar</string>
     <string name="tool_phone_run">Beberapa tindakan ponsel</string>
+    <string name="tool_list_device_files">Jelajahi berkas perangkat</string>
+    <string name="tool_copy_device_file">Salin berkas perangkat</string>
     <string name="tool_process_files">Olah berkas</string>
     <string name="tool_run_script">Jalankan skrip bawaan</string>
     <string name="tool_read_file">Baca berkas</string>

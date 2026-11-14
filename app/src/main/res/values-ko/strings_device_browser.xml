@@ -1,0 +1,15 @@
+<resources>
+    <string name="device_browser_title">기기 파일</string>
+    <string name="device_browser_roots">허용된 폴더</string>
+    <string name="device_browser_back">뒤로</string>
+    <string name="device_browser_retry">불러오지 못했습니다. 눌러서 다시 시도</string>
+    <string name="device_browser_empty">파일이나 허용된 폴더가 없습니다</string>
+    <string name="device_browser_more">더 불러오기</string>
+    <string name="device_browser_add">선택 항목 추가 (%1$d)</string>
+    <string name="device_browser_cancel">취소</string>
+    <string name="device_browser_history">이 대화의 가져오기 기록</string>
+    <string name="device_browser_show_files">파일 찾아보기</string>
+    <string name="device_browser_history_hint">기록의 복사본은 삭제되었을 수 있습니다. 파일 라이브러리에서 확인하세요.</string>
+    <string name="device_browser_search">파일 검색</string>
+    <string name="device_browser_truncated">깊이, 시간 또는 파일 수 제한으로 결과가 불완전할 수 있습니다.</string>
+</resources>

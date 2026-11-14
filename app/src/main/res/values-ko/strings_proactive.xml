@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="proactive_title">능동 기능(실험)</string>
+    <string name="proactive_title">능동 기능</string>
     <string name="proactive_entry_sub">선택한 앱의 알림을 읽습니다</string>
     <string name="proactive_switch">켜기</string>
     <string name="proactive_listener">리스너: %1$s</string>

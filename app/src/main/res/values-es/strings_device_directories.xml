@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dirs_title">Carpetas del dispositivo</string>
+    <string name="device_dirs_explanation">Las pistas ayudan a Mika a encontrar archivos. Añadir una pista no concede acceso; autoriza cada carpeta guardada por separado.</string>
+    <string name="device_dirs_authorize">Autorizar acceso a la carpeta</string>
+    <string name="device_dirs_recursive">Incluir subcarpetas</string>
+    <string name="device_dirs_not_synced">Autorización sin sincronizar</string>
+    <string name="device_dirs_synced">Autorización sincronizada</string>
+    <string name="device_dirs_retry_sync">Reintentar sincronización</string>
+    <string name="device_dirs_edit_path">Edita la ruta de la carpeta y vuelve a intentarlo.</string>
+    <string name="device_dirs_not_authorized">Sin autorización</string>
+    <string name="device_dirs_write_failed">No se pudieron guardar los ajustes de carpetas. Reinicia la aplicación y vuelve a intentarlo.</string>
+    <string name="device_dirs_add">Añadir pista de carpeta</string>
+    <string name="device_dirs_edit">Pista de carpeta</string>
+    <string name="device_dirs_name">Nombre</string>
+    <string name="device_dirs_path">Ruta del dispositivo</string>
+    <string name="device_dirs_description">Descripción</string>
+    <string name="device_dirs_invalid">Introduce un nombre y una ruta única del almacenamiento compartido.</string>
+    <string name="device_dirs_delete">Eliminar pista</string>
+    <string name="device_dirs_save">Guardar</string>
+    <string name="device_dirs_cancel">Cancelar</string>
+    <string name="device_dirs_available">Accesible</string>
+    <string name="device_dirs_missing">Carpeta no encontrada</string>
+    <string name="device_dirs_denied">Acceso denegado</string>
+    <string name="device_dirs_unknown">Estado no disponible</string>
+    <string name="device_dirs_entry">Pistas de carpetas</string>
+    <string name="device_dirs_entry_sub">Ayuda a Mika a encontrar archivos descargados</string>
+    <string name="device_dirs_source_preset">Predefinida</string>
+    <string name="device_dirs_source_user">Editada por ti</string>
+    <string name="device_dirs_source_mika">Editada por Mika</string>
+</resources>

@@ -12,7 +12,13 @@ data class ConversationTokens(val tokens: Long, val turns: Int, val missing: Int
 
     companion object {
         /** 一轮的 token;没有小结、或一个也没报(全是 0)时为 null,界面不写「0 Token」。 */
-        fun turn(m: RunMetrics?): Long? = m?.tokens?.takeIf { it > 0 }
+        fun turn(m: RunMetrics?, includeSideCalls: Boolean = false): Long? {
+            m ?: return null
+            val input = m.allInputTokens
+            val output = m.allOutputTokens
+            val tokens = if (includeSideCalls && input != null && output != null) input + output else m.tokens
+            return tokens.takeIf { it > 0 }
+        }
 
         /** [runIds] 是这个对话里已经结束的各轮(同一个只算一次);一个数也没有时为 null,界面不显示。 */
         fun of(runIds: List<String>, metrics: Map<String, RunMetrics>): ConversationTokens? {

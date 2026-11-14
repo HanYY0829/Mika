@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jev_title">Decision model · Jev</string>
+    <string name="jev_row_sub">Optional intent and route selection</string>
+    <string name="jev_enabled">Use the decision model</string>
+    <string name="jev_privacy">When enabled, your request, recent conversation context and candidate routes are sent to the configured provider to judge intent and choose routes. If it fails, Mika uses the existing model. Main, vision and light model settings stay separate.</string>
+    <string name="jev_provider">Provider</string>
+    <string name="jev_endpoint">Endpoint</string>
+    <string name="jev_model">Model ID</string>
+    <string name="jev_endpoint_note">Enter the complete SystemOne endpoint URL. HTTPS is required except for local HTTP services. The API key is stored encrypted on this device.</string>
+    <string name="jev_invalid">Enter a valid endpoint and model ID. Enabling or testing also requires an API key.</string>
+    <string name="jev_apply_note">Save to apply the switch and connection settings to new tasks.</string>
+    <string name="jev_test">Test connection</string>
+    <string name="jev_test_note">Testing sends only a fixed greeting and two choices to this endpoint. It does not send your conversations, screens or memories, save changes, or enable the service.</string>
+    <string name="jev_test_success">Connection works; the synthetic choice was correct.</string>
+    <string name="jev_test_failed">Test failed. Check the endpoint, model, API key and network.</string>
+    <string name="jev_saved">Saved. New tasks will use these settings.</string>
+    <string name="jev_save_failed">Could not save. Your previous saved settings are unchanged.</string>
+</resources>

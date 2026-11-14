@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dirs_title">手機目錄</string>
+    <string name="device_dirs_explanation">目錄線索幫助 Mika 尋找檔案。新增線索不會授予存取權限；請個別授權已儲存的目錄。</string>
+    <string name="device_dirs_authorize">授權存取此目錄</string>
+    <string name="device_dirs_recursive">包含子目錄</string>
+    <string name="device_dirs_not_synced">授權尚未同步</string>
+    <string name="device_dirs_synced">授權已同步</string>
+    <string name="device_dirs_retry_sync">重試同步</string>
+    <string name="device_dirs_edit_path">請編輯目錄路徑後重試。</string>
+    <string name="device_dirs_not_authorized">尚未授權</string>
+    <string name="device_dirs_write_failed">無法儲存目錄設定，請重新啟動應用程式後再試。</string>
+    <string name="device_dirs_add">新增目錄線索</string>
+    <string name="device_dirs_edit">目錄線索</string>
+    <string name="device_dirs_name">名稱</string>
+    <string name="device_dirs_path">手機目錄路徑</string>
+    <string name="device_dirs_description">簡介</string>
+    <string name="device_dirs_invalid">請填寫名稱和不重複的手機共用儲存空間路徑。</string>
+    <string name="device_dirs_delete">刪除線索</string>
+    <string name="device_dirs_save">儲存</string>
+    <string name="device_dirs_cancel">取消</string>
+    <string name="device_dirs_available">可存取</string>
+    <string name="device_dirs_missing">目錄不存在</string>
+    <string name="device_dirs_denied">無權存取</string>
+    <string name="device_dirs_unknown">狀態暫不可用</string>
+    <string name="device_dirs_entry">手機目錄線索</string>
+    <string name="device_dirs_entry_sub">幫助 Mika 尋找下載的檔案</string>
+    <string name="device_dirs_source_preset">系統預設</string>
+    <string name="device_dirs_source_user">使用者填寫</string>
+    <string name="device_dirs_source_mika">Mika 更新</string>
+</resources>

@@ -27,4 +27,6 @@
     <string name="dev_run_log">Run records</string>
     <string name="dev_screen_tables">Compact new screen elements</string>
     <string name="dev_screen_tables_sub">Send repeated fields as table columns the first time a screen is read. Element refs and the full tree are kept.</string>
+    <string name="dev_device_files">Import device files</string>
+    <string name="dev_device_files_sub">Let Mika copy files from shared device storage into the workspace. Changes apply to new tasks.</string>
 </resources>

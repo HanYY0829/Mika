@@ -304,8 +304,9 @@ class CallRuntime(private val app: MikaApp) {
 
     private fun isIncomingStandbyRunning(): Boolean = standbyService?.stickyAutoAnswer == true && hasAuthorizedIncomingStandby()
 
-    internal fun hasLockedDialForegroundWork(): Boolean = userUnlocked() && settings.state.value.enabled &&
-        (lockedDial != null || work?.lockedDialTicket != null)
+    internal fun hasOutgoingForegroundWork(): Boolean = CallStandbyPolicy.foregroundOutgoing(
+        userUnlocked(), settings.state.value.enabled, lockedDial != null, work?.direction,
+    )
 
     internal fun isStandbyStartRequested(requestId: String?): Boolean = standbyStarting && requestId != null && requestId == standbyStartId
 
@@ -339,7 +340,7 @@ class CallRuntime(private val app: MikaApp) {
         standbyService = null
         standbyRunning.value = false
         lockedDial?.let { finishLockedDial(it, "后台电话服务停止，未执行锁屏拨出") }
-        if (work?.let { (it.lockedDialTicket != null && it.placed) || (it.automatic && it.answerSent) } == true && !interactiveForeground()) {
+        if (work?.let { (it.direction == CallDirection.OUTGOING) || (it.automatic && it.answerSent && !interactiveForeground()) } == true) {
             cancelWork("后台电话服务已停止，通话由系统处理")
         }
         cancelPendingIfStandbyLost()
@@ -362,7 +363,7 @@ class CallRuntime(private val app: MikaApp) {
     }
 
     private fun stopBackgroundStandbyIfUnneeded() {
-        if (!hasLockedDialForegroundWork() && (standbyService != null || standbyStarting) &&
+        if (!hasOutgoingForegroundWork() && (standbyService != null || standbyStarting) &&
             !(hasAuthorizedIncomingStandby() && (standbyService?.stickyAutoAnswer == true || standbyIncomingRequested))) {
             stopBackgroundStandby()
         }
@@ -975,12 +976,36 @@ class CallRuntime(private val app: MikaApp) {
         publish()
     }
 
+    /** A user-confirmed outgoing attempt owns a temporary lease, independent of auto-answer. */
+    private suspend fun ensureOutgoingForegroundService(w: Work) {
+        if (standbyService == null) {
+            if (!requestCallForegroundService(incoming = false)) {
+                throw CallProblem(standbyStartError ?: "外呼后台电话服务未能启动，未拨号")
+            }
+            if (!awaitCallForegroundReady(
+                    isStarting = { standbyStarting },
+                    isReady = { work === w && standbyService?.leaseAvailable == true },
+                )) {
+                throw CallProblem(standbyStartError ?: "Android 未确认外呼后台电话服务启动，未拨号")
+            }
+        }
+        requireOutgoingForegroundService(w)
+    }
+
+    private fun requireOutgoingForegroundService(w: Work) {
+        val leaseReady = standbyService?.leaseAvailable == true && CallStandbyService.notificationsAvailable(app)
+        if (work !== w || !leaseReady || !hasOutgoingForegroundWork()) {
+            throw CallProblem(standbyStartError ?: "外呼后台电话服务不可用，AI 未执行后续操作")
+        }
+    }
+
     private suspend fun runWork(w: Work) {
         try {
             if (!notifications.show(w.id, detail.orEmpty(), ringing = w.direction == CallDirection.INCOMING)) {
                 throw CallProblem("需要打开 AI 电话通知，才能随时取消或接管")
             }
             if (!interactiveForeground()) acquireCallWakeLock(w, 20_000L)
+            if (w.direction == CallDirection.OUTGOING) ensureOutgoingForegroundService(w)
             if (w.automatic) waitAutoAnswerDelay(w)
             prerequisite(ignoreWork = true)?.let { throw CallProblem(it) }
             validateTarget(w)
@@ -994,81 +1019,97 @@ class CallRuntime(private val app: MikaApp) {
                 throw CallProblem("通话音频设置已变化，请重试")
             }
             validateTarget(w)
-            w.mediaStage = MediaStage.VOLC_CONNECT
             val ownerRules = withContext(Dispatchers.IO) {
                 runCatching { instructions.promptSnapshot() }
                     .getOrElse { throw CallProblem("无法读取电话交代，未由 AI 操作电话") }
             }
             validateTarget(w)
-            val session = withTimeoutOrNull(5_000L) {
-                realtimeProvider.connect(profile, credentials,
-                    CallPolicy.prompt(w.config.systemPrompt, w.direction, ownerRules, task = w.task))
-            } ?: throw CallProblem("实时语音连接超时，未由 AI 接管")
-            w.session = session
-            if (!session.setMuted(true)) throw CallProblem("火山实时语音未进入就绪状态")
-            if (!withContext(Dispatchers.IO) { access.ready() }) {
-                armed = false
-                throw CallProblem("系统通话管理权限不可用，未由 AI 操作电话")
+            val systemPrompt = CallPolicy.prompt(w.config.systemPrompt, w.direction, ownerRules, task = w.task)
+            try {
+                realtimeProvider.validate(profile, systemPrompt)
+            } catch (_: IllegalArgumentException) {
+                throw CallProblem("实时语音配置或本次交代无效，未由 AI 操作电话；请检查配置或缩短交代")
             }
-            prerequisite(ignoreWork = true)?.let { throw CallProblem(it) }
-            validateTarget(w)
-            w.mediaStage = MediaStage.TELECOM_CONNECT
-            if (w.direction == CallDirection.INCOMING) {
-                val target = w.track ?: throw CallProblem("来电已结束")
-                w.answerSent = true
-                w.telecomActionIssued = true
-                detail = "正在等待 Android 确认接听"
-                if (runCatching { target.call.answer(VideoProfile.STATE_AUDIO_ONLY) }.isFailure) {
-                    throw CallProblem("Android 未能发出接听请求")
-                }
-                publish()
-            } else {
-                if (liveCalls().isNotEmpty() || managedCallPresent() != false) throw CallProblem("已有通话或无法确认空闲，未拨号")
-                val sim = w.sim ?: throw CallProblem("没有可用的 SIM")
-                val number = w.requestedNumber ?: throw CallProblem("没有可用的电话号码")
-                // Preparing the realtime session takes time; do not let Telecom fall back to a
-                // different account if the chosen SIM disappeared in the meantime.
-                readSims()
-                if (w.lockedDialTicket != null && !withContext(Dispatchers.IO) { access.ready() }) {
-                    armed = false
-                    throw CallProblem("系统通话管理权限不可用，未执行锁屏拨出")
-                }
-                if (sims.none { it.handle == sim.handle }) throw CallProblem("选定的拨号 SIM 已不可用，请重新选择")
-                prerequisite(ignoreWork = true)?.let { throw CallProblem(it) }
-                if (liveCalls().isNotEmpty() || managedCallPresent() != false) throw CallProblem("已有通话或无法确认空闲，未拨号")
-                if (isEmergency(number) != false) throw CallProblem("无法确认此号码可安全拨打")
-                val extras = Bundle().apply {
-                    putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, sim.handle)
-                    putBundle(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, Bundle().apply { putString(TOKEN, w.id) })
-                }
-                validateLockedDial(w)
-                w.placed = true
-                w.telecomActionIssued = true
-                val issued = runCatching { checkNotNull(telecom).placeCall(Uri.fromParts(PhoneAccount.SCHEME_TEL, number, null), extras) }.isSuccess
-                lockedDial?.takeIf { it.ticket === w.lockedDialTicket }?.let {
-                    finishLockedDial(it, if (issued) "正在等待 Android 确认锁屏拨号" else "Android 拒绝锁屏拨号")
-                }
-                if (!issued) {
-                    throw CallProblem("Android 拒绝拨号")
-                }
-                if (!waitFor(CallPolicy.DIAL_TIMEOUT_MS) { w.track != null }) {
-                    throw CallProblem("未收到该号码的 Android 通话回调，请查看系统拨号器")
-                }
-            }
-            val limit = if (w.direction == CallDirection.INCOMING) CallPolicy.CONTROL_TIMEOUT_MS else 55_000L
-            if (!waitFor(limit) { w.track?.phase == CallPhase.ACTIVE }) {
-                throw CallProblem("Android 未确认通话接通，电话由系统处理")
-            }
-            val target = w.track ?: throw CallProblem("通话已结束")
-            if (!carrierCall(target.call) || liveCalls().singleOrNull() !== target) {
-                throw CallProblem("当前通话无法由 AI 安全接管")
-            }
-            w.activeAt = System.currentTimeMillis()
-            w.activeElapsed = SystemClock.elapsedRealtime()
-            acquireCallWakeLock(w)
-            w.bridging = true
-            detail = "已接通，正在建立双向音频"
-            publish()
+            val session = startCallSession(
+                direction = w.direction,
+                connect = {
+                    validateSessionTarget(w, helper)
+                    w.mediaStage = MediaStage.VOLC_CONNECT
+                    val connected = withTimeoutOrNull(5_000L) {
+                        realtimeProvider.connect(profile, credentials, systemPrompt)
+                            .also { w.session = it } // Adopt before the timeout/cancellation boundary.
+                    } ?: throw CallProblem("实时语音连接超时，未由 AI 接管")
+                    if (!connected.setMuted(true)) throw CallProblem("火山实时语音未进入就绪状态")
+                    validateSessionTarget(w, helper)
+                    connected
+                },
+                awaitCarrier = {
+                    if (!withContext(Dispatchers.IO) { access.ready() }) {
+                        armed = false
+                        throw CallProblem("系统通话管理权限不可用，未由 AI 操作电话")
+                    }
+                    prerequisite(ignoreWork = true)?.let { throw CallProblem(it) }
+                    validateTarget(w)
+                    w.mediaStage = MediaStage.TELECOM_CONNECT
+                    if (w.direction == CallDirection.INCOMING) {
+                        val target = w.track ?: throw CallProblem("来电已结束")
+                        w.answerSent = true
+                        w.telecomActionIssued = true
+                        detail = "正在等待 Android 确认接听"
+                        if (runCatching { target.call.answer(VideoProfile.STATE_AUDIO_ONLY) }.isFailure) {
+                            throw CallProblem("Android 未能发出接听请求")
+                        }
+                        publish()
+                    } else {
+                        if (liveCalls().isNotEmpty() || managedCallPresent() != false) throw CallProblem("已有通话或无法确认空闲，未拨号")
+                        val sim = w.sim ?: throw CallProblem("没有可用的 SIM")
+                        val number = w.requestedNumber ?: throw CallProblem("没有可用的电话号码")
+                        // Recheck the chosen account before placing the call; Telecom must not fall
+                        // back to another SIM if the selection disappeared during preparation.
+                        readSims()
+                        if (w.lockedDialTicket != null && !withContext(Dispatchers.IO) { access.ready() }) {
+                            armed = false
+                            throw CallProblem("系统通话管理权限不可用，未执行锁屏拨出")
+                        }
+                        if (sims.none { it.handle == sim.handle }) throw CallProblem("选定的拨号 SIM 已不可用，请重新选择")
+                        prerequisite(ignoreWork = true)?.let { throw CallProblem(it) }
+                        if (liveCalls().isNotEmpty() || managedCallPresent() != false) throw CallProblem("已有通话或无法确认空闲，未拨号")
+                        if (isEmergency(number) != false) throw CallProblem("无法确认此号码可安全拨打")
+                        val extras = Bundle().apply {
+                            putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, sim.handle)
+                            putBundle(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, Bundle().apply { putString(TOKEN, w.id) })
+                        }
+                        validateLockedDial(w)
+                        requireOutgoingForegroundService(w)
+                        w.placed = true
+                        w.telecomActionIssued = true
+                        val issued = runCatching { checkNotNull(telecom).placeCall(Uri.fromParts(PhoneAccount.SCHEME_TEL, number, null), extras) }.isSuccess
+                        lockedDial?.takeIf { it.ticket === w.lockedDialTicket }?.let {
+                            finishLockedDial(it, if (issued) "正在等待 Android 确认锁屏拨号" else "Android 拒绝锁屏拨号")
+                        }
+                        if (!issued) {
+                            throw CallProblem("Android 拒绝拨号")
+                        }
+                        if (!waitFor(CallPolicy.DIAL_TIMEOUT_MS) { w.track != null }) {
+                            throw CallProblem("未收到该号码的 Android 通话回调，请查看系统拨号器")
+                        }
+                    }
+                    val limit = if (w.direction == CallDirection.INCOMING) CallPolicy.CONTROL_TIMEOUT_MS else 55_000L
+                    if (!waitFor(limit) { w.track?.phase == CallPhase.ACTIVE }) {
+                        throw CallProblem("Android 未确认通话接通，电话由系统处理")
+                    }
+                    val target = w.track ?: throw CallProblem("通话已结束")
+                    if (!carrierCall(target.call) || liveCalls().singleOrNull() !== target) {
+                        throw CallProblem("当前通话无法由 AI 安全接管")
+                    }
+                    w.activeAt = System.currentTimeMillis()
+                    w.activeElapsed = SystemClock.elapsedRealtime()
+                    acquireCallWakeLock(w)
+                    w.bridging = true
+                    detail = "已接通，正在建立双向音频"
+                    publish()
+                },
+            )
             runAudio(w, helper, session)
         } catch (e: CancellationException) {
             // Coroutine cancellation may carry a secondary descriptor-close exception.
@@ -1226,33 +1267,48 @@ class CallRuntime(private val app: MikaApp) {
             throw CallProblem("通话状态已变更，AI 未接入音频")
         }
         w.mediaStage = MediaStage.MUTE_ACQUIRE
-        val mute = acquireTelecomMute(w, target)
+        val mute = acquireTelecomMute(w, target, helper)
         if (!sameActiveMuteTarget(w, target) || target.suppressed || shell !== helper ||
             !settings.state.value.enabled || !mute.isConfirmed(target.service.telecomMuted, microphoneMuted())) {
             throw CallProblem("通话状态或静音已变更，AI 未接入音频")
         }
         w.mediaStage = MediaStage.SHELL_OPEN
         w.audioHelper = helper
-        val channel = withContext(NonCancellable + Dispatchers.IO) {
-            val result = helper.openCallAudio(w.config.audioMode.wire, w.audioOwner)
-            if (result?.getBoolean("ready") != true) {
-                throw CallProblem(result?.getString("reason")?.take(160)?.takeIf { it.isNotBlank() } ?: "此设备未建立双向电话音频")
-            }
-            val down = result.fd("downlink")
-            val up = result.fd("uplink")
-            if (down == null || up == null ||
-                result.getInt("captureRate") != session.inputSampleRate ||
-                result.getInt("playRate") != session.outputSampleRate) {
-                runCatching { down?.close() }
-                runCatching { up?.close() }
-                throw CallProblem("内置助手的电话音频格式不兼容")
-            }
-            val capture = ParcelFileDescriptor.AutoCloseInputStream(down)
-            val playback = ParcelFileDescriptor.AutoCloseOutputStream(up)
-            w.capture = capture
-            w.playback = playback
-            CallPcmBridge(capture, playback) {
-                withContext(Dispatchers.IO) { runCatching { helper.flushCallAudio(w.audioOwner) }.getOrDefault(false) }
+        val audioAccount = target.call.details?.accountHandle
+        val channel = awaitCallAudioOpen(
+            isCurrent = {
+                sameActiveMuteTarget(w, target) && !target.suppressed && shell === helper &&
+                    target.call.details?.accountHandle == audioAccount &&
+                    (w.direction != CallDirection.OUTGOING || (audioAccount != null && audioAccount == w.sim?.handle)) &&
+                    settings.state.value.enabled && w.config.audioMode == settings.state.value.audioMode &&
+                    mute.isConfirmed(target.service.telecomMuted, microphoneMuted())
+            },
+            nowMs = SystemClock::elapsedRealtime,
+        ) {
+            // A successful attempt transfers every descriptor to Work before cancellation can run cleanup.
+            // Only the helper's resource-free readiness rejection can request another attempt.
+            withContext(NonCancellable + Dispatchers.IO) {
+                val result = helper.openCallAudio(w.config.audioMode.wire, w.audioOwner)
+                if (result?.getBoolean("ready") != true) {
+                    if (result?.getString("errorCode") == "cellular_audio_not_ready") return@withContext null
+                    throw CallProblem(result?.getString("reason")?.take(160)?.takeIf { it.isNotBlank() } ?: "此设备未建立双向电话音频")
+                }
+                val down = result.fd("downlink")
+                val up = result.fd("uplink")
+                if (down == null || up == null ||
+                    result.getInt("captureRate") != session.inputSampleRate ||
+                    result.getInt("playRate") != session.outputSampleRate) {
+                    runCatching { down?.close() }
+                    runCatching { up?.close() }
+                    throw CallProblem("内置助手的电话音频格式不兼容")
+                }
+                val capture = ParcelFileDescriptor.AutoCloseInputStream(down)
+                val playback = ParcelFileDescriptor.AutoCloseOutputStream(up)
+                w.capture = capture
+                w.playback = playback
+                CallPcmBridge(capture, playback) {
+                    withContext(Dispatchers.IO) { runCatching { helper.flushCallAudio(w.audioOwner) }.getOrDefault(false) }
+                }
             }
         }
         if (!sameActiveMuteTarget(w, target) || target.suppressed || shell !== helper ||
@@ -1371,16 +1427,20 @@ class CallRuntime(private val app: MikaApp) {
         return true
     }
 
-    private suspend fun acquireTelecomMute(w: Work, target: Tracked): TelecomMuteLease {
+    private suspend fun acquireTelecomMute(w: Work, target: Tracked, helper: IMikaShell): TelecomMuteLease {
         val service = target.service
-        var baseline: TelecomMuteLease? = null
-        val known = awaitMute {
-            if (!sameActiveMuteTarget(w, target) || target.suppressed) return@awaitMute false
-            baseline = TelecomMuteLease.fromBaseline(service.telecomMuted, microphoneMuted())
-            baseline != null
-        }
-        val lease = baseline?.takeIf { known }
-            ?: throw CallProblem("Android 未确认原有通话静音状态，AI 未接入音频")
+        val lease = awaitTelecomMuteBaseline(
+            isCurrent = { sameActiveMuteTarget(w, target) && !target.suppressed && settings.state.value.enabled &&
+                shell === helper && runCatching { helper.asBinder().isBinderAlive }.getOrDefault(false) &&
+                settings.state.value.credentialsConfigured && w.config.audioMode == settings.state.value.audioMode },
+            nowMs = SystemClock::elapsedRealtime,
+            sample = { TelecomMuteBaseline(
+                cellularModeReady = runCatching { app.getSystemService(AudioManager::class.java)?.mode == AudioManager.MODE_IN_CALL }.getOrDefault(false),
+                telecomMuted = service.telecomMuted,
+                hardwareMuted = microphoneMuted(),
+                observationRevision = service.muteObservationRevision,
+            ) },
+        )
         w.muteLease = lease
         if (lease.needsMuteRequest) {
             // Mark before the Binder request: an in-flight mute still needs a compensating
@@ -1481,6 +1541,25 @@ class CallRuntime(private val app: MikaApp) {
     private fun Bundle.fd(key: String): ParcelFileDescriptor? =
         if (Build.VERSION.SDK_INT >= 33) getParcelable(key, ParcelFileDescriptor::class.java)
         else getParcelable(key)
+
+    /** Never spend the outgoing ringing interval with an unattended cloud session. */
+    private fun validateSessionTarget(w: Work, helper: IMikaShell) {
+        prerequisite(ignoreWork = true)?.let { throw CallProblem(it) }
+        if (shell !== helper || w.config.audioMode != settings.state.value.audioMode) {
+            throw CallProblem("通话音频设置或内置助手已变化，AI 未接入")
+        }
+        if (w.direction == CallDirection.INCOMING) {
+            validateTarget(w)
+        } else {
+            requireOutgoingForegroundService(w)
+            val target = w.track ?: throw CallProblem("外呼通话已结束，AI 未接入")
+            val account = target.call.details?.accountHandle
+            if (!sameActiveMuteTarget(w, target) || target.suppressed || !carrierCall(target.call) ||
+                target.direction != CallDirection.OUTGOING || account == null || account != w.sim?.handle) {
+                throw CallProblem("外呼通话已变化，AI 未接入")
+            }
+        }
+    }
 
     private fun validateTarget(w: Work) {
         if (w.direction == CallDirection.INCOMING) {
@@ -1685,10 +1764,14 @@ class CallRuntime(private val app: MikaApp) {
         return number == null || isEmergency(number) == false
     }
 
-    private fun matchesOutgoing(w: Work, tracked: Tracked): Boolean =
-        tracked.direction == CallDirection.OUTGOING && tracked.number == w.requestedNumber &&
-            tracked.call.details?.accountHandle == w.sim?.handle &&
-            runCatching { tracked.call.details?.intentExtras?.getString(TOKEN) == w.id }.getOrDefault(false)
+    private fun matchesOutgoing(w: Work, tracked: Tracked): Boolean = OutgoingCallMatch.matches(
+        requestedNumber = w.requestedNumber,
+        observedNumber = tracked.number,
+        direction = tracked.direction,
+        accountMatches = w.sim?.handle?.let { it == tracked.call.details?.accountHandle } == true,
+        requestedToken = w.id,
+        observedToken = runCatching { tracked.call.details?.intentExtras?.getString(TOKEN) }.getOrNull(),
+    )
 
     private suspend fun readSims() {
         sims = if (!access.hasPhonePermissions()) emptyList() else withContext(Dispatchers.IO) {

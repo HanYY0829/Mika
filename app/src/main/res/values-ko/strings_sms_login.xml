@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sms_login_title">SMS 로그인 (실험 기능)</string>
+    <string name="sms_login_enable">SMS 로그인 허용</string>
+    <string name="sms_login_default_off">기본 꺼짐 · 기기 내 신뢰 설정</string>
+    <string name="sms_login_limits">설정된 기본 앱에서 서명·발신자·서비스·계정을 대조해 자동 로그인합니다. 매번 확인하지 않습니다. 권한이나 성공 증거가 부족하면 수동 처리합니다. 검증 후 문자 화면 읽기를 재개하며 이미지는 기기에만 둡니다.</string>
+    <string name="sms_login_permission">Android SMS 권한</string>
+    <string name="sms_login_error">권한 또는 저장 실패. 수동으로 로그인하고 시스템 권한을 확인하세요.</string>
+    <string name="sms_login_disclosure">설정한 서명된 앱과 계정만 자동 로그인하도록 허용합니다. 다시 묻지 않고 코드 요청·입력·로그인 제출·계정 검증을 합니다. 결제·복구·가입은 제외합니다. 문자와 코드는 저장하거나 모델에 보내지 않습니다. 끄거나 설정을 삭제해 철회하세요.</string>
+    <string name="sms_login_sender">정확한 문자 발신자</string>
+    <string name="sms_login_signature">괄호 안 서비스 이름</string>
+    <string name="sms_login_account">일치하는 계정 숫자 (4–11자리)</string>
+    <string name="sms_login_listening">설정된 계정의 요청·입력·검증을 자동 진행 중입니다. 취소할 수 있습니다.</string>
+    <string name="sms_login_tool">SMS 로그인</string>
+    <string name="sms_profile_title">신뢰하는 서비스 및 계정</string>
+    <string name="sms_profile_help">한 번 설정해 저장하면 서명된 이 앱의 코드 요청, 계정·코드 입력, 최종 로그인 및 계정 확인을 자동으로 허용합니다. 검증된 기본 리소스 ID와 로그인된 계정 표시가 필요합니다. 앱당 계정 하나이며 수정·삭제로 철회합니다. Android Keystore로 기기에 암호화 저장합니다.</string>
+    <string name="sms_profile_accountvalue">계정 번호 (이 기기에만 저장)</string>
+    <string name="sms_profile_package">설치된 앱 패키지</string>
+    <string name="sms_profile_accountfield">계정 입력란 리소스 ID</string>
+    <string name="sms_profile_codefield">코드 입력란 리소스 ID</string>
+    <string name="sms_profile_sendbutton">코드 요청 버튼 리소스 ID</string>
+    <string name="sms_profile_loginbutton">최종 로그인 버튼 리소스 ID</string>
+    <string name="sms_profile_successview">로그인 표시 리소스 ID</string>
+    <string name="sms_profile_successtext">정확한 로그인 표시 문구</string>
+    <string name="sms_profile_successaccount">로그인된 계정 표시 리소스 ID</string>
+</resources>

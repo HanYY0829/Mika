@@ -1,0 +1,15 @@
+<resources>
+    <string name="device_browser_title">Archivos del dispositivo</string>
+    <string name="device_browser_roots">Carpetas autorizadas</string>
+    <string name="device_browser_back">Atrás</string>
+    <string name="device_browser_retry">No se pudieron cargar los archivos. Toca para reintentar</string>
+    <string name="device_browser_empty">No hay archivos ni carpetas autorizadas</string>
+    <string name="device_browser_more">Cargar más</string>
+    <string name="device_browser_add">Añadir selección (%1$d)</string>
+    <string name="device_browser_cancel">Cancelar</string>
+    <string name="device_browser_history">Importaciones de esta conversación</string>
+    <string name="device_browser_show_files">Explorar archivos</string>
+    <string name="device_browser_history_hint">Las copias del historial pueden haberse eliminado. Consulta la biblioteca de archivos.</string>
+    <string name="device_browser_search">Buscar archivos</string>
+    <string name="device_browser_truncated">La búsqueda alcanzó un límite de profundidad, tiempo o archivos; los resultados pueden estar incompletos.</string>
+</resources>

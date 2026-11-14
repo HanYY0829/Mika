@@ -193,6 +193,12 @@ class MemoryTriggerStore(initial: TriggerSnapshot = TriggerSnapshot(emptyList(),
 fun TriggerDefinition.slotTaken(windows: List<TriggerWindow>): Boolean =
     windows.any { it.triggerId == id && it.dueAtMs == nextAtMs }
 
+/**
+ * 计划页的开关能不能拨:已启用的总能暂停;已停用的看这次时段跑过没有,和 [TriggerEngine.setEnabled] 一致。
+ * 一次性计划这次时段跑过就不能再开(要再跑得改时间或立即执行);手动运行只记在别的时段,不算占用。
+ */
+fun TriggerDefinition.canToggle(windows: List<TriggerWindow>): Boolean = enabled || !slotTaken(windows)
+
 /** 以当地日历递进，跨夏令时仍保持同一钟点；不存在的钟点使用系统的向前调整规则。 */
 fun nextCalendarAt(time: String, zone: String, days: List<Int>, afterMs: Long): Long =
     nextCalendarAt(listOf(time), zone, days, afterMs)

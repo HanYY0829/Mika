@@ -192,6 +192,8 @@
     <string name="mcp_servers_status_fail">连接失败:%1$s</string>
     <string name="mcp_servers_refresh_all">测试全部</string>
     <string name="mcp_servers_allowlist">允许的工具(英文逗号分隔,留空为全部)</string>
+    <string name="settings_show_task_cost">显示任务费用</string>
+    <string name="settings_show_task_cost_sub">按人民币估算新任务的 DeepSeek API 费用。</string>
     <string name="quit_title">完全退出 Mika</string>
     <string name="quit_row_sub">停止后台任务，收起悬浮胶囊</string>
     <string name="quit_confirm_body">正在进行的任务会停止，悬浮胶囊和通知都会收起。下次打开 Mika 就回来。</string>

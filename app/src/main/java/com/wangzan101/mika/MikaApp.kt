@@ -142,6 +142,11 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
             },
         )
     }
+    /** 已安装的插件:zip 安装、启停与只读技能;任务开始时给技能目录一份固定快照。 */
+    val plugins by lazy {
+        com.wangzan101.mika.plugin.PluginRegistry(filesDir, scope,
+            log = { msg, e -> Log.w("MikaPlugin", msg, e) })
+    }
     override val tabBudget get() = resources.tabBudget
 
     /** 任务结束后留在后台接着运行的那一页;关掉时在来源对话那一轮记下原因(对话页那一轮下面显示「后台网页已关闭」)。 */
@@ -254,7 +259,11 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
             schedulesOf = { id -> TriggerRuntime.list(app).filter { it.threadId == id }.map { it.id } },
             deleteWorkspace = { id ->
                 // 工作区里有附件、用户发来的屏幕、任务写的文件;沙箱里的命令碰得到这里,和命令、导入、重置互斥着删
-                SandboxDirs(app).deleteWorkspace(id)
+                try {
+                    SandboxDirs(app).deleteWorkspace(id)
+                } finally {
+                    com.wangzan101.mika.task.DeviceImportStore.get(app).removeConversation(id)
+                }
             },
         )
     }
@@ -269,7 +278,7 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
         com.wangzan101.mika.settings.AppAccessStore(java.io.File(filesDir, "app-access.json"))
     }
 
-    /** 主动能力(实验):通知白名单、监听与本机收件箱。 */
+    /** 主动能力:通知白名单、监听与本机收件箱。 */
     val proactive by lazy {
         com.wangzan101.mika.proactive.ProactiveRuntime.create(this,
             { com.wangzan101.mika.proactive.AppGate.of(appAccess.current()) },
@@ -414,6 +423,10 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
         super.onCreate()
         // 上次进程在复制或绑定分享草稿途中退出时留下的临时文件;目录至多保留一份有效草稿。
         runCatching { sharedDrafts.cleanup() }
+        scope.launch(Dispatchers.IO) {
+            runCatching { com.wangzan101.mika.task.AndroidDeviceFiles.cleanupStaging(SandboxDirs(this@MikaApp)) }
+                .onFailure { Log.w("MikaImport", "Could not clean device import staging", it) }
+        }
         // 界面以外的文字(通知、服务、悬浮胶囊)按 App 语言取
         AppLanguage.applyDefaultLocale(this)
         UiText.source = ResourceTexts { AppLanguage.resources(this) }

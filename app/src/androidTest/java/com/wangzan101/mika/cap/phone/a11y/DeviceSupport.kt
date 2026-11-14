@@ -70,11 +70,14 @@ object DeviceSupport {
     private fun rebindAccessibility() {
         if (ScreenAccessibility.instance.value != null) return
         val key = "enabled_accessibility_services"
-        val mika = "${InstrumentationRegistry.getInstrumentation().targetContext.packageName}/${MikaAccessibilityService::class.java.name}"
+        val pkg = InstrumentationRegistry.getInstrumentation().targetContext.packageName
+        val full = "$pkg/${MikaAccessibilityService::class.java.name}"
+        // 组件名有「包名/.类名」与完整类名两种写法;App 自己的恢复(PermissionCommands.accessibilityService)写的是短形式,两种都要认,不然重绑被跳过
+        val short = "$pkg/" + MikaAccessibilityService::class.java.name.removePrefix("$pkg.")
         val enabled = sh("settings get secure $key").trim().split(':')
-        if (mika !in enabled) return
+        if (enabled.none { it == full || it == short }) return
         try {
-            sh("settings put secure $key ${enabled.filter { it != mika }.joinToString(":").ifEmpty { "\"\"" }}")
+            sh("settings put secure $key ${enabled.filter { it != full && it != short }.joinToString(":").ifEmpty { "\"\"" }}")
             Thread.sleep(500)
         } finally {
             sh("settings put secure $key ${enabled.joinToString(":")}")

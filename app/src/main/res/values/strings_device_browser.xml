@@ -1,0 +1,15 @@
+<resources>
+    <string name="device_browser_title">Device files</string>
+    <string name="device_browser_roots">Authorized folders</string>
+    <string name="device_browser_back">Back</string>
+    <string name="device_browser_retry">Could not load files. Tap to retry.</string>
+    <string name="device_browser_empty">No files or authorized folders</string>
+    <string name="device_browser_more">Load more</string>
+    <string name="device_browser_add">Add selected (%1$d)</string>
+    <string name="device_browser_cancel">Cancel</string>
+    <string name="device_browser_history">Conversation imports</string>
+    <string name="device_browser_show_files">Browse files</string>
+    <string name="device_browser_history_hint">Import history; copies may have been removed. Open the file library to view files.</string>
+    <string name="device_browser_search">Search files</string>
+    <string name="device_browser_truncated">Search stopped at the depth, time or file limit; results may be incomplete.</string>
+</resources>

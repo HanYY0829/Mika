@@ -1,0 +1,15 @@
+<resources>
+    <string name="device_browser_title">手机文件</string>
+    <string name="device_browser_roots">已授权的文件夹</string>
+    <string name="device_browser_back">返回</string>
+    <string name="device_browser_retry">无法读取文件，点击重试</string>
+    <string name="device_browser_empty">没有文件或已授权的文件夹</string>
+    <string name="device_browser_more">加载更多</string>
+    <string name="device_browser_add">添加已选文件（%1$d）</string>
+    <string name="device_browser_cancel">取消</string>
+    <string name="device_browser_history">本会话的导入记录</string>
+    <string name="device_browser_show_files">浏览文件</string>
+    <string name="device_browser_history_hint">导入历史中的副本可能已被删除，可在文件库中查看文件。</string>
+    <string name="device_browser_search">搜索文件</string>
+    <string name="device_browser_truncated">搜索受到深度、时间或文件数量限制，结果可能不完整。</string>
+</resources>

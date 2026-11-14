@@ -20,6 +20,9 @@
     <string name="proactive_learn_topic_detail">%1$s · %2$s · %3$d 日 · 最終 %4$s</string>
     <string name="proactive_learn_topic_outcomes">%1$d 個のアプリ · 開いた %2$d · 消した %3$d</string>
     <string name="proactive_learn_delete">削除</string>
+    <string name="proactive_learn_topic_merge">統合…</string>
+    <string name="proactive_learn_topic_merge_title">「%1$s」の統合先</string>
+    <string name="proactive_learn_topic_merge_body">このトピックの日数と回数は選んだトピックに加算され、今後この名前もそちらに数えられます。元に戻せません。</string>
     <string name="proactive_learn_clear_all">Mika が集めた内容をすべて消去</string>
     <string name="proactive_learn_clear_all_body">Mika が集めたトピック、連絡先、各まとめ、保存してある通知テキストをすべて削除しますか？元に戻せません。その後は新しい通知からまた集めます。</string>
     <string name="proactive_learn_clear_app">%1$s からの分を消去</string>

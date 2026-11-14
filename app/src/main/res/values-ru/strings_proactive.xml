@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="proactive_title">Проактивность (эксперимент)</string>
+    <string name="proactive_title">Проактивность</string>
     <string name="proactive_entry_sub">Читает уведомления выбранных приложений</string>
     <string name="proactive_switch">Включить</string>
     <string name="proactive_listener">Слушатель: %1$s</string>

@@ -219,7 +219,7 @@ class AnthropicModelTest {
     // 别的 400 照常报错;签名本身坏了(只有前半句)不重发;这次没带思考块(关掉了思考)时不重发;去掉以后还被拒的不再发第三次
     @Test fun otherRejectionsAreNotSentAgain() = runTest {
         suspend fun rejected(m: AnthropicModel) =
-            try { m.complete("s", signedHistory(endpoint), emptyList()); null } catch (e: ModelError.BadResponse) { e }
+            try { m.complete("s", signedHistory(endpoint), emptyList()); null } catch (e: ModelError.Server) { e }
         server.enqueue(MockResponse().setResponseCode(400).setBody("""{"type":"error","error":{"type":"invalid_request_error","message":"tools.0.name: invalid"}}"""))
         assertTrue(rejected(model(reasoningEffort = "high")) != null)
         assertEquals(1, server.requestCount)

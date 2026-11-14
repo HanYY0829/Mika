@@ -176,15 +176,28 @@ interface DigestStore {
  * [LearnRunner.PURGE_SENSITIVE],以及单删的那些(只有编号、日子,没有内容;话题和句子的编号是随机的,
  * 联系人的是从 App 和会话名算出来的哈希——偏好文件不加密,这一项存上之前会在里面待一会儿)。记这一笔是尽力而为:
  * 存盘写不下去多半是存储满了,那时偏好多半也写不下去。
+ *
+ * 话题、联系人这两份是按记下的先后排着的(集合的遍历顺序就是先后),补做时照这个先后做:同一个话题名上,
+ * 「删掉」和「并进别的」是后做的算数,合并的目标也得先于并进它的那一步存在。实现要把先后一起存下来。
  */
 interface LearnPurges {
-    /** 话题池上还没落盘的。 */
+    /** 话题池上还没落盘的,按记下的先后。 */
     var topicPurges: Set<String>
-    /** 联系人上还没落盘的。 */
+    /** 联系人上还没落盘的,按记下的先后。 */
     var contactPurges: Set<String>
+
+    /**
+     * 同一个记号记到话题、联系人两份的末尾(一次合并两份都要改)。正式的实现([ProactivePrefs])一次落盘:
+     * 分两次写的话,中间进程没了只记上一半,补做时话题并了、联系人上的连接没跟上。
+     * 这里的默认写法分两次(先联系人),只给测试里的替身用。
+     */
+    fun addToTopicsAndContacts(mark: String) {
+        contactPurges = contactPurges - mark + mark
+        topicPurges = topicPurges - mark + mark
+    }
     /** 分段归纳的句子和各级归纳上还没落盘的。 */
     var digestPurges: Set<String>
-    /** 通知原文上还没落盘的:要去掉其全部原文的 App 包名。 */
+    /** 通知原文上还没落盘的:要去掉其全部原文的 App 包名,和「某个通知键某一阵的那几段」的记号(只有键的哈希和时间)。 */
     var journalPurges: Set<String>
 }
 
@@ -251,6 +264,8 @@ internal class LearnRunner(
     private var holdUntilMs = 0L
     /** 已经在内存里做掉、还没存上的补删(见 [purge]):存上的那一刻从记着的里划掉。 */
     private var topicPurgesApplied: Set<String> = emptySet()
+    /** 文件里有的话题的 id(读出来时、每次存上时记下):内存里多出来的(刚归纳出来、还没存上的)不在里面。 */
+    private var savedTopics: Set<String> = emptySet()
     private var contactPurgesApplied: Set<String> = emptySet()
     private var digestPurgesApplied: Set<String> = emptySet()
     private var journalPurgesApplied: Set<String> = emptySet()
@@ -374,6 +389,42 @@ internal class LearnRunner(
         if (buffer.capture(record, newMessages)) bump(record.packageName) { it.copy(captured = it.captured + 1) }
     }
 
+    /**
+     * 这个通知键其实是一条被反复重发的状态显示(导航播报之类,见 [LiveUpdates]):它从 [sinceMs] 起(这一阵重发)收进来、
+     * 还没归纳的那几条去掉,通知原文里的也去掉。同一个键上更早的不动——很多 App 所有推送共用一个通知键。
+     */
+    fun dropLive(key: String, packageName: String, sinceMs: Long) {
+        // 在途的请求里可能就有这几条:正在给这个 App 写分段归纳的那一批,或正在归纳话题的那一批里这个键这一阵的事件。
+        // 取消(和清掉一个 App 时一样):不然回复回来,照着它们写的句子、归纳出的话题还是存下了。
+        // 取消后归纳话题的那一批回到待归纳,下面一并去掉(不然锁屏之类再取消一次,它们又会被发出去);剩下的照常再发
+        val stopped = notesApp == packageName || buffer.sending().any { it.key == key && it.postedAtMs >= sinceMs }
+        if (stopped) stopRequest()
+        buffer.forgetKey(key, sinceMs)
+        if (on() && digest()) {
+            // 通知原文里的:和按 App 删一样先记下来(见 [LearnPurges.journalPurges])。这会儿读不出来的、去掉了没存上的,
+            // 读得出来时补做——不然它们还算没归纳过,下一次分段归纳又发给模型
+            val keyId = com.wangzan101.mika.core.proactive.NoticeDedup.idOf(key)
+            val mark = MARK_KEY + keyId + KEY_SINCE + sinceMs
+            val j = loadedJournal()
+            if (j == null) {
+                purges.journalPurges = purges.journalPurges + mark
+            } else if (j.removeKey(keyId, sinceMs, sinceMs + LIVE_WINDOW_MS)) {
+                purges.journalPurges = purges.journalPurges + mark
+                journalPurgesApplied = journalPurgesApplied + mark
+                saveJournal()
+            }
+        }
+        if (stopped && host != null) evaluate()
+    }
+
+    /** 记着的「这个通知键这一阵的去掉」:键的哈希、从什么时候起;不是这种记号、写得不对的为 null。 */
+    private fun keyIn(mark: String): Pair<String, Long>? {
+        if (!mark.startsWith(MARK_KEY)) return null
+        val parts = mark.removePrefix(MARK_KEY).split(KEY_SINCE)
+        val since = parts.getOrNull(1)?.toLongOrNull()
+        return if (parts.size == 2 && parts[0].isNotEmpty() && since != null) parts[0] to since else null
+    }
+
     /** 记进通知日志;攒够 [JOURNAL_FLUSH_EVERY] 段没存的就存一次(进程在两次存盘之间没了,最多丢这么多段,或上次锁屏之后的)。 */
     private fun record(record: NoticeRecord) {
         val j = loadedJournal() ?: return
@@ -475,12 +526,59 @@ internal class LearnRunner(
         if (p.delete(id)) {
             // 先记下来再存:没存上、进程又没了的,下次读出来时补做(见 [LearnPurges])
             val mark = MARK_TOPIC + id
-            purges.topicPurges = purges.topicPurges + mark
+            purges.topicPurges = purges.topicPurges - mark + mark
             topicPurgesApplied = topicPurgesApplied + mark
             topicsGone(setOf(id))
             save(p)
             dropBroken()
         }
+    }
+
+    /**
+     * 把话题 [fromId] 并进 [intoId](用户在话题页上做的;规则见 [TopicPool.merge]):事件上、联系人上指着 [fromId] 的改指 [intoId]。
+     * 不走删除那条路:并掉的名字不进「不再记录」,连接也不丢。
+     *
+     * 和删除一样先记下来再存(见 [LearnPurges]),存上了才划掉;没存上、进程又没了的,下次读出来时照记下的先后补做:
+     * - 话题那份:不补做的话,文件里两个话题都还在。用户并完接着把并好的那个删了(删除是记着的、会补做),
+     *   补做时文件里没有这次合并,并掉的那个就带着它的证据回来了,名字也不在「不再记录」里。
+     * - 联系人那份:这会儿读不出来、或改了没存上的,文件里连着的还是并掉的那个 id;等话题那份存上了,
+     *   下次整理就把这些连接当成指着空处的去掉了。
+     * 这一笔两份一次记上([LearnPurges.addToTopicsAndContacts]):只记上话题那一半的话,补做时联系人上的连接就丢了。
+     *
+     * 记号里只有两个 id,补做时两个话题都得在文件里。有一个还不在文件里(刚归纳出来、没存上的)时先存一次,还存不上就不并——
+     * 并了也记不住:进程一没,目标不在文件里,这次合并补不回来,并掉的那个又回来了。合并分不开,存不下的时候宁可不做。
+     *
+     * 先存联系人再存话题:中途进程没了,联系人上连着的是还在的那个话题。
+     */
+    fun mergeTopic(fromId: String, intoId: String) {
+        val p = loadedPool() ?: return
+        if (p[fromId] == null || p[intoId] == null || fromId == intoId) return
+        if ((fromId !in savedTopics || intoId !in savedTopics) && !save(p)) {
+            log("learn merge not done: topic not saved")
+            return
+        }
+        if (!p.merge(fromId, intoId)) return
+        val mark = MARK_MERGE + fromId + MERGE_INTO + intoId
+        purges.addToTopicsAndContacts(mark)
+        topicPurgesApplied = topicPurgesApplied + mark
+        buffer.remapTopic(fromId, intoId)
+        val c = contactPool
+        if (c == null) {
+            // 联系人还没读出来:读出来的那一刻把记着的(连同这一项)做掉;读不出来就留到读得出来时
+            loadedContacts()
+        } else {
+            c.remapTopic(fromId, intoId)
+            contactPurgesApplied = contactPurgesApplied + mark
+            saveContacts(c)
+        }
+        save(p)
+    }
+
+    /** 记着的一次合并:并掉的话题 id、并进去的 id;不是合并的记号、写得不对的为 null。 */
+    private fun mergeIn(mark: String): Pair<String, String>? {
+        if (!mark.startsWith(MARK_MERGE)) return null
+        val ids = mark.removePrefix(MARK_MERGE).split(MERGE_INTO)
+        return if (ids.size == 2 && ids[0].isNotEmpty() && ids[1].isNotEmpty()) ids[0] to ids[1] else null
     }
 
     /**
@@ -508,7 +606,10 @@ internal class LearnRunner(
         val c = loadedContacts()
         val contactsCleared: Boolean
         if (c != null) {
-            contactsCleared = !c.clear() || saveContacts(c) || wipe("contacts") { contactStore.wipe() }
+            // 内存里本来就是空的也照存:可能是之前删了却没存上,文件里还是旧的——这时跳过不存,
+            // 下面又把记着的待删划掉,旧的联系人下次启动就回来了
+            c.clear()
+            contactsCleared = saveContacts(c) || wipe("contacts") { contactStore.wipe() }
         } else {
             contactsCleared = wipe("contacts") { contactStore.wipe() }
             contactPool = ContactPool()
@@ -586,8 +687,7 @@ internal class LearnRunner(
             // 里面有留两年的月归纳;记下来,读得出来时补做(见 loadedDigest)
             digestRemove(setOf(what), stopRequests = true)
         }
-        purges.topicPurges = purges.topicPurges + what
-        purges.contactPurges = purges.contactPurges + what
+        purges.addToTopicsAndContacts(what)
         // 这一次才读出来的,读出来的那一刻已经把记着的(连同这一项)做掉了
         val hadTopics = pool != null
         val p = loadedPool()
@@ -601,9 +701,13 @@ internal class LearnRunner(
     private fun purgeTopics(p: TopicPool, what: Set<String>) {
         if (what.isEmpty()) return
         val gone = HashSet<String>()
+        // 照记下的先后做(见 [LearnPurges]):并完才删的,删的是并好的那个,并进过它的名字要跟着进「不再记录」;
+        // 先删了一个名字、后来又把同名的另一个并进别的,这个名字算并掉的。已经存上了的再做一遍什么都不会变:
+        // 并掉、删掉的那个 id 不在了,id 也不会再发给别的话题
         for (w in what) when {
             w == MARK_ALL -> { gone += p.all().map { it.id }; p.clear() }
             w == PURGE_SENSITIVE -> gone += p.deleteSensitive()
+            w.startsWith(MARK_MERGE) -> mergeIn(w)?.let { (from, into) -> p.merge(from, into) }
             w.startsWith(MARK_TOPIC) -> w.removePrefix(MARK_TOPIC).let { if (p.delete(it)) gone += it }
             // 别的记号不是话题池的事(也不能当包名去清)
             w.startsWith(":") -> {}
@@ -616,10 +720,13 @@ internal class LearnRunner(
 
     private fun purgeContacts(c: ContactPool, what: Set<String>) {
         if (what.isEmpty()) return
+        // 照记下的先后做。记着的合并:连着并掉的那个话题的,改连并进去的那个
         for (w in what) when {
             w == MARK_ALL -> c.clear()
             w == PURGE_SENSITIVE -> c.deleteSensitive()
-            w.startsWith(MARK_CONTACT) -> c.delete(w.removePrefix(MARK_CONTACT))
+            w.startsWith(MARK_MERGE) -> mergeIn(w)?.let { (from, into) -> c.remapTopic(from, into) }
+            // 不在了也要记进「不再记录」(见 [ContactPool.forget])
+            w.startsWith(MARK_CONTACT) -> c.forget(w.removePrefix(MARK_CONTACT))
             w.startsWith(":") -> {}
             else -> c.clearApp(w)
         }
@@ -697,6 +804,8 @@ internal class LearnRunner(
                 val pending = purges.journalPurges
                 if (pending.isNotEmpty()) {
                     it.removePackages { p -> MARK_ALL !in pending && p !in pending }
+                    // 记着的状态显示(见 dropLive):只去掉那一阵的——同一个键上之后的正常通知不动
+                    for (w in pending) keyIn(w)?.let { (keyId, since) -> it.removeKey(keyId, since, since + LIVE_WINDOW_MS) }
                     journalPurgesApplied = journalPurgesApplied + pending
                 }
                 // 读进来时就有过期的:内存里已经去掉了,文件里还在——马上存一次(存里面会刷新页面上的数)
@@ -1440,7 +1549,8 @@ internal class LearnRunner(
         val now = clock()
         // 给模型看的话题,和它回复里的 t1… 一一对应;请求途中被删了的,用的时候丢掉
         val allowSensitive = sensitive()
-        val shown = p.strongest(now, includeSensitive = allowSensitive).map { ExistingTopic(it.id, it.kind, it.label) }
+        // 这个 App 自己印证过的排在前面:它多半还在推那些题材,模型看得到才引用得上
+        val shown = p.strongest(now, includeSensitive = allowSensitive, packageName = packageName).map { ExistingTopic(it.id, it.kind, it.label) }
         // 联系人读不出来时不请模型给(给了也存不下)
         val contactsOn = loadedContacts() != null
         val lang = language()
@@ -1567,6 +1677,7 @@ internal class LearnRunner(
         return try {
             TopicPool(store.load()).also {
                 pool = it
+                savedTopics = it.all().mapTo(HashSet()) { t -> t.id }
                 topicsFlow.value = it.all()
                 topicsBlockedFlow.value = it.blockedCount
                 purgeTopics(it, purges.topicPurges)
@@ -1587,6 +1698,8 @@ internal class LearnRunner(
                 contactPool = it
                 contactsFlow.value = ContactsView(it.all(), it.blockedCount)
                 purgeContacts(it, purges.contactPurges)
+                // 以前按通知键存下来的:同名的并成一条(要在上面补做完记着的删除之后,那些记的是以前的 id)
+                if (it.adoptIdentities()) saveContacts(it)
             }
         } catch (e: CancellationException) {
             throw e
@@ -1621,6 +1734,7 @@ internal class LearnRunner(
         topicsBlockedFlow.value = p.blockedCount
         return try {
             store.save(p.data())
+            savedTopics = p.all().mapTo(HashSet()) { it.id }
             // 做过的补删这下落盘了
             if (topicPurgesApplied.isNotEmpty()) {
                 purges.topicPurges = purges.topicPurges - topicPurgesApplied
@@ -1679,6 +1793,14 @@ internal class LearnRunner(
         private const val MARK_ALL = ":all"
         private const val MARK_TOPIC = ":topic:"
         private const val MARK_CONTACT = ":contact:"
+        /** 通知原文上:某个通知键某一阵的那几段。后面是键的哈希、[KEY_SINCE]、从什么时候起(毫秒)。 */
+        private const val MARK_KEY = ":key:"
+        private const val KEY_SINCE = "@"
+        /** 那一阵有多长:认状态显示时往回看的窗口。 */
+        private const val LIVE_WINDOW_MS = com.wangzan101.mika.core.proactive.LiveUpdates.WINDOW_MS
+        /** 一次合并:后面是并掉的话题 id、[MERGE_INTO]、并进去的话题 id。话题、联系人两份上都可能记着。 */
+        private const val MARK_MERGE = ":merge:"
+        private const val MERGE_INTO = ">"
         private const val MARK_NOTE = ":note:"
         private const val MARK_DAY = ":day:"
         private const val MARK_WEEK = ":week:"

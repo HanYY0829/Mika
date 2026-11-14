@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "id": "com.example.feishu",
+  "name": "飞书消息",
+  "version": "0.2.0",
+  "kind": "capability",
+  "minApp": "0.1.33",
+  "author": "Mika 插件示例",
+  "description": "飞书消息技能，加上通过自定义机器人 webhook 发消息的工具；需要 P1b 的工具接入。",
+  "permissions": ["sandbox.run", "network"],
+  "tools": [
+    {
+      "name": "send",
+      "description": "通过飞书自定义机器人 webhook 发一条文本消息",
+      "script": "scripts/send.py",
+      "timeoutSec": 30,
+      "risk": "external",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "maxCostUnits": 5,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "webhook": {
+            "type": "string",
+            "description": "飞书自定义机器人的 webhook 地址，形如 https://open.feishu.cn/open-apis/bot/v2/hook/..."
+          },
+          "text": {
+            "type": "string",
+            "description": "要发送的文本，最多 20000 字符"
+          },
+          "secret": {
+            "type": "string",
+            "description": "可选：机器人开启签名校验时填 secret"
+          }
+        },
+        "required": ["webhook", "text"]
+      }
+    }
+  ],
+  "skills": [
+    {
+      "name": "feishu",
+      "path": "skills/feishu",
+      "display": "飞书消息"
+    }
+  ]
+}

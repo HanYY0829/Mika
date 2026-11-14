@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Opt-in, task-scoped incoming SMS only; never request READ_SMS or the default SMS role. -->
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <!-- 按住说话时录音，转成文字；用户浏览器里的网页要麦克风时也用它。 -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- 用户浏览器里的网页要摄像头（Mika 自己拍照走系统相机，不用这个权限）；网页请求时先弹框问用户。 -->
@@ -15,6 +17,7 @@
     <!-- 沙箱联网时读当前网络的 DNS 服务器 -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -116,6 +119,10 @@
         android:localeConfig="@xml/locales_config"
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <service
+            android:name=".voice.WakeWordService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
         <!-- 界面只有一个:从桌面、通知、别的 App 或命令打开都回到这一个(新的打开交给 onNewIntent),不在上面叠出第二个 -->
         <activity
             android:name=".ui.MainActivity"
@@ -223,7 +230,7 @@
                 android:resource="@xml/accessibility_service" />
         </service>
 
-        <!-- 主动能力(实验):默认停用,第一次打开功能时由 ProactiveRuntime 启用,系统「通知使用权」列表里才出现;
+        <!-- 主动能力:默认停用,第一次打开功能时由 ProactiveRuntime 启用,系统「通知使用权」列表里才出现;
              之后关掉功能只解绑、不再停用(组件一停用系统就收回使用权)。
              exported=false 与 NotificationListenerService 文档里的清单示例一致(系统按 BIND_NOTIFICATION_LISTENER_SERVICE 绑定);
              只滤掉常驻通知,不滤静默通知(用户常把微信设成静默)。 -->

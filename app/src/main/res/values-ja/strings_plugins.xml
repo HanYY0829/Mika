@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugins_title">プラグイン</string>
+    <string name="plugins_install">プラグインをインストール</string>
+    <string name="plugins_installing">インストール中…</string>
+    <string name="plugins_empty">プラグインはまだありません</string>
+    <string name="plugins_empty_sub">プラグインの zip をインストールすると、Mika が読めるスキルを追加できます。プラグインはアプリの設定を変更したり、他のデータを読んだりできません。</string>
+    <string name="plugins_enabled">有効</string>
+    <string name="plugins_disabled">無効</string>
+    <string name="plugins_skills">スキル</string>
+    <string name="plugins_no_skills">スキルなし</string>
+    <string name="plugins_permissions">権限</string>
+    <string name="plugins_none">なし</string>
+    <string name="plugins_version">バージョン %1$s</string>
+    <string name="plugins_uninstall">アンインストール</string>
+    <string name="plugins_uninstall_body">このプラグインとスキルを削除しますか？会話とメモリには影響しません。</string>
+    <string name="plugins_install_failed">インストールに失敗しました：%1$s</string>
+    <string name="plugins_unsupported_in_version">このバージョンはスキルのみのプラグインに対応しています。</string>
+    <string name="plugins_error_too_new">このプラグインには新しいバージョンの Mika が必要です。</string>
+    <string name="plugins_error_unsafe">安全でないパスが含まれているため、インストールを拒否しました。</string>
+    <string name="plugins_error_too_large">パッケージが大きすぎます。</string>
+    <string name="plugins_error_missing_manifest">パッケージのルートに manifest.json がありません。</string>
+    <string name="plugins_error_invalid">このパッケージは有効なプラグインではありません。</string>
+    <plurals name="plugins_skill_count">
+        <item quantity="other">%1$d 個のスキル</item>
+    </plurals>
+    <plurals name="plugins_count">
+        <item quantity="other">%1$d 個のプラグイン</item>
+    </plurals>
+</resources>

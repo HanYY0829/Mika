@@ -1,6 +1,7 @@
 package com.wangzan101.mika.cap.phone.a11y
 
 import android.graphics.Rect
+import android.os.Build
 import android.os.Bundle
 import android.view.accessibility.AccessibilityNodeInfo
 import com.wangzan101.mika.core.cap.phone.WheelDrags
@@ -244,7 +245,8 @@ internal class WheelDriver(
     /** 一项的名字;系统单独报的状态(stateDescription,如「已选中」)若被拼进了名字,先拿掉。太长的不算一项。 */
     private fun itemLabel(n: AccessibilityNodeInfo): String? {
         var label = ScreenReader.ownLabel(n) ?: return null
-        val state = n.stateDescription?.toString()?.trim()
+        // stateDescription 是安卓 11 起才有的;更早的系统没有单独报的状态。
+        val state = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) n.stateDescription?.toString()?.trim() else null
         if (!state.isNullOrEmpty() && label != state && label.contains(state)) {
             label = label.replace(state, "").trim { it.isWhitespace() || !it.isLetterOrDigit() }.ifEmpty { label }
         }

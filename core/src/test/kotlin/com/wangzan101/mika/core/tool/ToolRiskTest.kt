@@ -22,7 +22,7 @@ class ToolRiskTest {
 
     /** 原来要过锁屏/暂停关卡的工具表。 */
     private val oldWriting = both("tap", "scroll", "swipe", "type_text", "clear_text", "back", "press_key", "diagnose") + setOf(
-        "phone_launch_app", "phone_share_text", "phone_gesture", "hand_to_user",
+        "phone_launch_app", "phone_share_text", "phone_gesture", "phone_sms_login", "hand_to_user",
         "phone_set_alarm", "phone_set_timer", "phone_show_alarms", "phone_add_calendar_event", "phone_set_wheel",
         "web_navigate", "web_tabs", "web_upload", "web_interact", "web_site_mode", "phone_open_link", "web_keep_open", "phone_app_after_task",
     )
@@ -49,11 +49,16 @@ class ToolRiskTest {
             setOf("phone_find", "phone_collect", "phone_dialog", "phone_run", "phone_system_command", "phone_calendar_bulk_insert", "schedule_task", "spawn_agent", "settings_set", "root_run_command", "web_search",
                 "mika_open_screen", "mika_open_file", "mika_notify", "mika_copy",
                 "mika_open_in_browser", "mika_search_in_browser", "mika_login_site", "mika_confirm_login", "mika_favorites",
-                "phone_call_state", "phone_call_dial", "phone_call_answer", "phone_call_hangup", "phone_call_takeover")
+                "phone_call_state", "phone_call_dial", "phone_call_answer", "phone_call_hangup", "phone_call_takeover",
+                "list_device_files", "copy_device_file", "search_device_files", "list_device_directory_hints", "update_device_directory_description")
         assertEquals(refused, allTools().filter { !it.readOnly }.map { it.name }.toSet())
         // root 命令、通话工具都只在给了端口时登记:各给一个,所有工具都在
         val d = toolDispatcher(FakeScreen(), root = object : com.wangzan101.mika.core.cap.root.RootPort {
             override suspend fun run(command: String, timeoutMs: Long) = com.wangzan101.mika.core.cap.root.RootRun.Unavailable
+        }, deviceFiles = object : com.wangzan101.mika.core.cap.devicefiles.DeviceFilesPort {
+            override suspend fun search(query: com.wangzan101.mika.core.cap.devicefiles.DeviceFileSearchQuery): com.wangzan101.mika.core.cap.devicefiles.DeviceFileSearchResult = error("read call reached device files")
+            override suspend fun list(path: String?, cursor: String?, limit: Int): com.wangzan101.mika.core.cap.devicefiles.DeviceFilePage = error("read call reached device files")
+            override suspend fun importFile(path: String, workspace: String): com.wangzan101.mika.core.cap.devicefiles.DeviceFileImport = error("read call reached device files")
         }, phoneCalls = object : PhoneCallPort {
             override suspend fun state() = JsonObject(emptyMap())
             override suspend fun dial(number: String, simId: String?, task: PhoneCallTask?) = JsonObject(emptyMap())

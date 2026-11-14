@@ -109,6 +109,21 @@ internal fun userReason(e: ModelError): String = when (e) {
     is ModelError.SignInExpired -> "${e.account} 登录已失效,请在设置 › 模型里重新用 ${e.account} 登录。"
     is ModelError.AccountPlanNotAllowed ->
         "你的 ${e.account} 订阅档位不能用这个接口(HTTP 403)。${if (e.detail.isEmpty()) "" else "服务端说明:${quoted(e.detail)}。"}可以改用 ${e.account} 的 API Key,或在设置 › 模型里换一个模型。"
+    is ModelError.ChainFailed -> {
+        // 主消息是主模型最初的错误(上面按它的类型生成),后面附整条链每个模型的状态码与一行摘要(MK-1 第 2 批)
+        val trail = e.entries.joinToString("；") { (name, err) ->
+            "「$name」${chainErrorTag(err)}：${err.message.orEmpty().lineSequence().firstOrNull().orEmpty().take(80)}"
+        }
+        userReason(e.primary) + "本任务把整条备援链都试过了，全部失败：$trail。"
+    }
+}
+
+/** 链失败记录里每个错误的短标签:认得出的写 HTTP 状态码,其余写故障名。 */
+private fun chainErrorTag(e: ModelError): String = when (e) {
+    is ModelError.Server -> " HTTP ${e.status}"
+    is ModelError.RateLimited -> " HTTP 429"
+    is ModelError.Auth -> " " + RetryPolicy.label(e)
+    else -> " ${RetryPolicy.label(e)}"
 }
 
 /** 引在句中的服务端原话:去掉末尾一个句号(原话自带的),由引它的句子补上自己的「。」;省略号(截短的「…」、「...」)不动。 */

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugins_title">Плагины</string>
+    <string name="plugins_install">Установить плагин</string>
+    <string name="plugins_installing">Установка…</string>
+    <string name="plugins_empty">Плагинов пока нет</string>
+    <string name="plugins_empty_sub">Установите zip плагина, чтобы добавить навыки, которые Mika сможет читать. Плагин не может менять настройки приложения или читать другие ваши данные.</string>
+    <string name="plugins_enabled">Включён</string>
+    <string name="plugins_disabled">Отключён</string>
+    <string name="plugins_skills">Навыки</string>
+    <string name="plugins_no_skills">Нет навыков</string>
+    <string name="plugins_permissions">Разрешения</string>
+    <string name="plugins_none">Нет</string>
+    <string name="plugins_version">Версия %1$s</string>
+    <string name="plugins_uninstall">Удалить</string>
+    <string name="plugins_uninstall_body">Удалить этот плагин и его навыки? Диалоги и память не затрагиваются.</string>
+    <string name="plugins_install_failed">Не удалось установить: %1$s</string>
+    <string name="plugins_unsupported_in_version">Эта версия поддерживает только плагины с навыками.</string>
+    <string name="plugins_error_too_new">Этому плагину нужна более новая версия Mika.</string>
+    <string name="plugins_error_unsafe">В пакете есть небезопасный путь, установка отклонена.</string>
+    <string name="plugins_error_too_large">Пакет слишком большой.</string>
+    <string name="plugins_error_missing_manifest">В корне пакета нет manifest.json.</string>
+    <string name="plugins_error_invalid">Пакет не является действительным плагином.</string>
+    <plurals name="plugins_skill_count">
+        <item quantity="one">%1$d навык</item>
+        <item quantity="few">%1$d навыка</item>
+        <item quantity="many">%1$d навыков</item>
+        <item quantity="other">%1$d навыка</item>
+    </plurals>
+    <plurals name="plugins_count">
+        <item quantity="one">%1$d плагин</item>
+        <item quantity="few">%1$d плагина</item>
+        <item quantity="many">%1$d плагинов</item>
+        <item quantity="other">%1$d плагина</item>
+    </plurals>
+</resources>

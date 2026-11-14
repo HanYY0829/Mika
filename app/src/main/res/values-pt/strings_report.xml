@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="report_title">Relatório da tarefa</string>
+    <string name="report_entry_hint">Resultados · Detalhes · Capturas</string>
+    <string name="report_no_answer">Nenhuma resposta final foi salva para esta tarefa.</string>
+    <string name="report_screens">Capturas principais</string>
+    <string name="report_view_step">Etapa %1$d · Abrir reprodução</string>
+    <string name="report_local_note">Os registros ficam no dispositivo. As capturas podem conter dados das páginas. Apenas as últimas 30 tarefas são mantidas.</string>
+    <string name="playback_title">Reprodução de ações</string>
+    <string name="playback_empty">Não há capturas registradas para esta tarefa.</string>
+    <string name="playback_legacy">Registro antigo: apenas capturas, sem marcações de ações.</string>
+    <string name="playback_approximate">A seta indica a direção da rolagem, não pontos de toque exatos.</string>
+    <string name="playback_marks">Círculo vermelho: toque · Seta: deslizar</string>
+    <string name="playback_progress">Progresso da reprodução</string>
+    <string name="playback_pause">Pausar</string>
+    <string name="playback_play">Reproduzir</string>
+    <string name="playback_previous">Anterior</string>
+    <string name="playback_next">Próxima</string>
+    <string name="playback_image">Captura da tarefa</string>
+    <string name="playback_missing">Captura indisponível</string>
+    <string name="report_export">Exportar</string>
+    <string name="report_saved">Relatório salvo</string>
+    <string name="report_save_failed">Não foi possível salvar. Verifique o registro e o destino.</string>
+    <string name="report_close">Fechar</string>
+    <string name="report_final_page">Última página registrada</string>
+    <string name="playback_stage_start">Início</string>
+    <string name="playback_stage_input">Entrada e busca</string>
+    <string name="playback_skipped">%1$d imagens indisponíveis ignoradas.</string>
+    <string name="playback_no_mark">Nenhum marcador foi registrado para esta operação.</string>
+    <string name="playback_error_unknown">Erro: nenhum motivo específico foi registrado.</string>
+    <string name="playback_result">Resultado da ação</string>
+    <string name="playback_element_click">O círculo indica a posição estimada do elemento, não um toque real.</string>
+</resources>

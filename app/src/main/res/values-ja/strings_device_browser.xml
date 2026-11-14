@@ -1,0 +1,15 @@
+<resources>
+    <string name="device_browser_title">端末のファイル</string>
+    <string name="device_browser_roots">許可済みフォルダー</string>
+    <string name="device_browser_back">戻る</string>
+    <string name="device_browser_retry">読み込めません。タップして再試行</string>
+    <string name="device_browser_empty">ファイルまたは許可済みフォルダーがありません</string>
+    <string name="device_browser_more">さらに読み込む</string>
+    <string name="device_browser_add">選択したファイルを追加（%1$d）</string>
+    <string name="device_browser_cancel">キャンセル</string>
+    <string name="device_browser_history">この会話のインポート履歴</string>
+    <string name="device_browser_show_files">ファイルを参照</string>
+    <string name="device_browser_history_hint">履歴内のコピーは削除されている場合があります。ファイルライブラリで確認できます。</string>
+    <string name="device_browser_search">ファイルを検索</string>
+    <string name="device_browser_truncated">深さ、時間またはファイル数の制限に達したため、結果が不完全な場合があります。</string>
+</resources>

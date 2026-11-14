@@ -307,6 +307,9 @@
     <string name="pip_reopen">عرض الشاشة</string>
     <string name="pip_closed_needs_you">تتطلب تدخّلك</string>
     <string name="pip_closed_hint">أُغلقت لهذه المهمة. انقر على «عرض الشاشة» أسفل اليمين، أو افتح «الشاشات في الخلفية» من القائمة الجانبية.</string>
+    <string name="chat_task_cost_estimate">حوالي %1$s</string>
+    <string name="chat_task_cost_partial">%1$s (جزئيًا)</string>
+    <string name="chat_task_cost_unavailable">تعذّر تقدير التكلفة</string>
     <string name="follow_up_steer">توجيه</string>
     <string name="follow_up_queue">انتظار</string>
     <string name="follow_up_steer_hint">ستعدّل الخطوة التالية المهمة الحالية</string>

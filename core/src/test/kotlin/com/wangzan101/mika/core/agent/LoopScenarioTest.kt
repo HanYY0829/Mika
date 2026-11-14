@@ -23,7 +23,7 @@ import com.wangzan101.mika.core.tool.FakeScreen
 import com.wangzan101.mika.core.tool.ScriptWebPort
 import com.wangzan101.mika.core.tool.ToolDispatcher
 import com.wangzan101.mika.core.verify.Verifier
-import com.wangzan101.mika.core.cap.web.AttachedPage
+import com.wangzan101.mika.core.agent.AttachedPage
 import com.wangzan101.mika.core.cap.web.FakeWebPort
 import com.wangzan101.mika.core.cap.web.PageText
 import com.wangzan101.mika.core.cap.web.ScriptRun

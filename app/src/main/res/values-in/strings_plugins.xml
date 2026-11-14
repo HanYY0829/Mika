@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugins_title">Plugin</string>
+    <string name="plugins_install">Pasang plugin</string>
+    <string name="plugins_installing">Memasang…</string>
+    <string name="plugins_empty">Belum ada plugin</string>
+    <string name="plugins_empty_sub">Pasang zip plugin untuk menambah keterampilan yang bisa dibaca Mika. Plugin tidak dapat mengubah setelan aplikasi atau membaca data Anda yang lain.</string>
+    <string name="plugins_enabled">Aktif</string>
+    <string name="plugins_disabled">Nonaktif</string>
+    <string name="plugins_skills">Keterampilan</string>
+    <string name="plugins_no_skills">Tidak ada keterampilan</string>
+    <string name="plugins_permissions">Izin</string>
+    <string name="plugins_none">Tidak ada</string>
+    <string name="plugins_version">Versi %1$s</string>
+    <string name="plugins_uninstall">Copot pemasangan</string>
+    <string name="plugins_uninstall_body">Hapus plugin ini dan keterampilannya? Percakapan dan memori tidak terpengaruh.</string>
+    <string name="plugins_install_failed">Pemasangan gagal: %1$s</string>
+    <string name="plugins_unsupported_in_version">Versi ini hanya mendukung plugin yang berisi keterampilan.</string>
+    <string name="plugins_error_too_new">Plugin ini memerlukan versi Mika yang lebih baru.</string>
+    <string name="plugins_error_unsafe">Paket berisi jalur yang tidak aman dan ditolak.</string>
+    <string name="plugins_error_too_large">Paket terlalu besar.</string>
+    <string name="plugins_error_missing_manifest">Paket tidak memiliki manifest.json di akarnya.</string>
+    <string name="plugins_error_invalid">Paket ini bukan plugin yang valid.</string>
+    <plurals name="plugins_skill_count">
+        <item quantity="other">%1$d keterampilan</item>
+    </plurals>
+    <plurals name="plugins_count">
+        <item quantity="other">%1$d plugin</item>
+    </plurals>
+</resources>

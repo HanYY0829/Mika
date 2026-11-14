@@ -14,7 +14,7 @@ import kotlin.coroutines.CoroutineContext
  * 适配器内部的兼容重发增加实际请求数,但不增加逻辑调用数。不在这个上下文里的调用(交出回答后的结局判定、记忆提取)不算,
  * Token 用量页照样都记。只在内存里加,多线程安全。
  */
-class RunUsageTally(val tokenBudget: Long? = null) : AbstractCoroutineContextElement(Key) {
+class RunUsageTally(val tokenBudget: Long? = null, val deepSeekCost: DeepSeekRunCost? = null) : AbstractCoroutineContextElement(Key) {
     companion object Key : CoroutineContext.Key<RunUsageTally>
 
     init { require(tokenBudget == null || tokenBudget > 0) }
@@ -51,7 +51,7 @@ class RunUsageTally(val tokenBudget: Long? = null) : AbstractCoroutineContextEle
     }
 
     /** 此刻的合计,作为运行记录里的一条 [RunEvent.ModelCalls]。 */
-    fun event(atMs: Long) = RunEvent.ModelCalls(
-        atMs, logicalCalls.get(), unreported.get(), input.get(), output.get(), cached.get(), calls.get(), httpUnreported.get(),
+    fun event(atMs: Long, cost: DeepSeekCost? = null) = RunEvent.ModelCalls(
+        atMs, logicalCalls.get(), unreported.get(), input.get(), output.get(), cached.get(), calls.get(), httpUnreported.get(), deepSeekCost = cost,
     )
 }

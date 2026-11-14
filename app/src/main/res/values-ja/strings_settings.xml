@@ -192,6 +192,8 @@
     <string name="mcp_servers_status_fail">接続に失敗:%1$s</string>
     <string name="mcp_servers_refresh_all">すべてテスト</string>
     <string name="mcp_servers_allowlist">許可するツール(カンマ区切り、空欄はすべて)</string>
+    <string name="settings_show_task_cost">タスクの費用を表示</string>
+    <string name="settings_show_task_cost_sub">新しいタスクの DeepSeek API 費用を人民元で見積もります。</string>
     <string name="quit_title">Mika を完全に終了</string>
     <string name="quit_row_sub">バックグラウンドのタスクを停止し、フローティングカプセルを閉じます</string>
     <string name="quit_confirm_body">実行中のタスクは停止し、フローティングカプセルと通知は消えます。次に Mika を開くと元に戻ります。</string>

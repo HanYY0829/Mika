@@ -1,7 +1,7 @@
 package com.wangzan101.mika.core.agent
 
 import com.wangzan101.mika.core.assembly.toolDispatcher
-import com.wangzan101.mika.core.cap.web.AttachedPage
+import com.wangzan101.mika.core.agent.AttachedPage
 import com.wangzan101.mika.core.cap.web.FakeWebPort
 import com.wangzan101.mika.core.tool.FakeScreen
 import org.junit.Assert.assertEquals

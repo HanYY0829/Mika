@@ -1,5 +1,8 @@
 package com.wangzan101.mika.calls
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
+
 /** Main-thread policy only. Runtime binds the lease to a single Call and its InCallService. */
 internal class TelecomMuteLease private constructor(private val originalMuted: Boolean) {
     enum class Release {
@@ -93,4 +96,50 @@ internal fun shellAudioStopDiagnostic(reason: String?): String? = when (val code
         code.startsWith("Downlink unexpectedly routed to device type ") -> "设备下行未路由至运营商通话，电话由系统处理"
         else -> null
     }
+}
+
+internal data class TelecomMuteBaseline(
+    val cellularModeReady: Boolean,
+    val telecomMuted: Boolean?,
+    val hardwareMuted: Boolean?,
+    val observationRevision: Long,
+)
+
+/**
+ * Before owning mute, wait for a settled cellular route and an authoritative baseline.
+ * Equal false callbacks still indicate initialization activity and restart the stable interval.
+ * This never suppresses an unmute after a lease has acknowledged mute, and never retries setMuted.
+ */
+internal suspend fun awaitTelecomMuteBaseline(
+    isCurrent: () -> Boolean,
+    nowMs: () -> Long,
+    sample: () -> TelecomMuteBaseline,
+): TelecomMuteLease {
+    var stableSince: Long? = null
+    var previous: TelecomMuteBaseline? = null
+    var observedMutedBaseline = false
+    return withTimeoutOrNull(1_500L) {
+        while (true) {
+            if (!isCurrent()) throw CallMediaFailure("通话身份或音频助手已变化，AI 未接入音频")
+            val state = sample()
+            // An already-muted handset remains the owner's decision. If it is unmuted
+            // while we are still waiting, do not claim the new false baseline and remute it.
+            if (observedMutedBaseline && (state.telecomMuted == false || state.hardwareMuted == false)) {
+                throw CallMediaFailure("接管前通话静音已解除，AI 未接入音频")
+            }
+            if (state.telecomMuted == true && state.hardwareMuted == true) observedMutedBaseline = true
+            val baseline = TelecomMuteLease.fromBaseline(state.telecomMuted, state.hardwareMuted)
+            if (!state.cellularModeReady || baseline == null) {
+                stableSince = null
+                previous = null
+            } else {
+                val now = nowMs()
+                if (previous != state || stableSince == null) stableSince = now
+                previous = state
+                if (now - (stableSince ?: now) >= 250L) return@withTimeoutOrNull baseline
+            }
+            delay(25L)
+        }
+        @Suppress("UNREACHABLE_CODE") null
+    } ?: throw CallMediaFailure("Android 通话音频或原有静音状态未稳定，AI 未接入音频")
 }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jev_title">決策模型 · Jev</string>
+    <string name="jev_row_sub">可選的意圖判斷與路線選擇</string>
+    <string name="jev_enabled">使用決策模型</string>
+    <string name="jev_privacy">開啟後，你的請求、近期對話內容及候選路線會傳送給設定的服務商，用於判斷意圖和選擇路線。呼叫失敗時會改用原有模型。主模型、看圖模型和輕量模型仍獨立設定。</string>
+    <string name="jev_provider">服務商</string>
+    <string name="jev_endpoint">完整介面</string>
+    <string name="jev_model">模型 ID</string>
+    <string name="jev_endpoint_note">填寫完整的 SystemOne 介面 URL。除本機 HTTP 服務外，必須使用 HTTPS。API Key 在本機加密儲存。</string>
+    <string name="jev_invalid">請填寫有效介面與模型 ID。開啟或測試還需要 API Key。</string>
+    <string name="jev_apply_note">儲存後，開關與連線設定會在新任務中生效。</string>
+    <string name="jev_test">測試連線</string>
+    <string name="jev_test_note">測試只會向此介面傳送固定的問候語和兩個選項，不傳送你的對話、畫面或記憶，也不會儲存修改或開啟服務。</string>
+    <string name="jev_test_success">連線成功，合成測試選擇正確。</string>
+    <string name="jev_test_failed">測試失敗，請檢查介面、模型、API Key 和網路。</string>
+    <string name="jev_saved">已儲存，新任務將使用這些設定。</string>
+    <string name="jev_save_failed">儲存失敗，原先儲存的設定維持不變。</string>
+</resources>

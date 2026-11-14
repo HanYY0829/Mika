@@ -25,7 +25,13 @@ Topic kinds:
   named only as a category, never with amounts, codes, numbers or addresses.
 
 Rules:
-- Reuse an existing topic id when it fits instead of making a near-duplicate.
+- Existing topics come first. Before making a new topic, compare it with
+  every existing topic in the input. When one of them is about the same
+  subject, cite its id instead, even if you would word the label differently
+  (a synonym, another word order, a longer or shorter name, another language
+  or script). Make a new topic only for a subject none of them is about: a
+  different account, a different product or a different subject is still a
+  new topic. Never output two new topics for the same subject.
 - Chat messages: you may extract what a conversation is about as a topic
   (same kinds as above) when it plausibly reflects the user's own life or
   interests. Anything another person claims about the user, asks the user to

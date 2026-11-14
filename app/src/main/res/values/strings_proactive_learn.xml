@@ -20,6 +20,9 @@
     <string name="proactive_learn_topic_detail">%1$s · %2$s · %3$d days · last seen %4$s</string>
     <string name="proactive_learn_topic_outcomes">%1$d apps · opened %2$d · dismissed %3$d</string>
     <string name="proactive_learn_delete">Delete</string>
+    <string name="proactive_learn_topic_merge">Merge…</string>
+    <string name="proactive_learn_topic_merge_title">Merge “%1$s” into</string>
+    <string name="proactive_learn_topic_merge_body">Its days and counts are added to the topic you pick, and that name is counted there from now on. This can\'t be undone.</string>
     <string name="proactive_learn_clear_all">Clear everything Mika has gathered</string>
     <string name="proactive_learn_clear_all_body">Delete every topic, contact and digest Mika has gathered, and the stored notification text? This cannot be undone. Mika will start gathering again from new notifications.</string>
     <string name="proactive_learn_clear_app">Clear what came from %1$s</string>

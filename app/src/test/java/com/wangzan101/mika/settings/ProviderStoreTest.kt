@@ -66,6 +66,139 @@ class ProviderStoreTest {
         assertTrue(choose(ModelRole.Main, RoleChoice.Model(c.id)))
     }
 
+    // ---------- 主模型备援链(项目 3) ----------
+
+    @Test fun mainFallbackGapSlotAppendsAtEnd() {
+        val s = store()
+        s.save(cfg("a"), "sk-a")
+        assertTrue(s.setMainFallback(1, "a"))
+        assertEquals(listOf("a"), s.roles.value.mainFallbacks)
+    }
+
+    @Test fun mainFallbackAppendReplaceAndClear() {
+        val s = store()
+        s.save(cfg("a"), "sk-a")
+        assertTrue(s.setMainFallback(0, "a"))
+        s.save(cfg("b"), "sk-b")
+        assertTrue(s.setMainFallback(1, "b"))
+        assertEquals(listOf("a", "b"), s.roles.value.mainFallbacks)
+        s.save(cfg("c"), "sk-c")
+        assertTrue(s.setMainFallback(0, "c"))
+        assertEquals(listOf("c", "b"), s.roles.value.mainFallbacks)
+        assertTrue(s.setMainFallback(0, null))
+        assertEquals(listOf("b"), s.roles.value.mainFallbacks)
+    }
+
+    @Test fun mainFallbackMoveDedupes() {
+        val s = store()
+        s.save(cfg("a"), "sk-a")
+        assertTrue(s.setMainFallback(0, "a"))
+        s.save(cfg("b"), "sk-b")
+        assertTrue(s.setMainFallback(1, "b"))
+        assertTrue(s.setMainFallback(0, "b"))
+        assertEquals(listOf("b", "a"), s.roles.value.mainFallbacks)
+        assertTrue(s.setMainFallback(1, "b"))
+        assertEquals(listOf("a", "b"), s.roles.value.mainFallbacks)
+    }
+
+    @Test fun mainFallbackRejectsUnknownConfig() {
+        val s = store()
+        assertFalse(s.setMainFallback(0, "nope"))
+        assertEquals(emptyList<String>(), s.roles.value.mainFallbacks)
+    }
+
+    @Test fun mainFallbackRejectsSlotAtMax() {
+        // 位子只有 0..MAX-1(UI 也只显示这些):slot == MAX 要拒(MK-1 B-D3)。
+        val s = store()
+        s.save(cfg("a"), "sk-a")
+        assertFalse(s.setMainFallback(MAX_MAIN_FALLBACKS, "a"))
+        assertEquals(emptyList<String>(), s.roles.value.mainFallbacks)
+    }
+
+    @Test fun mainFallbackChainSkipsMainItself() {
+        // 旧设定若把主模型自己排进备援,组链时略过(MK-1 B-D2)。
+        // 顺序要注意:setMainFallback 会 prune 掉还没被引用的配置,所以先把 a 排上再存 b。
+        val s = store()
+        s.saveAsMain(cfg("a"), "sk-a")
+        assertTrue(s.setMainFallback(0, "a"))
+        s.save(cfg("b"), "sk-b")
+        assertTrue(s.setMainFallback(1, "b"))
+        val (models, _) = s.mainFallbackChain()
+        assertEquals(1, models.size)
+    }
+
+    @Test fun isMainModelMatchesCurrentMain() {
+        // 手填备援时挡主模型自己,靠这个判断(MK-1 D1)。
+        val s = store()
+        val p = connected(s)
+        s.use(ModelRole.Main, p.id, "m1", none)
+        assertTrue(s.isMainModel(p.id, "m1"))
+        assertFalse(s.isMainModel(p.id, "m2"))
+        assertFalse(s.isMainModel("nope", "m1"))
+    }
+
+    @Test fun choosingFallbackAsMainClearsItFromFallbacks() {
+        // 把备援改选为主模型:它不能同时留在备援链里(MK-1 D2)。
+        val s = store()
+        val p = connected(s)
+        s.use(ModelRole.Main, p.id, "m1", none)
+        val fbId = s.ensureConfigId(p.id, "m2", none)!!
+        assertTrue(s.setMainFallback(0, fbId))
+        assertTrue(s.use(ModelRole.Main, p.id, "m2", none))
+        assertEquals(emptyList<String>(), s.roles.value.mainFallbacks)
+    }
+
+    @Test fun storedMainDuplicateClearedOnReload() {
+        // 旧文件里主模型自己排在备援链里:重新载入时清掉,界面与实际链一致(MK-1 D2)。
+        val s = store()
+        s.saveAsMain(cfg("a"), "sk-a")
+        assertTrue(s.setMainFallback(0, "a"))
+        s.save(cfg("b"), "sk-b")
+        assertTrue(s.setMainFallback(1, "b"))
+        val reopened = store()
+        assertEquals(listOf("b"), reopened.roles.value.mainFallbacks)
+    }
+
+    @Test fun settingMainAsFallbackIsDroppedImmediately() {
+        // 任何路径把主模型写进备援位,存的当下就清掉,不等下次载入(审 T-1112-74a8f2 D2)。
+        val s = store()
+        s.saveAsMain(cfg("a"), "sk-a")
+        assertTrue(s.setMainFallback(0, "a"))
+        assertTrue(s.roles.value.mainFallbacks.isEmpty())
+    }
+
+    @Test fun fallbackInheritsMainReasoningEffortWhenSupported() {
+        // 主模型设了思考强度、备援写明支持同一档:建备援时带上(MK-1 B-D1)。
+        val s = store()
+        val mainP = s.connect("MainP", ProviderConfig.Kind.OpenAiCompat, "https://mainp.test/v1", "k",
+            listOf(ListedModel("m1", reasoningEfforts = listOf("low", "high"))))
+        s.use(ModelRole.Main, mainP.id, "m1", none)
+        assertTrue(s.setReasoningEffort(ModelRole.Main, "high"))
+        val fbP = s.connect("FbP", ProviderConfig.Kind.OpenAiCompat, "https://fbp.test/v1", "k",
+            listOf(ListedModel("m9", reasoningEfforts = listOf("low", "high"))))
+        val fbId = s.ensureConfigId(fbP.id, "m9", none)!!
+        assertTrue(s.setMainFallback(0, fbId))
+        setups.clear()
+        s.modelForConfig(fbId)
+        assertEquals("high", setups.last().reasoningEffort)
+    }
+
+    @Test fun fallbackOmitsMainReasoningEffortWhenUnsupported() {
+        // 备援没写明支持主模型那个档位:不带,用它自己的默认,不能让请求因参数被拒(MK-1 B-D1)。
+        val s = store()
+        val mainP = s.connect("MainP", ProviderConfig.Kind.OpenAiCompat, "https://mainp.test/v1", "k",
+            listOf(ListedModel("m1", reasoningEfforts = listOf("low", "high"))))
+        s.use(ModelRole.Main, mainP.id, "m1", none)
+        assertTrue(s.setReasoningEffort(ModelRole.Main, "high"))
+        val fbP = s.connect("FbP", ProviderConfig.Kind.OpenAiCompat, "https://fbp.test/v1", "k",
+            listOf(ListedModel("m9", reasoningEfforts = listOf("low"))))
+        val fbId = s.ensureConfigId(fbP.id, "m9", none)!!
+        assertTrue(s.setMainFallback(0, fbId))
+        setups.clear()
+        s.modelForConfig(fbId)
+        assertNull(setups.last().reasoningEffort)
+    }
+
     private fun connected(s: ProviderStore, name: String = "P", key: String = "k") =
         s.connect(name, ProviderConfig.Kind.OpenAiCompat, "https://${name.lowercase()}.test/v1", key, listOf(ListedModel("m1"), ListedModel("m2")))
 

@@ -18,6 +18,7 @@ import com.wangzan101.mika.R
 import com.wangzan101.mika.core.proactive.CatchUp
 import com.wangzan101.mika.core.proactive.GrantResult
 import com.wangzan101.mika.core.proactive.ListenerGrant
+import com.wangzan101.mika.core.proactive.LiveUpdates
 import com.wangzan101.mika.core.proactive.NoticeDedup
 import com.wangzan101.mika.core.proactive.NoticeFilter
 import com.wangzan101.mika.core.proactive.NoticeHints
@@ -34,7 +35,6 @@ import com.wangzan101.mika.core.proactive.TriageTarget
 import com.wangzan101.mika.core.shell.ShellCommandRunner
 import com.wangzan101.mika.i18n.AppLanguage
 import com.wangzan101.mika.i18n.tr
-import com.wangzan101.mika.record.DetailedTraces
 import com.wangzan101.mika.settings.FeatureFlags
 import com.wangzan101.mika.settings.KeystoreKeyCipher
 import com.wangzan101.mika.ui.classifierLanguage
@@ -56,7 +56,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * 主动能力(实验,在开发者选项里):读用户选定的 App 的通知,筛选、去重后放进内存里的收件箱。
+ * 主动能力(入口在设置首页,默认关着):读用户选定的 App 的通知,筛选、去重后放进内存里的收件箱。
  * 用户确认过把通知文字发给哪个服务商、哪个模型(轻量,没有用主模型)之后:[TriageRunner] 按 App 分批判成忽略、记下或
  * 值得提醒,结果只在内存里;[LearnRunner] 从中归纳话题、联系人和各级消息归纳,加密存在本机。没确认过、或实际要用的
  * 服务商和模型与确认过的不一样时,什么都不发。
@@ -91,6 +91,8 @@ class ProactiveRuntime(
 
     val inbox = NoticeInbox()
     private val dedup: NoticeDedup = NoticeDedup.decode(prefs.dedup)
+    /** 被 App 反复重发的状态显示(导航播报之类)认出来就不收;只在内存里。 */
+    private val live = LiveUpdates()
     private val policy = ProactiveLockPolicy(prefs.lastLockedAtMs)
 
     private val _enabled = MutableStateFlow(false)
@@ -175,8 +177,8 @@ class ProactiveRuntime(
     private var watching: Job? = null
     private var receiver: BroadcastReceiver? = null
 
-    /** 发布版里看不到开发者选项,也就关不掉:只认调试版和性能测试版里的开关。 */
-    private fun wanted(): Boolean = DetailedTraces.supportedBuild && flags.proactive()
+    /** 总开关:入口在设置首页,每个版本都看得到、关得掉。 */
+    private fun wanted(): Boolean = flags.proactive()
 
     /**
      * 功能开着时,进程起来、或用户从「完全退出」回来时调一次(MikaApp 只在开关开着时调)。
@@ -207,11 +209,10 @@ class ProactiveRuntime(
      */
     fun setEnabled(on: Boolean, target: TriageTarget? = null) {
         flags.setProactive(on)
-        val want = on && DetailedTraces.supportedBuild
-        setConsent(TriageConsent.afterSwitch(want, target, _consent.value))
-        _enabled.value = want
+        setConsent(TriageConsent.afterSwitch(on, target, _consent.value))
+        _enabled.value = on
         scope.launch {
-            if (want) {
+            if (on) {
                 // 打开之前已在通知栏里的积压一条都不收
                 prefs.enabledAtMs = System.currentTimeMillis()
                 enableComponent()
@@ -225,6 +226,7 @@ class ProactiveRuntime(
                 triage.clear()
                 learn.clear()
                 dedup.clear()
+                live.clear()
                 prefs.clearDedup()
             }
         }
@@ -438,6 +440,8 @@ class ProactiveRuntime(
         hintBoard.dismissed(key)
         inbox.remove(key)
         learn.removed(key, reason)
+        // 用户处理掉了这一条:同一个键的下一条从头数,不接着算成「同一条在重发」(见 [LiveUpdates.ended])
+        live.ended(key)
     }
 
     // ---- 内部 ----
@@ -559,7 +563,7 @@ class ProactiveRuntime(
     private fun gatedRecord(sbn: StatusBarNotification): NoticeRecord? {
         val pkg = sbn.packageName ?: return null
         if (!BlockedApps.readable(pkg, allowed.current(), access())) return null
-        return NoticeMapper.read(sbn)?.toRecord()
+        return NoticeMapper.read(sbn)?.copy(importance = service?.importanceOf(sbn.key))?.toRecord()
     }
 
     private fun admit(raw: NoticeRecord) {
@@ -567,6 +571,19 @@ class ProactiveRuntime(
         // 清洗之后按 App 的写法把会话、说话的人、那句话拆开(QQ、微信;见 [NoticeShapes]),后面都用拆好的
         val r = NoticeShapes.apply(NoticeFilter.sanitize(raw))
         if (!BlockedApps.admits(r, allowed.current(), access())) return
+        // 被 App 一遍遍重发的状态显示(导航播报之类)不收;刚认出来时,它前面收进来的那几条也去掉(见 [LiveUpdates])
+        when (live.observe(r)) {
+            LiveUpdates.Verdict.Normal -> {}
+            LiveUpdates.Verdict.Live -> return
+            LiveUpdates.Verdict.BecameLive -> {
+                // 只记是哪个 App、出不出声,不记内容
+                Log.i(TAG, "status display, not taken: ${r.packageName} silent=${r.silent}")
+                hintBoard.withdraw(r.key)
+                inbox.remove(r.key)
+                learn.dropLive(r.key, r.packageName, r.postedAtMs - LiveUpdates.WINDOW_MS)
+                return
+            }
+        }
         val admitted = dedup.admit(r) ?: return
         prefs.dedup = dedup.encode()
         inbox.add(r)

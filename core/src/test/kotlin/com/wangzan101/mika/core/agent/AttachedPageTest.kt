@@ -1,4 +1,4 @@
-package com.wangzan101.mika.core.cap.web
+package com.wangzan101.mika.core.agent
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

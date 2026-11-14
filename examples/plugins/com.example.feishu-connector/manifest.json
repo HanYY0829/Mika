@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "id": "com.example.feishu-connector",
+  "name": "飞书连接器",
+  "version": "0.1.0",
+  "kind": "connector",
+  "minApp": "0.1.33",
+  "author": "Mika 插件示例",
+  "description": "在电脑上运行 mika-feishu，把飞书私聊交给 Mika；App 里只展示安装指引和状态。",
+  "connector": {
+    "installDocs": "https://github.com/wangzan101/mika/blob/main/docs/feishu.md",
+    "command": "pipx install mika-feishu && mika-feishu setup",
+    "statusApi": "/api/v1",
+    "pairing": "code"
+  }
+}

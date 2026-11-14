@@ -1,0 +1,15 @@
+<resources>
+    <string name="device_browser_title">فایل‌های دستگاه</string>
+    <string name="device_browser_roots">پوشه‌های مجاز</string>
+    <string name="device_browser_back">بازگشت</string>
+    <string name="device_browser_retry">بارگذاری نشد. برای تلاش دوباره ضربه بزنید</string>
+    <string name="device_browser_empty">فایل یا پوشه مجازی وجود ندارد</string>
+    <string name="device_browser_more">بارگذاری بیشتر</string>
+    <string name="device_browser_add">افزودن موارد انتخاب‌شده (%1$d)</string>
+    <string name="device_browser_cancel">لغو</string>
+    <string name="device_browser_history">واردات این گفتگو</string>
+    <string name="device_browser_show_files">مرور فایل‌ها</string>
+    <string name="device_browser_history_hint">ممکن است نسخه‌های تاریخچه حذف شده باشند. کتابخانه فایل را بررسی کنید.</string>
+    <string name="device_browser_search">جستجوی فایل‌ها</string>
+    <string name="device_browser_truncated">جستجو به محدودیت عمق، زمان یا تعداد فایل رسید؛ نتایج ممکن است ناقص باشند.</string>
+</resources>

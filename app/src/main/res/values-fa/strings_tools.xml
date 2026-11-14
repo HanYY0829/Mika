@@ -20,6 +20,8 @@
     <string name="tool_find_element">جست‌وجو در صفحه</string>
     <string name="tool_collect">جمع‌آوری از چند صفحه</string>
     <string name="tool_phone_run">چند اقدام در گوشی</string>
+    <string name="tool_list_device_files">مرور فایل‌های دستگاه</string>
+    <string name="tool_copy_device_file">کپی فایل دستگاه</string>
     <string name="tool_process_files">کار با فایل‌ها</string>
     <string name="tool_run_script">اجرای اسکریپت داخلی</string>
     <string name="tool_read_file">خواندن فایل</string>

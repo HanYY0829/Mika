@@ -9,6 +9,8 @@ import com.wangzan101.mika.core.uistate.PlacePace
 import kotlin.random.Random
 import com.wangzan101.mika.core.action.OutwardPacing
 import com.wangzan101.mika.core.cap.phone.OperatingPace
+import com.wangzan101.mika.core.usage.DeepSeekPriceCache
+import com.wangzan101.mika.core.usage.DeepSeekRunCost
 import com.wangzan101.mika.core.usage.RunUsageTally
 import com.wangzan101.mika.core.shell.AccessibilityRepair
 import com.wangzan101.mika.core.shell.HelperRestart
@@ -158,6 +160,7 @@ internal fun restorePipSound(takeover: Takeover?, restorePhone: () -> Unit) {
 internal fun mutePipSound(takeover: Takeover?, mutePhone: () -> Unit) {
     if (takeover?.muteBack() != true) mutePhone()
 }
+private val deepSeekPrices by lazy { DeepSeekPriceCache(ProviderStore.modelHttp) }
 
 /**
  * 一个任务的全部状态:虚拟屏、循环、关卡、接管、静音、监视。[TaskService] 只管服务生命周期、意图分发与通知。
@@ -532,10 +535,94 @@ class TaskRun(
         return RetestHint.apply(end, ProviderStore.get(service).untestedMainProvider()) { tr(R.string.fail_model_untested, it) }
     }
 
+    /** execute 收尾用的本地状态;把 finally 拆成独立函数以缩小 execute 的 suspend 状态机(超大 suspend 函数会被 ART 校验器拒绝)。 */
+    private class RunCleanup(
+        val side: CoroutineScope,
+        val resources: ResourceScope,
+        val tally: RunUsageTally,
+        val approvalControl: com.wangzan101.mika.settings.ApprovalControl,
+        val connection: com.wangzan101.mika.cap.phone.shell.ShellBinding?,
+        val smsLogin: com.wangzan101.mika.cap.phone.sms.AndroidSmsLogin?,
+        val watcher: DeviceStateWatcher?,
+        val mute: AudioMute?,
+        val afterTask: com.wangzan101.mika.core.uistate.AfterTaskMarks?,
+        val shellDeath: IBinder.DeathRecipient?,
+        val shellBinder: IBinder?,
+        val record: RunHandle?,
+        val runStore: RunStore?,
+        val mcpEvents: AutoCloseable?,
+        val liveFeed: AutoCloseable?,
+        val approval: RunApproval?,
+    )
+
+    private suspend fun cleanup(c: RunCleanup) {
+        if (resultReadyAtMs == 0L) resultReadyAtMs = SystemClock.elapsedRealtime()
+        handoffUnconsumed()
+        c.side.cancel()
+        _frames.value = null
+        _phoneFrames.value = null
+        _webOpen.value = false
+        synchronized(publishLock) { ended = true }
+        if (awake != null && service.hasQueuedRuns()) wakeHandoff = service.wakeLock.lease().also { it.acquire() }
+        awake?.close()
+        awake = null
+        c.shellDeath?.let { d -> runCatching { c.shellBinder?.unlinkToDeath(d, 0) } }
+        loop = null
+        children = null
+        // 早点关:后面收尾要等屏和网页;resources 关时还会再关一次(只关一次,不重复)
+        mcpConnections?.close()
+        mcpConnections = null
+        c.mcpEvents?.close()
+        c.liveFeed?.close()
+        c.approval?.let { c.approvalControl.end(it) }
+        gate = null
+        takeover = null
+        handoverRef = null
+        sideScope = null
+        // 借来的页面还回浏览器页(在关掉网页这一套之前)
+        withContext(Dispatchers.Main + NonCancellable) { runCatching { UserBrowser.existing()?.loans?.end(key) } }
+        withContext(Dispatchers.IO + NonCancellable) {
+            // 前面哪步抛错,屏和网页显示也照放(按建的反序)
+            try {
+                // 先定 Mika 屏上 App 的去留(留下的挪到主屏后面、正在出声的关掉)并释放屏,再还原静音:留下的不会突然出声
+                val apps = phone?.takeIf { !shellDied }?.let { p ->
+                    p.display.current?.let { d -> AppsAfterTaskEnd.finish(p.shell, d.displayId, c.afterTask) }
+                }
+                c.record?.let { r ->
+                    apps?.let { r.event(RunEvent.State(System.currentTimeMillis(), "apps_after_task", it.detail)) }
+                    val cost = c.tally.deepSeekCost?.let { usage ->
+                        val table = if (usage.hasUsage()) {
+                            withTimeoutOrNull(2_000L) { deepSeekPrices.prices() }.also {
+                                if (it == null) Log.d(TAG, "DeepSeek 价目表暂不可用")
+                            }
+                        } else null
+                        usage.estimate(table)
+                    }
+                    r.event(c.tally.event(System.currentTimeMillis(), cost))
+                    r.close()
+                    if (BuildConfig.DEBUG) c.runStore?.mirrorToExternal(r.runId)
+                }
+                // 恢复抛错也要撤掉「在跑」的登记,否则这份记录永远不归恢复处理
+                try { c.mute?.restoreAll() } finally { recovery.endRun(key) }
+                c.watcher?.close()
+            } finally {
+                try { c.resources.close() } finally { c.smsLogin?.close() }
+            }
+        }
+        phone = null
+        // 屏释放后、对外报结束前清掉:界面看到任务结束时已经没有屏了
+        _displayId.value = -1
+        _pipInput.value = null
+        _pipSoundOn.value = false
+        _appShown.value = false
+        if (c.connection != null) phoneServices.sharedShell.release()
+    }
+
     suspend fun execute(priorTurns: List<Turn>): TaskState {
         noticeTainted = NoticeTurn.tainted(priorTurns)
         // 手机一侧(内置助手、无障碍、虚拟屏)第一次 launch_app 时才接上:只用网页、沙箱的任务不需要它们
         var connection: com.wangzan101.mika.cap.phone.shell.ShellBinding? = null
+        var smsLogin: com.wangzan101.mika.cap.phone.sms.AndroidSmsLogin? = null
         phone = null
         // 虚拟屏、网页显示等:建好当场归它,收尾时一起放掉;不经「建完再记到变量」,取消落在中间也不会漏
         val resources = ResourceScope()
@@ -551,7 +638,8 @@ class TaskRun(
         var runStore: RunStore? = null
         // 整个运行共用一份已报告 Token 预算；子任务沿用协程上下文里的这份，不另开额度。
         val tokenBudget = if (conditionCheck) null else FeatureFlags.get(service).taskTokenBudget()
-        val tally = RunUsageTally(tokenBudget)
+        // 这次运行里经计量的模型请求(含旁路调用),收尾时记进运行记录
+        val tally = RunUsageTally(tokenBudget, if (FeatureFlags.get(service).showTaskCost()) DeepSeekRunCost() else null)
         // 第一次打开网址时才建;没建过就不用关
         var webStack: WebStack? = null
         // 当前界面(手机/网页)要看分发器;画中画的画面来源随它切换
@@ -578,6 +666,7 @@ class TaskRun(
             // 用户在浏览器页上对着一页问的:那一页借给这个任务当当前网页标签(见 PageLoans);开跑时页面还开着才借得到
             val pageLoan = if (provenance.origin == RunOrigin.Ui) withContext(Dispatchers.Main) { UserBrowser.existing()?.claim(conversationId, key) } else null
             val light = env.lightModelFactory(service, session)
+            val decision = env.decisionModel(service)
             // 同一模型分成两个实例并不会更便宜或更快;禁止它给批量/收尾工具反而只会增加改派和逐步操作。
             // 这只跳过逐步分工,轻量角色仍可用于意图判断、标题和收尾等辅助调用。
             val routedLight = light?.takeIf {
@@ -595,7 +684,9 @@ class TaskRun(
             val appAccess = (service.application as MikaApp).appAccess
             // 应用访问边界:工具和预览画面共用一份(下面接手机端口时建),窗口没变时核对结果直接沿用,预览不必每一帧都问窗口
             var accessGuard: com.wangzan101.mika.core.uistate.AppAccessScreenPort? = null
+            var smsPrivacy: com.wangzan101.mika.core.cap.phone.sms.SmsPrivateScreen? = null
             suspend fun previewAllowed(): Boolean {
+                if (smsPrivacy?.imagesPrivate == true) return false
                 val guard = accessGuard ?: return false
                 return try {
                     guard.checkAppAccess()
@@ -716,6 +807,7 @@ class TaskRun(
                 protectedUi = { appAccess.sensitiveUi }, ownPackage = service.packageName,
                 windowToken = { ScreenAccessibility.windowGeneration() },
             ).also { accessGuard = it }
+            val privatePhone = com.wangzan101.mika.core.cap.phone.sms.SmsPrivateScreen(accessedPhone).also { smsPrivacy = it }
             afterTask = phoneScreen.afterTask
             // 挪回虚拟屏后等窗口出现,Agent 接下来读屏才读得到
             suspend fun moveTask(taskId: Int, to: Int): Boolean {
@@ -784,7 +876,11 @@ class TaskRun(
             // 用户本次说的话:记忆的引文、按用户要求写下技能的引文都据此核对(只在内存里,任务开始清空)
             val utterances = UserUtterances()
             // 改名前沉淀的个人技能:里面的旧工具名载入时换成现在的
-            val catalog = GuideCatalog.withPersonal(skills, memoryRuntime.skills(), legacyNames()::rewrite)
+            // 插件技能取任务开始时的快照:任务中途启停插件,下一次任务才生效
+            val catalog = GuideCatalog.withPersonal(
+                skills, memoryRuntime.skills(), legacyNames()::rewrite,
+                plugins = (service.application as MikaApp).plugins.skillsSnapshot(),
+            )
             // 内置浏览器:每个任务自己的后台网页显示、标签池和脚本引擎,第一次打开网址时才建(只用手机的任务不建);
             // 系统里没有 WebView 时不提供网页工具
             val webInstalled = runCatching { WebViewCompat.getCurrentWebViewPackage(service) != null }.getOrDefault(false)
@@ -864,7 +960,7 @@ class TaskRun(
             val runApproval = approvalControl.start(alwaysAsk = provenance.origin == RunOrigin.Mcp || noticeTainted).also { approval = it }
             val childRunner = if (provenance.origin == RunOrigin.Ui && web != null) ChildAgentRunner(
                 create = { childSpec ->
-                    val childTools = toolDispatcher(accessedPhone, model.capabilities.vision,
+                    val childTools = toolDispatcher(privatePhone, model.capabilities.vision,
                         web = web, webPacing = { PagePacing.human() }, webPlacePace = { PlacePace.of(catalog.sitePace(it)) },
                         webIdleScroll = { IdleScroll(Random.Default) },
                         appPacing = { pace.appPacing() }, appPace = { PlacePace.of(catalog.appPace(it)) }, appIdleScroll = { IdleScroll(Random.Default) },
@@ -884,7 +980,11 @@ class TaskRun(
             val selfPort = if (provenance.origin == RunOrigin.Ui && !conditionCheck) {
                 (service.application as? MikaApp)?.let { app -> com.wangzan101.mika.self.AndroidSelfPort(app, conversationId, key) }
             } else null
-            val tools = toolDispatcher(accessedPhone, model.capabilities.vision, catalog, recordFrames = true, vision = vision?.let { VisionService(it, BitmapImageOps) },
+            val tools = toolDispatcher(privatePhone, model.capabilities.vision, catalog, recordFrames = true, vision = vision?.let { VisionService(it, BitmapImageOps) },
+                smsLogin = if (provenance.origin == RunOrigin.Ui && !conditionCheck && !runSpec.readOnly) {
+                    com.wangzan101.mika.cap.phone.sms.AndroidSmsLogin(service, phoneServices.smsLogin, appAccess,
+                        accessedPhone, privatePhone) { phone?.screen }.also { smsLogin = it }
+                } else null,
                 phoneCalls = (service.application as MikaApp).callPort.takeIf {
                     !conditionCheck && (service.application as MikaApp).calls.settings.state.value.enabled
                 },
@@ -909,6 +1009,10 @@ class TaskRun(
                 workspacePath = web?.let { { p: String -> sandbox.uploadCheck(conversationId, p) } },
                 // 工作区 = 对话:同一对话的追问接着用上一轮的文件,不同对话互不可见
                 sandbox = sandbox, workspace = { conversationId },
+                deviceFiles = if (provenance.origin == RunOrigin.Ui && !conditionCheck && FeatureFlags.get(service).deviceFiles()) {
+                    AndroidDeviceFiles(phoneServices.hub, com.wangzan101.mika.cap.sandbox.SandboxDirs(service), sandbox,
+                        com.wangzan101.mika.settings.DeviceDirectoryStore.get(service), DeviceImportStore.get(service))
+                } else null,
                 onSandboxCommand = { sandboxNote(StatusCopy.sandboxCommand(it, sandboxOnline())) },
                 onSandboxProgress = { sandboxNote(StatusCopy.sandboxProgress(it, sandboxOnline())) },
                 onSandboxPreparing = { sandboxNote(StatusCopy.RUNTIME_PREPARING) },
@@ -948,6 +1052,12 @@ class TaskRun(
                     null
                 }
             } else null
+
+            // 主模型备援链(项目 3):评测换掉模型来源时不接设置里的备援,免得测到真服务商
+            val chainStore = ProviderStore.get(service)
+            val (chainModels, chainFbTags) = if (env.modelFactory === TaskEnvironment.defaultModelFactory)
+                chainStore.mainFallbackChain(session) else (emptyList<ChatModel>() to emptyList<String?>())
+            val chainTags = listOf(chainStore.mainProviderTag()) + chainFbTags
             val agent = AgentLoop(
                 model, tools,
                 SystemPrompt.identity(),
@@ -979,10 +1089,14 @@ class TaskRun(
                 selfPackage = service.packageName,
                 flags = speed,
                 // 只在 lightSteps 打开、轻量模型能调工具且与主模型不是同一份配置时生效
+                modelFallbacks = chainModels, modelChainTags = chainTags,
                 router = routedLight?.let { ModelRouter(model, it) },
                 intentJudge = if (provenance.origin == RunOrigin.Ui) light ?: model else null,
+                intentDecision = if (provenance.origin == RunOrigin.Ui) decision else null,
                 // 选路线是辅助判断:用轻量模型,没配用主模型
-                routes = if (speed.replay) RouteMatcher(light ?: model, routeStore, knowledge) else null,
+                routes = if (speed.replay) RouteMatcher(light ?: model, routeStore, knowledge, decision) { detail ->
+                    sink.event(RunEvent.State(System.currentTimeMillis(), "jev_route", detail))
+                } else null,
                 skills = catalog,
                 memory = memory,
                 interaction = service.interaction(conversationId, channelPeer),
@@ -1102,58 +1216,7 @@ class TaskRun(
             resultReadyAtMs = SystemClock.elapsedRealtime()
             return end.also { usedGroups = agent.usedGroups.toList() }.let(::localizeTaskFailure).let(::withRetestHint)
         } finally {
-            if (resultReadyAtMs == 0L) resultReadyAtMs = SystemClock.elapsedRealtime()
-            handoffUnconsumed()
-            side.cancel()
-            _frames.value = null
-            _phoneFrames.value = null
-            _webOpen.value = false
-            synchronized(publishLock) { ended = true }
-            if (awake != null && service.hasQueuedRuns()) wakeHandoff = service.wakeLock.lease().also { it.acquire() }
-            awake?.close()
-            awake = null
-            shellDeath?.let { d -> runCatching { shellBinder?.unlinkToDeath(d, 0) } }
-            loop = null
-            children = null
-            // 早点关:后面收尾要等屏和网页;resources 关时还会再关一次(只关一次,不重复)
-            mcpConnections?.close()
-            mcpConnections = null
-            mcpEvents?.close()
-            liveFeed?.close()
-            approval?.let { approvalControl.end(it) }
-            gate = null
-            takeover = null
-            handoverRef = null
-            sideScope = null
-            // 借来的页面还回浏览器页(在关掉网页这一套之前)
-            withContext(Dispatchers.Main + NonCancellable) { runCatching { UserBrowser.existing()?.loans?.end(key) } }
-            withContext(Dispatchers.IO + NonCancellable) {
-                // 前面哪步抛错,屏和网页显示也照放(按建的反序)
-                try {
-                    // 先定 Mika 屏上 App 的去留(留下的挪到主屏后面、正在出声的关掉)并释放屏,再还原静音:留下的不会突然出声
-                    val apps = phone?.takeIf { !shellDied }?.let { p ->
-                        p.display.current?.let { d -> AppsAfterTaskEnd.finish(p.shell, d.displayId, afterTask) }
-                    }
-                    record?.let { r ->
-                        apps?.let { r.event(RunEvent.State(System.currentTimeMillis(), "apps_after_task", it.detail)) }
-                        r.event(tally.event(System.currentTimeMillis()))
-                        r.close()
-                        if (BuildConfig.DEBUG) runStore?.mirrorToExternal(r.runId)
-                    }
-                    // 恢复抛错也要撤掉「在跑」的登记,否则这份记录永远不归恢复处理
-                    try { mute?.restoreAll() } finally { recovery.endRun(key) }
-                    watcher?.close()
-                } finally {
-                    resources.close()
-                }
-            }
-            phone = null
-            // 屏释放后、对外报结束前清掉:界面看到任务结束时已经没有屏了
-            _displayId.value = -1
-            _pipInput.value = null
-            _pipSoundOn.value = false
-            _appShown.value = false
-            if (connection != null) phoneServices.sharedShell.release()
+            cleanup(RunCleanup(side, resources, tally, approvalControl, connection, smsLogin, watcher, mute, afterTask, shellDeath, shellBinder, record, runStore, mcpEvents, liveFeed, approval))
         }
     }
 

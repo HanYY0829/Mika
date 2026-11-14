@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dirs_title">پوشه‌های دستگاه</string>
+    <string name="device_dirs_explanation">راهنماهای پوشه به میکا در یافتن فایل‌ها کمک می‌کنند. افزودن راهنما مجوز دسترسی نمی‌دهد؛ هر پوشه ذخیره‌شده را جداگانه مجاز کنید.</string>
+    <string name="device_dirs_authorize">اجازه دسترسی به پوشه</string>
+    <string name="device_dirs_recursive">شامل زیرپوشه‌ها</string>
+    <string name="device_dirs_not_synced">مجوز همگام‌سازی نشده است</string>
+    <string name="device_dirs_synced">مجوز همگام‌سازی شده است</string>
+    <string name="device_dirs_retry_sync">تلاش دوباره برای همگام‌سازی</string>
+    <string name="device_dirs_edit_path">مسیر پوشه را ویرایش کنید و دوباره تلاش کنید.</string>
+    <string name="device_dirs_not_authorized">بدون مجوز</string>
+    <string name="device_dirs_write_failed">ذخیره تنظیمات پوشه ممکن نشد. برنامه را دوباره باز کنید و دوباره تلاش کنید.</string>
+    <string name="device_dirs_add">افزودن راهنمای پوشه</string>
+    <string name="device_dirs_edit">راهنمای پوشه</string>
+    <string name="device_dirs_name">نام</string>
+    <string name="device_dirs_path">مسیر دستگاه</string>
+    <string name="device_dirs_description">توضیحات</string>
+    <string name="device_dirs_invalid">یک نام و یک مسیر یکتا در فضای ذخیره‌سازی مشترک وارد کنید.</string>
+    <string name="device_dirs_delete">حذف راهنما</string>
+    <string name="device_dirs_save">ذخیره</string>
+    <string name="device_dirs_cancel">لغو</string>
+    <string name="device_dirs_available">قابل دسترسی</string>
+    <string name="device_dirs_missing">پوشه پیدا نشد</string>
+    <string name="device_dirs_denied">دسترسی رد شد</string>
+    <string name="device_dirs_unknown">وضعیت در دسترس نیست</string>
+    <string name="device_dirs_entry">راهنماهای پوشه</string>
+    <string name="device_dirs_entry_sub">به میکا کمک کنید فایل‌های دانلودشده را پیدا کند</string>
+    <string name="device_dirs_source_preset">پیش‌فرض</string>
+    <string name="device_dirs_source_user">ویرایش‌شده توسط شما</string>
+    <string name="device_dirs_source_mika">ویرایش‌شده توسط میکا</string>
+</resources>

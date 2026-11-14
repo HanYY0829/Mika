@@ -116,6 +116,12 @@ object MikaIcons {
         "M11 18.5 h2",
     )
     val Moon = stroke("moon", "M20 14.5 A8 8 0 0 1 9.5 4 a8 8 0 1 0 10.5 10.5 z")
+    /** 一个点和两圈波纹:留意着周围的动静(主动能力)。 */
+    val Ripple = stroke(
+        "ripple", "M11.4 12 a0.6 0.6 0 1 0 1.2 0 a0.6 0.6 0 1 0 -1.2 0",
+        "M8.6 8.6 a4.8 4.8 0 0 0 0 6.8 M15.4 8.6 a4.8 4.8 0 0 1 0 6.8",
+        "M5.6 5.6 a9 9 0 0 0 0 12.8 M18.4 5.6 a9 9 0 0 1 0 12.8",
+    )
     val Bell = stroke("bell", "M18 16 V11 a6 6 0 1 0 -12 0 v5 l-2 2 h16 z M10 20.5 a2 2 0 0 0 4 0")
     val Key = stroke("key", "M4 15 a4 4 0 1 0 8 0 a4 4 0 1 0 -8 0", "M10.8 12.2 L20 3 M17 6 l3 3 M14.5 8.5 l2 2")
     val Terminal = stroke(
@@ -188,6 +194,8 @@ object MikaIcons {
     )
     /** 引用:往回指的箭头(接着前面那条说)。 */
     val Quote = stroke("quote", "M9.5 6.5 L4.5 11.5 l5 5", "M4.5 11.5 h9 a5.5 5.5 0 0 1 5.5 5.5 v1")
+    /** 引导当前任务:向右转入的弯箭头。 */
+    val Steer = stroke("steer", "M15 4 l5 5 -5 5", "M20 9 H10 a6 6 0 0 0 -6 6 v5")
     /** 选择文字:文字光标。 */
     val SelectText = stroke("select-text", "M9 4.5 h6 M9 19.5 h6 M12 4.5 v15")
     /** 图钉:置顶了的对话。 */

@@ -271,6 +271,9 @@
     <string name="pip_closed_hint">Cerrada para esta tarea. Toca “Mostrar pantalla” abajo a la derecha, o abre “Pantallas en segundo plano” en el menú lateral.</string>
     <string name="chat_conversation_tokens">Esta conversación: %1$s</string>
     <string name="chat_conversation_tokens_partial">Esta conversación: al menos %1$s</string>
+    <string name="chat_task_cost_estimate">Aprox. %1$s</string>
+    <string name="chat_task_cost_partial">%1$s (parcial)</string>
+    <string name="chat_task_cost_unavailable">Coste no disponible</string>
     <string name="follow_up_steer">Guiar</string>
     <string name="follow_up_queue">En cola</string>
     <string name="follow_up_steer_hint">El siguiente paso ajustará la tarea actual</string>

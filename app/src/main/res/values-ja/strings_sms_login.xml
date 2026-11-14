@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sms_login_title">SMSログイン（試験機能）</string>
+    <string name="sms_login_enable">SMSログインを許可</string>
+    <string name="sms_login_default_off">初期設定はオフ · 端末内の信頼設定</string>
+    <string name="sms_login_limits">設定済みのネイティブアプリで署名・送信元・サービス・アカウントを照合し自動ログイン。毎回の確認は不要です。権限や成功の証拠が不足すれば手動へ。確認後は文字の画面読み取りを再開し、画像は端末内に留めます。</string>
+    <string name="sms_login_permission">Android SMS権限</string>
+    <string name="sms_login_error">権限または保存に失敗しました。手動でログインし、システム権限を確認してください。</string>
+    <string name="sms_login_disclosure">ここで設定した署名とアカウントだけを自動ログインに許可します。再確認なしで要求・入力・ログイン確定・アカウント検証を行います。決済・復旧・登録は対象外。SMSとコードは保存・モデル送信しません。オフまたは設定削除で取り消します。</string>
+    <string name="sms_login_sender">正確なSMS送信元</string>
+    <string name="sms_login_signature">括弧内のサービス名</string>
+    <string name="sms_login_account">共通のアカウント数字（4〜11桁）</string>
+    <string name="sms_login_listening">設定済みアカウントのコード要求・入力・確認を自動実行中。キャンセルできます。</string>
+    <string name="sms_login_tool">SMSログイン</string>
+    <string name="sms_profile_title">信頼するサービスとアカウント</string>
+    <string name="sms_profile_help">一度設定して保存すると、この署名のアプリでコード要求、アカウントとコードの入力、ログイン確定、アカウント確認を自動化します。確認済みのネイティブリソースIDとログイン後のアカウント表示が必要です。アプリごとに1アカウント。編集・削除で取り消せます。Android Keystoreで端末内に暗号化保存。</string>
+    <string name="sms_profile_accountvalue">アカウント番号（端末内のみ）</string>
+    <string name="sms_profile_package">インストール済みアプリのパッケージ</string>
+    <string name="sms_profile_accountfield">アカウント入力欄のリソースID</string>
+    <string name="sms_profile_codefield">コード入力欄のリソースID</string>
+    <string name="sms_profile_sendbutton">コード要求ボタンのリソースID</string>
+    <string name="sms_profile_loginbutton">ログイン確定ボタンのリソースID</string>
+    <string name="sms_profile_successview">ログイン済み表示のリソースID</string>
+    <string name="sms_profile_successtext">ログイン済み表示の正確な文字</string>
+    <string name="sms_profile_successaccount">ログイン後アカウント表示のリソースID</string>
+</resources>

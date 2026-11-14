@@ -157,7 +157,23 @@ class ContactPool(data: ContactPoolData = ContactPoolData()) {
         allowSensitive: Boolean = false,
         strategy: ContactIdStrategy = LearnTuning.CONTACT_ID,
     ): Applied {
-        val ids = events.map { ContactIdentity.of(it.packageName, it.key, it.title, strategy) }
+        // 标题是发言人、不是会话名的(没有会话名的群聊)认不出是哪个会话:不记
+        val ids = events.map { if (it.titleIsSpeaker) null else ContactIdentity.of(it.packageName, it.key, it.title, strategy) }
+        // 「不再记录」的名单里可能还是按以前的算法(带着通知键)记的 id:这条通知按以前的算法正好是它,就把现在的 id 也记进去。
+        // 不然换了算法,用户删掉的联系人就悄悄回来了
+        // 名单因此变长也算改动:要存上。不然进程一重启、通知键又换了,以前的 id 对不上,删掉的就回来了
+        var carried = false
+        if (strategy != ContactIdStrategy.KeyAndTitle) events.forEachIndexed { i, e ->
+            val now = ids[i]?.id ?: return@forEachIndexed
+            if (now in blocked) return@forEachIndexed
+            // 现在的 id 上已经有联系人了(用户留着的那一条换过来的,或换了通知键之后新记的):不带。带了的话它既在名单里
+            // 又在列表里:留在页面上,却再也不会动,也没有任何说明。用户不要它可以再删一次,这回按会话名记,换了键也挡得住
+            if (now in contacts) return@forEachIndexed
+            val before = ContactIdentity.of(e.packageName, e.key, e.title, ContactIdStrategy.KeyAndTitle)?.id
+            // 换成现在的 id,不是再添一个:旧的那个以后用不上了(现在的 id 换了通知键也挡得住),两个都留着的话,
+            // 一次删除占名单里两个位置,名单满着时换一个就挤掉一个别的、还没换过来的删除
+            if (before != null && before in blocked) { blocked.remove(before); block(now); carried = true }
+        }
         // 显示名用这批里这个会话最近一条能给的;没有的话沿用旧的;第一次见就给不出的不记
         fun nameOf(id: String): String? = events.indices.filter { ids[it]?.id == id }.sortedBy { events[it].postedAtMs }
             .mapNotNull { ids[it]?.name }.lastOrNull()
@@ -212,7 +228,7 @@ class ContactPool(data: ContactPoolData = ContactPoolData()) {
             val next = (c.topics - topicIds + topicIds).takeLast(LearnTuning.CONTACT_TOPICS)
             if (next != c.topics) { contacts[id] = c.copy(topics = next); changed = true }
         }
-        return Applied(accepted, dropped, changed)
+        return Applied(accepted, dropped, changed || carried)
     }
 
     /**
@@ -226,6 +242,17 @@ class ContactPool(data: ContactPoolData = ContactPoolData()) {
         if (contacts.size > LearnTuning.CONTACT_CAP) {
             contacts.values.filter { it.userRelation == null }.sortedBy { it.score(nowMs) }
                 .take(contacts.size - LearnTuning.CONTACT_CAP).forEach { contacts.remove(it.id); changed = true }
+        }
+        return changed
+    }
+
+    /** 话题 [from] 被用户并进了 [into]:连着它的改成连着那一个(留在原来的位置;两个都连着的只留一个)。有改动返回 true。 */
+    fun remapTopic(from: String, into: String): Boolean {
+        var changed = false
+        for (c in contacts.values.toList()) {
+            if (from !in c.topics) continue
+            contacts[c.id] = c.copy(topics = c.topics.map { if (it == from) into else it }.distinct())
+            changed = true
         }
         return changed
     }
@@ -251,12 +278,54 @@ class ContactPool(data: ContactPoolData = ContactPoolData()) {
         return true
     }
 
-    /** 用户删一个:同一个会话以后也不再记(只记 id)。 */
-    fun delete(id: String): Boolean {
-        if (contacts.remove(id) == null) return false
+    /**
+     * 用户删一个:同一个会话以后也不再记(只记 id)。删的是按以前的算法存下来的一条时(补做以前没存上的删除),
+     * 它按现在的算法该是哪个 id 也一并记进去——同名的那几条接下来会并成一条([adoptIdentities]),不能让它借着换算法回来。
+     */
+    fun delete(id: String, strategy: ContactIdStrategy = LearnTuning.CONTACT_ID): Boolean {
+        val c = contacts.remove(id) ?: return false
+        block(id)
+        if (fromAnOlderStrategy(id)) ContactIdentity.ofStored(c.packageName, c.name, strategy)?.let(::block)
+        return true
+    }
+
+    /**
+     * 补做一次记着的删除([id] 是当时删掉的那个联系人):还在就照常删;不在了也把 [id] 记进「不再记录」。
+     * 不在是会有的:把以前的条目换成现在的身份([adoptIdentities])之后没存上,用户又删了换好的那一条、也没存上,
+     * 进程没了——下次读出来的还是换之前的文件,里面没有这个 id。只是跳过的话,接着再换一遍身份,删掉的就回来了。
+     * 有改动返回 true。
+     */
+    fun forget(id: String, strategy: ContactIdStrategy = LearnTuning.CONTACT_ID): Boolean {
+        if (delete(id, strategy)) return true
+        if (id in blocked) return false
+        block(id)
+        return true
+    }
+
+    private fun block(id: String) {
         blocked.remove(id)
         blocked += id
         while (blocked.size > LearnTuning.CONTACT_BLOCKED_CAP) blocked.remove(blocked.first())
+    }
+
+    /**
+     * 把按以前的算法(带着通知键)存下来的联系人换成现在的身份([strategy],只看会话名):同一个 App 里名字一样的并成一条。
+     * 以前同一个群每换一次通知键就多存一条,这里把它们合回去。算不出现在的身份的(名字是空的)原样留着,等它淡忘。
+     * 并的时候:出现过的日子、类型和关系的票取并集;名字、用户定的关系用最近出现过的那一条的,它没有定过就用另一条的;
+     * 连着的话题都留着(超出上限时留最近的)。现在的身份在「不再记录」里的,不留。
+     * 已经都是现在的身份时什么都不做。有改动返回 true。要在补做完记着的删除之后调(那些删除记的是以前的 id)。
+     */
+    fun adoptIdentities(strategy: ContactIdStrategy = LearnTuning.CONTACT_ID): Boolean {
+        if (strategy != ContactIdStrategy.Title || contacts.keys.none(::fromAnOlderStrategy)) return false
+        val out = LinkedHashMap<String, ObservedContact>()
+        for (c in contacts.values) {
+            val id = if (fromAnOlderStrategy(c.id)) ContactIdentity.ofStored(c.packageName, c.name, strategy) ?: c.id else c.id
+            if (id in blocked) continue
+            val moved = if (id == c.id) c else c.copy(id = id)
+            out[id] = out[id]?.let { merge(it, moved) } ?: moved
+        }
+        contacts.clear()
+        contacts.putAll(out)
         return true
     }
 
@@ -297,6 +366,31 @@ class ContactPool(data: ContactPoolData = ContactPoolData()) {
             groups.all { it == true } -> ContactType.Group
             groups.none { it == true } -> ContactType.Person
             else -> null
+        }
+
+        // 以前的算法(键加标题,发出去的版本里只用过这一种)给的 id:它的字母加一段十六进制的哈希。逐个字符比,不用正则
+        private fun fromAnOlderStrategy(id: String): Boolean {
+            val prefix = ContactIdStrategy.KeyAndTitle.prefix
+            return id.length == prefix.length + NoticeDedup.ID_HEX && id.startsWith(prefix) &&
+                id.drop(prefix.length).all { it in '0'..'9' || it in 'a'..'f' }
+        }
+
+        /** 两条其实是同一个联系人:并成一条(规则见 [adoptIdentities])。id、App 用 [a] 的。 */
+        private fun merge(a: ObservedContact, b: ObservedContact): ObservedContact {
+            val (older, newer) = if (b.lastSeenMs >= a.lastSeenMs) a to b else b to a
+            fun <K> votes(x: Map<K, List<Long>>, y: Map<K, List<Long>>): Map<K, List<Long>> =
+                (x.keys + y.keys).associateWith { addDays(x[it].orEmpty(), y[it].orEmpty()) }
+            return a.copy(
+                name = newer.name,
+                firstSeenMs = minOf(a.firstSeenMs, b.firstSeenMs),
+                lastSeenMs = maxOf(a.lastSeenMs, b.lastSeenMs),
+                typeVotes = votes(a.typeVotes, b.typeVotes),
+                relationVotes = votes(a.relationVotes, b.relationVotes),
+                days = addDays(a.days, b.days),
+                // 超出上限时留最近的:两边都连着的话题按较新那一条里的位置算(和平时刷新连接的规矩一样)
+                topics = (older.topics - newer.topics.toSet() + newer.topics).distinct().takeLast(LearnTuning.CONTACT_TOPICS),
+                userRelation = newer.userRelation ?: older.userRelation,
+            )
         }
 
         private fun addDays(old: List<Long>, days: List<Long>): List<Long> =

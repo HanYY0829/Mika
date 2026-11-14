@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="report_title">Отчёт о задаче</string>
+    <string name="report_entry_hint">Результаты · Подробности · Снимки экрана</string>
+    <string name="report_no_answer">Итоговый ответ для этой задачи не сохранён.</string>
+    <string name="report_screens">Основные снимки</string>
+    <string name="report_view_step">Шаг %1$d · Открыть воспроизведение</string>
+    <string name="report_local_note">Записи хранятся на устройстве. Снимки могут содержать данные страниц. Сохраняются только последние 30 задач.</string>
+    <string name="playback_title">Просмотр действий</string>
+    <string name="playback_empty">Для этой задачи нет снимков экрана.</string>
+    <string name="playback_legacy">Старая запись: только снимки, без отметок действий.</string>
+    <string name="playback_approximate">Стрелка показывает направление прокрутки, а не точные точки касания.</string>
+    <string name="playback_marks">Красный круг: касание · Стрелка: свайп</string>
+    <string name="playback_progress">Ход воспроизведения</string>
+    <string name="playback_pause">Пауза</string>
+    <string name="playback_play">Воспроизвести</string>
+    <string name="playback_previous">Назад</string>
+    <string name="playback_next">Далее</string>
+    <string name="playback_image">Снимок экрана задачи</string>
+    <string name="playback_missing">Снимок недоступен</string>
+    <string name="report_export">Экспорт</string>
+    <string name="report_saved">Отчёт сохранён</string>
+    <string name="report_save_failed">Не удалось сохранить. Проверьте запись и место сохранения.</string>
+    <string name="report_close">Закрыть</string>
+    <string name="report_final_page">Последняя записанная страница</string>
+    <string name="playback_stage_start">Начало</string>
+    <string name="playback_stage_input">Ввод и поиск</string>
+    <string name="playback_skipped">Пропущено недоступных кадров: %1$d.</string>
+    <string name="playback_no_mark">Маркер положения для этого действия не записан.</string>
+    <string name="playback_error_unknown">Ошибка: конкретная причина не записана.</string>
+    <string name="playback_result">Результат действия</string>
+    <string name="playback_element_click">Круг показывает примерное положение элемента, а не фактическую точку касания.</string>
+</resources>

@@ -63,7 +63,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.wangzan101.mika.core.tool.ToolIndex
 import com.wangzan101.mika.core.assembly.knownTools
-import com.wangzan101.mika.core.cap.web.AttachedPage
+import com.wangzan101.mika.core.agent.AttachedPage
 import com.wangzan101.mika.core.userscreen.UserScreenMessage
 import kotlin.coroutines.CoroutineContext
 
@@ -306,8 +306,8 @@ data class ChatUi(
     val blocked: List<Problem>? = null,
     val pip: PipUi = PipUi(),
     val composer: ComposerMode = ComposerMode.Idle,
-    /** 任务进行中补充消息交给谁;新任务开始时回到引导。 */
-    val followUpMode: FollowUpMode = FollowUpMode.Steer,
+    /** 任务进行中补充消息交给谁;主对话默认排队,点消息右侧箭头后改为引导。 */
+    val followUpMode: FollowUpMode = FollowUpMode.Queue,
     /** 这个对话明确排队、还没开始的下一件(按先后);开始或取消后从这里拿掉。 */
     val queued: List<QueuedFollowUp> = emptyList(),
     val takeoverStage: Takeover.Stage = Takeover.Stage.None,
@@ -337,7 +337,7 @@ private data class ComposerDraft(
     val input: String = "",
     val attachments: List<PendingAttachment> = emptyList(),
     val quote: QuoteMessage.Quote? = null,
-    val followUpMode: FollowUpMode = FollowUpMode.Steer,
+    val followUpMode: FollowUpMode = FollowUpMode.Queue,
     val sharedDraft: SharedDraft? = null,
     val importing: Boolean = false,
     val rejected: List<AttachmentFailure> = emptyList(),
@@ -370,7 +370,7 @@ private fun ChatUi.rebuildForConversation(
     pip = PipUi(),
     composer = ComposerMode.Idle,
     input = input,
-    followUpMode = FollowUpMode.Steer,
+    followUpMode = FollowUpMode.Queue,
     queued = emptyList(),
     takeoverStage = takeoverStage,
     attachments = attachments,
@@ -384,7 +384,7 @@ private fun ChatUi.rebuildForConversation(
 
 /**
  * 聊天界面的状态。步骤列表来自运行事件里实际做过的事(活动);进展那一行是模型这一步的话,
- * 等待模型时仅显示状态。任务在跑时输入框发的话交给这个任务(插话)。
+ * 等待模型时仅显示状态。任务在跑时输入框发的话先排队,用户再决定是否改为当前任务的引导。
  * 整个进程只用一个实例,界面关掉再打开时正在跑的任务的步骤还在。
  */
 class ChatViewModel(
@@ -489,6 +489,7 @@ class ChatViewModel(
     private val libraryCopies = mutableMapOf<String, () -> Unit>()
     private val librarySources = mutableMapOf<String, LibraryFileHandle>()
     private val libraryImports = mutableMapOf<String, Int>()
+    private val deviceImports = mutableMapOf<String, kotlinx.coroutines.Job>()
 
     /** 只回收本进程登记的副本；导入中或任何草稿引用中的 URI 继续保留。 */
     private fun releaseUnusedLibraryCopies() {
@@ -839,7 +840,7 @@ class ChatViewModel(
     }
 
     private fun canAttach(ui: ChatUi) = ui.attachEnabled && !ui.importing &&
-        (ui.composer == ComposerMode.Idle || (ui.composer != ComposerMode.Idle && ui.followUpMode == FollowUpMode.Queue))
+        (ui.composer == ComposerMode.Idle || ui.followUpMode == FollowUpMode.Queue)
 
     /** 从相机、相册、文件选择器拿到的文件:没有任务在跑、沙箱就绪时才收;读出名字和大小后挂在输入框上方,随下一句话发出去。 */
     fun attach(uris: List<String>, conversationId: String? = _ui.value.conversationId) {
@@ -847,8 +848,10 @@ class ChatViewModel(
         val id = draftConversation()
         val sharedBefore = _ui.value.sharedDraft
         val serialBefore = sharedDraftSerial
+        val wasIdle = _ui.value.composer == ComposerMode.Idle
         scope.launch {
             val items = try { describeAttachments(uris) } catch (e: CancellationException) { throw e } catch (e: Exception) { emptyList() }
+            if (wasIdle && _ui.value.composer != ComposerMode.Idle) return@launch
             if (_ui.value.conversationId == id && (!canAttach(_ui.value) || sharedDraftSerial != serialBefore)) return@launch
             if (_ui.value.conversationId != id && drafts.value[id]?.sharedDraft != sharedBefore) return@launch
             updateDraft(id) { draft ->
@@ -856,6 +859,49 @@ class ChatViewModel(
                 draft.copy(attachments = all, overLimit = dropped, rejected = emptyList())
             }
         }
+    }
+
+    /** Copy selected device files into the conversation that opened the browser. */
+    internal fun importDeviceAttachments(conversationId: String, paths: List<String>,
+        copy: suspend (String, String) -> com.wangzan101.mika.core.cap.devicefiles.DeviceFileImport) {
+        if (_ui.value.conversationId != conversationId || !canAttach(_ui.value) || paths.isEmpty()) return
+        val slots = (AttachTray.LIMIT - _ui.value.attachments.size).coerceAtLeast(0)
+        val selected = paths.distinct().take(slots)
+        val dropped = (paths.distinct().size - selected.size).coerceAtLeast(0)
+        if (selected.isEmpty()) {
+            updateDraft(conversationId) { it.copy(overLimit = dropped) }
+            return
+        }
+        updateDraft(conversationId) { it.copy(importing = true, rejected = emptyList(), overLimit = dropped) }
+        val job = scope.launch {
+            val added = mutableListOf<PendingAttachment>()
+            val failures = mutableListOf<AttachmentFailure>()
+            try {
+                for (path in selected) {
+                    if (conversationId in _deleted.value || conversationId in deleting) break
+                    try {
+                        val result = copy(path, conversationId)
+                        added += PendingAttachment("workspace:$conversationId:${result.path}", result.path.substringAfterLast('/'), result.size,
+                            workspaceConversationId = conversationId, workspacePath = result.path)
+                    } catch (e: CancellationException) { throw e } catch (e: Exception) {
+                        val reason = when ((e as? com.wangzan101.mika.core.workspace.SandboxError)?.code) {
+                            "too_large" -> AttachmentFailureReason.TOO_LARGE
+                            "low_device_space" -> AttachmentFailureReason.LOW_DEVICE_SPACE
+                            "workspace_limit" -> AttachmentFailureReason.WORKSPACE_LIMIT
+                            else -> AttachmentFailureReason.IO_ERROR
+                        }
+                        failures += AttachmentFailure(path.substringAfterLast('/'), reason)
+                    }
+                }
+            } finally {
+                updateDraft(conversationId) { draft ->
+                    val (merged, overflow) = AttachTray.add(draft.attachments, added)
+                    draft.copy(importing = false, attachments = merged, rejected = failures, overLimit = draft.overLimit + overflow)
+                }
+            }
+        }
+        deviceImports[conversationId] = job
+        job.invokeOnCompletion { deviceImports.remove(conversationId, job) }
     }
 
     /** 为当前新会话分配草稿编号；调用方在主线程调用。 */
@@ -1195,7 +1241,7 @@ class ChatViewModel(
                 attachments = nextAttachments,
                 pip = gated(PipUi(visible = true)),
                 composer = ComposerMode.Busy,
-                followUpMode = if (nextAttachments.isNotEmpty()) FollowUpMode.Queue else FollowUpMode.Steer,
+                followUpMode = FollowUpMode.Queue,
                 // 这一句如果本来在排队条上乐观挂着、现在已经开始,就不能再显示一行
                 queued = it.queued.filterNot { q -> q.text == goal },
             )
@@ -1245,6 +1291,7 @@ class ChatViewModel(
 
     /** 切换任务进行中补充消息的默认去向;只影响下次发送,不改已经发出的消息。 */
     fun setFollowUpMode(mode: FollowUpMode) {
+        if (_ui.value.importing) return
         if (mode == FollowUpMode.Steer) {
             _ui.value.sharedDraft?.takeIf { it.image != null }?.let(::clearSharedImage)
         }
@@ -1279,6 +1326,20 @@ class ChatViewModel(
         if (!actions.cancelFollowUp(conversationId, id)) return false
         _ui.update { it.copy(queued = it.queued.filterNot { q -> q.id == id }) }
         return true
+    }
+
+    /** 把一条还没开始的排队改为当前任务的引导;竞争失败时保留或恢复排队。 */
+    fun guideQueued(id: String, check: Prerequisites.Check): Boolean {
+        val ui = _ui.value
+        if (ui.composer != ComposerMode.Busy) return false
+        val item = ui.queued.firstOrNull { it.id == id } ?: return false
+        if (!check.canStartTask) {
+            _ui.update { it.copy(blocked = check.blockers) }
+            return false
+        }
+        if (!cancelQueued(id)) return false
+        if (steer(item.text, check)) return true
+        return enqueue(item.text, check)
     }
 
     /**
@@ -1395,7 +1456,7 @@ class ChatViewModel(
                     followUpMode = when {
                         it.attachments.isNotEmpty() -> FollowUpMode.Queue
                         it.draft().hasContent -> it.followUpMode
-                        else -> FollowUpMode.Steer
+                        else -> FollowUpMode.Queue
                     },
                     queued = it.queued.filterNot { q -> q.text == live.goal })
             }
@@ -1880,6 +1941,7 @@ class ChatViewModel(
             // 一条删不掉(存储读写失败等)不挡住后面的;最后照实说几条失败
             targets.forEach { id ->
                 try {
+                    deviceImports[id]?.join()
                     removeConversation(id)
                 } catch (e: CancellationException) {
                     val unfinished = targets.drop(done).toSet()
@@ -2000,7 +2062,7 @@ class ChatViewModel(
                     followUpMode = when {
                         it.attachments.isNotEmpty() -> FollowUpMode.Queue
                         it.draft().hasContent -> it.followUpMode
-                        else -> FollowUpMode.Steer
+                        else -> FollowUpMode.Queue
                     },
                     queued = it.queued.filterNot { q -> q.text == goal })
             }
@@ -2295,6 +2357,7 @@ class ToolLabels(private val tools: ToolIndex, private val legacy: LegacyNames =
     companion object {
         /** 工具声明里的 label → 界面文字;中文资源与 label 一字不差(ToolLabelsTest 核对每个工具都有)。 */
         val TOOL_LABELS: Map<String, Int> = mapOf(
+            "短信验证码登录" to R.string.sms_login_tool,
             "查看已装的 App" to R.string.tool_list_apps,
             "打开 App" to R.string.tool_open_app,
             "分享文字到 App" to R.string.tool_share_text,
@@ -2320,6 +2383,9 @@ class ToolLabels(private val tools: ToolIndex, private val legacy: LegacyNames =
             "查找界面控件" to R.string.tool_find_element,
             "采集多屏内容" to R.string.tool_collect,
             "连续操作手机" to R.string.tool_phone_run,
+            "查看设备文件" to R.string.tool_list_device_files,
+            "搜索设备文件" to R.string.tool_search_device_files,
+            "复制设备文件" to R.string.tool_copy_device_file,
             "处理文件" to R.string.tool_process_files,
             "运行自带脚本" to R.string.tool_run_script,
             "读文件" to R.string.tool_read_file,

@@ -198,4 +198,11 @@
     <string name="models_daily_token_budget">Orçamento diário de tokens</string>
     <string name="models_daily_token_budget_sub">Conta os tokens de entrada e saída informados para todos os modelos e usos deste provedor no dia local. Ao atingir o limite, a próxima solicitação é bloqueada; solicitações em andamento podem excedê-lo. O uso não informado conta como 0 e é redefinido quando a data local muda.</string>
     <string name="models_daily_token_budget_save_failed">Não foi possível salvar o orçamento. A configuração anterior continua ativa.</string>
+    <string name="main_fallback_name">Fallback model %1$d</string>
+    <string name="main_fallback_what">Takes over when the main model is unavailable</string>
+    <string name="main_fallback_pick">Pick a fallback model</string>
+    <string name="main_fallback_clear">No fallback</string>
+    <string name="main_fallback_hint">The main model runs first. If it runs out of quota or fails, the fallback takes over automatically.</string>
+    <string name="main_fallback_failed">Could not set the fallback model</string>
+    <string name="main_fallback_is_main">This is the current main model, so it cannot also be its fallback</string>
 </resources>

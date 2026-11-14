@@ -88,6 +88,13 @@ class NoticeHints(private val limit: Int = LIMIT) {
         publish()
     }
 
+    /** 这条通知其实不该收(认出来是一条被反复重发的状态显示,见 [LiveUpdates]):提醒拿掉。不是用户处理掉的,不记「没看就处理了」。 */
+    @Synchronized fun withdraw(key: String) {
+        if (items.remove(key) == null) return
+        acked.remove(key)
+        publish()
+    }
+
     /**
      * 用户点开了提醒,[shown] 这几条已经写进了提醒对话:记为看过。只认键和发出时间都对得上的——
      * 写的过程中同一条通知又更新了、又来了新的提醒,那些还没给用户看过,照样算没看。

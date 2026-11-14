@@ -140,10 +140,10 @@ class StoreCodecTest {
         days = listOf(com.wangzan101.mika.core.proactive.DayDigest(20_000, 1L, listOf(com.wangzan101.mika.core.proactive.DigestLine("一句", apps = listOf("com.chat"))))))
 
     /** 每份存盘:文件名、加版本检查之前的写法写出来的内容(没有 version)、存一遍、读一遍。 */
-    private class Case(val name: String, val old: String, val save: () -> Unit, val load: () -> Any?, val data: Any)
+    private class Case(val name: String, val old: String, val save: () -> Unit, val load: () -> Any?, val data: Any, val known: Int = 1)
     private fun cases() = listOf(
         Case(TopicPoolFile.FILE, plainJson.encodeToString(com.wangzan101.mika.core.proactive.TopicPoolData.serializer(), topics),
-            { TopicPoolFile(tmp.root, identity).save(topics) }, { TopicPoolFile(tmp.root, identity).load() }, topics),
+            { TopicPoolFile(tmp.root, identity).save(topics) }, { TopicPoolFile(tmp.root, identity).load() }, topics, known = TopicPoolFile.VERSION),
         Case(ContactPoolFile.FILE, plainJson.encodeToString(com.wangzan101.mika.core.proactive.ContactPoolData.serializer(), contacts),
             { ContactPoolFile(tmp.root, identity).save(contacts) }, { ContactPoolFile(tmp.root, identity).load() }, contacts),
         Case(NoticeJournalFile.FILE, plainJson.encodeToString(com.wangzan101.mika.core.proactive.NoticeJournalData.serializer(), journal),
@@ -182,15 +182,15 @@ class StoreCodecTest {
             tmp.root.listFiles()?.forEach { it.deleteRecursively() }
             val body = (kotlinx.serialization.json.Json.parseToJsonElement(c.old) as kotlinx.serialization.json.JsonObject)
             val newer = kotlinx.serialization.json.JsonObject(
-                body + ("version" to kotlinx.serialization.json.JsonPrimitive(2)) + ("newRequiredMeaning" to kotlinx.serialization.json.JsonPrimitive("preserve me")),
+                body + ("version" to kotlinx.serialization.json.JsonPrimitive(c.known + 1)) + ("newRequiredMeaning" to kotlinx.serialization.json.JsonPrimitive("preserve me")),
             ).toString()
             seed(c.name, newer)
             try {
                 c.load()
                 fail(c.name)
             } catch (e: NewerStoreVersion) {
-                assertEquals(c.name, 2, e.found)
-                assertEquals(c.name, 1, e.known)
+                assertEquals(c.name, c.known + 1, e.found)
+                assertEquals(c.name, c.known, e.known)
             }
             assertEquals(c.name, listOf(c.name), dir.list()!!.toList())
             assertEquals(c.name, newer, File(dir, c.name).readText())

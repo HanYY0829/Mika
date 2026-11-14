@@ -20,6 +20,9 @@
     <string name="proactive_learn_topic_detail">%1$s · %2$s · %3$d يوم · آخر ظهور %4$s</string>
     <string name="proactive_learn_topic_outcomes">تطبيقات: %1$d · فُتح %2$d · رُفض %3$d</string>
     <string name="proactive_learn_delete">حذف</string>
+    <string name="proactive_learn_topic_merge">دمج…</string>
+    <string name="proactive_learn_topic_merge_title">دمج «%1$s» في</string>
+    <string name="proactive_learn_topic_merge_body">تُضاف أيامه وأعداده إلى الموضوع الذي تختاره، ويُحتسب هذا الاسم هناك من الآن فصاعدًا. لا يمكن التراجع.</string>
     <string name="proactive_learn_clear_all">مسح كل ما جمعه Mika</string>
     <string name="proactive_learn_clear_all_body">حذف كل المواضيع وجهات الاتصال والملخّصات التي جمعها Mika، ونص الإشعارات المحفوظ؟ لا يمكن التراجع. سيبدأ Mika الجمع من جديد من الإشعارات الجديدة.</string>
     <string name="proactive_learn_clear_app">مسح ما جاء من %1$s</string>

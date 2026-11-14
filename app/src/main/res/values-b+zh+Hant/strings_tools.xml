@@ -20,6 +20,8 @@
     <string name="tool_find_element">查詢介面控制項</string>
     <string name="tool_collect">採集多螢幕內容</string>
     <string name="tool_phone_run">連續操作手機</string>
+    <string name="tool_list_device_files">檢視裝置檔案</string>
+    <string name="tool_copy_device_file">複製裝置檔案</string>
     <string name="tool_process_files">處理檔案</string>
     <string name="tool_run_script">執行內建腳本</string>
     <string name="tool_read_file">讀檔案</string>

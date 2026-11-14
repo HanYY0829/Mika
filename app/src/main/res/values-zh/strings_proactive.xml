@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="proactive_title">主动能力（实验）</string>
+    <string name="proactive_title">主动能力</string>
     <string name="proactive_entry_sub">读取所选 App 的通知</string>
     <string name="proactive_switch">开启</string>
     <string name="proactive_listener">监听：%1$s</string>

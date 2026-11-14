@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jev_title">Modelo de decisión · Jev</string>
+    <string name="jev_row_sub">Clasificación de intención y selección de rutas opcionales</string>
+    <string name="jev_enabled">Usar el modelo de decisión</string>
+    <string name="jev_privacy">Al activarlo, se envían tu solicitud, el contexto reciente de la conversación y las rutas candidatas al proveedor configurado para determinar la intención y elegir rutas. Si falla, Mika usa el modelo habitual. Los modelos principal, de visión y ligero se configuran por separado.</string>
+    <string name="jev_provider">Proveedor</string>
+    <string name="jev_endpoint">Endpoint</string>
+    <string name="jev_model">ID del modelo</string>
+    <string name="jev_endpoint_note">Introduce la URL completa del endpoint SystemOne. Se requiere HTTPS salvo para servicios HTTP locales. La clave API se guarda cifrada en este dispositivo.</string>
+    <string name="jev_invalid">Introduce un endpoint y un ID de modelo válidos. Para activar o probar también necesitas una clave API.</string>
+    <string name="jev_apply_note">Guarda para aplicar el interruptor y la conexión a las tareas nuevas.</string>
+    <string name="jev_test">Probar conexión</string>
+    <string name="jev_test_note">La prueba solo envía un saludo fijo y dos opciones a este endpoint. No envía conversaciones, pantallas ni recuerdos, no guarda cambios ni activa el servicio.</string>
+    <string name="jev_test_success">La conexión funciona y la selección de prueba fue correcta.</string>
+    <string name="jev_test_failed">La prueba falló. Revisa el endpoint, el modelo, la clave API y la red.</string>
+    <string name="jev_saved">Guardado. Las tareas nuevas usarán estos ajustes.</string>
+    <string name="jev_save_failed">No se pudo guardar. Los ajustes guardados anteriormente no han cambiado.</string>
+</resources>

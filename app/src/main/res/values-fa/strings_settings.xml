@@ -229,4 +229,6 @@
     <string name="settings_scheduled_quiet_start">زمان شروع</string>
     <string name="settings_scheduled_quiet_end">زمان پایان</string>
     <string name="settings_scheduled_quiet_equal">برای بی‌صدا کردن اعلان‌ها، زمان شروع و پایان متفاوتی انتخاب کنید.</string>
+    <string name="settings_show_task_cost">نمایش هزینه کار</string>
+    <string name="settings_show_task_cost_sub">تخمین هزینه API DeepSeek به یوان چین برای کارهای جدید.</string>
 </resources>

@@ -127,10 +127,13 @@ fun toolDispatcher(
     /** 操作 Mika 自己的界面/文件/通知/剪贴板;用户打开「允许 Mika 操作自己的界面」时才给。 */
     selfOperate: com.wangzan101.mika.core.self.SelfPort? = null,
     phoneCalls: com.wangzan101.mika.core.calls.PhoneCallPort? = null,
+    smsLogin: com.wangzan101.mika.core.cap.phone.sms.SmsLoginPort? = null,
     /** 跨会话任务摘要;给了才提供 task_memory_search / task_memory_timeline / task_memory_step。 */
     taskMemory: com.wangzan101.mika.core.memory.TaskMemoryStore? = null,
     /** 这两天的通知原文和存着的各天、各周、各月的归纳(主动能力攒下的、够格带进任务的);给了才提供 notices_read。 */
     notices: com.wangzan101.mika.core.proactive.NoticeSource? = null,
+    /** 用户在 UI 发起任务时可访问的设备文件。 */
+    deviceFiles: com.wangzan101.mika.core.cap.devicefiles.DeviceFilesPort? = null,
 ): ToolDispatcher {
     val screenshotStore = sandbox?.takeIf {
         it.status() !is com.wangzan101.mika.core.cap.sandbox.SandboxStatus.Unsupported &&
@@ -143,7 +146,7 @@ fun toolDispatcher(
     val providers: List<CapabilityProvider> = listOf(
         object : CapabilityProvider {
             override val id = PHONE
-            override fun open(spec: RunSpec) = PhoneCapability(screen, deepLinks, appPacing(), appPace, appIdleScroll())
+            override fun open(spec: RunSpec) = PhoneCapability(screen, deepLinks, appPacing(), appPace, appIdleScroll(), smsLogin)
         },
         object : CapabilityProvider {
             override val id = WEB
@@ -163,6 +166,13 @@ fun toolDispatcher(
         object : CapabilityProvider {
             override val id = "calls"
             override fun open(spec: RunSpec) = com.wangzan101.mika.core.calls.PhoneCallsCapability(port)
+        }
+    }, deviceFiles?.let { port ->
+        object : CapabilityProvider {
+            override val id = com.wangzan101.mika.core.cap.devicefiles.DEVICE_FILES
+            override fun open(spec: RunSpec) = if (spec.provenance.origin == com.wangzan101.mika.core.run.RunOrigin.Ui &&
+                spec.provenance.attendance != com.wangzan101.mika.core.run.Attendance.Unattended)
+                com.wangzan101.mika.core.cap.devicefiles.DeviceFilesCapability(port, workspace) else null
         }
     }) + mcpServers.map(::McpClientProvider)
     return RunAssembler(providers).assemble(runSpec, config, stableRefs, FORMER_PREFIX, RENAMED, RETIRED, MOVED)
@@ -210,7 +220,7 @@ fun recordedTools(): ToolIndex = legacyNames().let { legacy -> ToolIndex(allTool
 
 /** Mika 所有可能提供的工具,按发给模型的顺序。 */
 internal fun allTools(): List<AgentTool> =
-    GeneralGroup.tools + PhoneCapability.tools() + WebGroup.tools + SandboxGroup.tools + RootGroup.tools + com.wangzan101.mika.core.calls.callAgentTools
+    GeneralGroup.tools + PhoneCapability.tools() + WebGroup.tools + SandboxGroup.tools + RootGroup.tools + com.wangzan101.mika.core.calls.callAgentTools + com.wangzan101.mika.core.cap.devicefiles.DeviceFilesGroup.tools
 
 /** Mika 所有可能提供的工具的声明。 */
 fun knownTools(): ToolIndex = ToolIndex(allTools())

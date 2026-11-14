@@ -1,10 +1,17 @@
 package com.wangzan101.mika.core.replay
 
 import com.wangzan101.mika.core.agent.FakeModel
+import com.wangzan101.mika.core.decision.DecisionModel
+import com.wangzan101.mika.core.decision.DecisionChoice
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.awaitCancellation
 import com.wangzan101.mika.core.model.ModelReply
 import com.wangzan101.mika.core.model.Part
 import com.wangzan101.mika.core.model.StopReason
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -23,6 +30,78 @@ class RouteMatcherTest {
     private fun text(s: String) = ModelReply(listOf(Part.Text(s)), StopReason.EndTurn, null)
     private val memo = Route("m", "在备忘录里写{1}", 1, listOf("com.notes"), emptyMap(), emptyList(), lastUsedMs = 0)
     private val goal = "在备忘录里写今天天气不错"
+
+    @Test fun decisionSelectsValidatedRouteWithoutCallingTextModel() = runTest {
+        val m = FakeModel()
+        val selected = RouteMatcher(m, MemRoutes(memo), null, DecisionModel { _, _, options, applicable ->
+            assertEquals(memo.template, options.getValue("route_0"))
+            assertTrue(!applicable.isNullOrBlank())
+            DecisionChoice("route_0", 0.96, 0.98)
+        }).choose(goal)
+        assertEquals(RouteChoice(memo, listOf("今天天气不错")), selected)
+        assertTrue(m.requests.isEmpty())
+    }
+
+    @Test fun confidentSkipLeavesPlanningToMainModelWithoutCallingRouteFallback() = runTest {
+        for (applicable in listOf(0.0, 0.99)) {
+            val m = FakeModel(text("""{"route": 1, "slots": ["今天天气不错"]}"""))
+            val decisions = mutableListOf<String>()
+            val selected = RouteMatcher(m, MemRoutes(memo), null, DecisionModel { _, _, options, _ ->
+                assertTrue("skip" in options)
+                DecisionChoice("skip", 0.99, applicable)
+            }, decisions::add).choose(goal)
+            assertNull(selected)
+            assertTrue(m.requests.isEmpty())
+            assertEquals(listOf("skipped"), decisions)
+        }
+    }
+
+    @Test fun decisionReceivesAndReturnsCompleteParameterWhitespace() = runTest {
+        val content = "    indented\n"
+        val route = memo.copy(template = "把以下内容写入备忘录：{1}")
+        val m = FakeModel()
+        val selected = RouteMatcher(m, MemRoutes(route), null, DecisionModel { state, _, _, _ ->
+            assertEquals(JsonArray(listOf(JsonPrimitive(content))), state.jsonObject.getValue("routes")
+                .jsonObject.getValue("route_0").jsonObject.getValue("boundParameters"))
+            DecisionChoice("route_0", 0.99, 0.99)
+        }).choose("把以下内容写入备忘录：$content")
+        assertEquals(RouteChoice(route, listOf(content)), selected)
+        assertTrue(m.requests.isEmpty())
+    }
+
+    @Test fun uncertainOrInapplicableDecisionFallsBackToOriginalSlotValidation() = runTest {
+        for (decision in listOf(
+            DecisionModel { _, _, _, _ -> DecisionChoice("skip", 0.5, 0.0) },
+            DecisionModel { _, _, _, _ -> DecisionChoice("skip", Double.NaN, 0.0) },
+            DecisionModel { _, _, _, _ -> DecisionChoice("route_0", 0.5, 0.99) },
+            DecisionModel { _, _, _, _ -> DecisionChoice("route_0", 0.99, 0.2) },
+            DecisionModel { _, _, _, _ -> DecisionChoice("route_0", 0.99) },
+            DecisionModel { _, _, _, _ -> DecisionChoice("not_a_route", 1.0, 1.0) },
+            DecisionModel { _, _, _, _ -> throw IllegalStateException("down") },
+            DecisionModel { _, _, _, _ -> awaitCancellation() },
+        )) {
+            val m = FakeModel(text("""{"route": 1, "slots": ["今天天气不错"]}"""))
+            assertEquals(RouteChoice(memo, listOf("今天天气不错")), RouteMatcher(m, MemRoutes(memo), null, decision).choose(goal))
+            assertEquals(1, m.requests.size)
+        }
+    }
+
+    @Test fun ambiguousSlotsSkipDecisionAndCancellationDoesNotStartFallback() = runTest {
+        val ambiguous = memo.copy(template = "给{1}发消息说{2}", slots = 2)
+        var decisions = 0
+        val m = FakeModel(text("""{"route":null}"""))
+        assertNull(RouteMatcher(m, MemRoutes(ambiguous), null, DecisionModel { _, _, _, _ ->
+            decisions++; DecisionChoice("route_0", 1.0, 1.0)
+        }).choose("给张三发消息说李四发消息说你好"))
+        assertEquals(0, decisions)
+        val untouched = FakeModel()
+        try {
+            RouteMatcher(untouched, MemRoutes(memo), null, DecisionModel { _, _, _, _ -> throw CancellationException("stopped") }).choose(goal)
+            org.junit.Assert.fail("cancellation was swallowed")
+        } catch (_: CancellationException) {
+            assertTrue(untouched.requests.isEmpty())
+        }
+    }
 
     @Test fun noCandidatesNoModelCall() = runTest {
         val m = FakeModel()

@@ -259,6 +259,9 @@
     <string name="pip_closed_hint">Closed for this task. Tap “Show screen” at the bottom right, or open “Background screens” in the side menu.</string>
     <string name="chat_conversation_tokens">This chat: %1$s</string>
     <string name="chat_conversation_tokens_partial">This chat: at least %1$s</string>
+    <string name="chat_task_cost_estimate">Est. %1$s</string>
+    <string name="chat_task_cost_partial">%1$s (partial)</string>
+    <string name="chat_task_cost_unavailable">Cost unavailable</string>
     <string name="follow_up_steer">Steer</string>
     <string name="follow_up_queue">Queue</string>
     <string name="follow_up_steer_hint">The next step will adjust the current task</string>

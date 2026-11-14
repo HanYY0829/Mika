@@ -38,7 +38,7 @@ import com.wangzan101.mika.R
 import com.wangzan101.mika.browser.PageAskModel
 import com.wangzan101.mika.browser.PageConversations
 import com.wangzan101.mika.browser.UserBrowser
-import com.wangzan101.mika.core.cap.web.AttachedPage
+import com.wangzan101.mika.core.agent.AttachedPage
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag

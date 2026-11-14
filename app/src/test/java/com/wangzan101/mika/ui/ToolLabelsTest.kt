@@ -26,5 +26,7 @@ class ToolLabelsTest {
         UiText.source = ResFileTexts.english
         assertEquals("Tap", labels.label("tap"))
         assertEquals("Open web page", labels.label("browser_navigate"))
+        assertEquals("Browse device files", labels.label("list_device_files"))
+        assertEquals("Copy device file", labels.label("copy_device_file"))
     }
 }

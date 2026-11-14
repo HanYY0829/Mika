@@ -37,6 +37,7 @@ internal class PhoneCapability(
     pacing: AppPacing = AppPacing.Off,
     appPace: (String) -> PlacePace = { PlacePace.NORMAL },
     idle: IdleScroll? = null,
+    val smsLogin: com.wangzan101.mika.core.cap.phone.sms.SmsLoginPort? = null,
 ) : Capability {
     val dwell = AppDwell(pacing, appPace, idle)
 

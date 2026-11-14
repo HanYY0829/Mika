@@ -38,6 +38,12 @@ class NoticeListenerService : NotificationListenerService() {
      */
     fun activeOrNull(): Array<StatusBarNotification>? = runCatching { activeNotifications }.getOrNull()
 
+    /** 系统给这条通知排的重要程度(NotificationManager.IMPORTANCE_*);读不出来(还没连上、系统没给)为 null。 */
+    fun importanceOf(key: String): Int? = runCatching {
+        val ranking = Ranking()
+        if (currentRanking.getRanking(key, ranking)) ranking.importance else null
+    }.getOrNull()
+
     companion object {
         val SEEN_REASONS = setOf(REASON_CLICK, REASON_CANCEL, REASON_CANCEL_ALL)
     }

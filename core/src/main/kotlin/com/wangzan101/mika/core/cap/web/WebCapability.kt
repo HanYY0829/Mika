@@ -1,5 +1,6 @@
 package com.wangzan101.mika.core.cap.web
 
+import com.wangzan101.mika.core.agent.AttachedPage
 import com.wangzan101.mika.core.capability.Capability
 import com.wangzan101.mika.core.capability.CapabilityKey
 import com.wangzan101.mika.core.capability.CapabilityStatus

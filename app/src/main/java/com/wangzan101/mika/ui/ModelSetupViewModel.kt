@@ -932,6 +932,68 @@ class ModelSetupViewModel(
         }
     }
 
+    /** 把 [providerId] 下的 [model] 设为第 [slot] 位主模型备援(项目 3):备好配置再记位子,和选主模型同一条建配置的路。记不上位就不清提示,让用户知道没设成。 */
+    fun pickFallback(slot: Int, providerId: String, model: String) {
+        val m = model.trim()
+        if (m.isEmpty()) return
+        scope.launch {
+            var ok = false
+            withContext(io) {
+                val p = store.provider(providerId) ?: return@withContext
+                val caps = ModelOptions.ofProvider(p, store.list()).firstOrNull { it.id == m }?.capabilities ?: ModelOptions.baseOf(p)
+                ok = store.ensureConfigId(p.id, m, caps)?.let { store.setMainFallback(slot, it) } == true
+            }
+            _state.update { snapshot(if (ok) it.copy(probeNote = null, pickToProbe = null) else it.copy(probeNote = tr(R.string.main_fallback_failed))) }
+        }
+    }
+
+    /** 备援手填(或在没试通过的那家选):先试调用,通了才设上;规矩和主模型手填一样(还要会调用工具)。 */
+    fun pickFallbackManual(slot: Int, providerId: String, model: String, onPicked: () -> Unit = {}) {
+        val m = model.trim()
+        if (m.isEmpty() || _state.value.manualPick[providerId] == ListState.Running) return
+        val p = store.provider(providerId) ?: return
+        if (store.isMainModel(providerId, m)) {
+            _state.update { it.copy(manualPick = it.manualPick + (providerId to ListState.Failed(tr(R.string.main_fallback_is_main)))) }
+            return
+        }
+        _state.update { it.copy(manualPick = it.manualPick + (providerId to ListState.Running)) }
+        scope.launch {
+            val outcome = probeSaved(p, m)
+            val problem = when {
+                outcome is ProbeOutcome.Failed -> outcome.message
+                outcome is ProbeOutcome.NoToolCall -> tr(R.string.model_probe_no_tools_pick, m)
+                else -> null
+            }
+            if (problem != null) {
+                _state.update { it.copy(manualPick = it.manualPick + (providerId to ListState.Failed(problem))) }
+                return@launch
+            }
+            var ok = false
+            withContext(io) {
+                store.markVerified(p.id, m)
+                if (p.models.orEmpty().none { it.id == m }) store.markTyped(p.id, m)
+                store.provider(p.id)?.let { fresh ->
+                    val caps = ModelOptions.ofProvider(fresh, store.list()).firstOrNull { it.id == m }?.capabilities ?: ModelOptions.baseOf(fresh)
+                    ok = store.ensureConfigId(fresh.id, m, caps)?.let { store.setMainFallback(slot, it) } == true
+                }
+            }
+            if (!ok) {
+                _state.update { it.copy(manualPick = it.manualPick + (providerId to ListState.Failed(tr(R.string.main_fallback_failed)))) }
+                return@launch
+            }
+            _state.update { snapshot(it.copy(manualPick = it.manualPick - providerId, probeNote = null, pickToProbe = null)) }
+            onPicked()
+        }
+    }
+
+    /** 撤掉第 [slot] 位主模型备援(项目 3)。 */
+    fun clearFallback(slot: Int) {
+        scope.launch {
+            withContext(io) { store.setMainFallback(slot, null) }
+            sync()
+        }
+    }
+
     /** 看图、轻量的固定选项:「用主模型」或(只有看图)「不用」。 */
     fun choose(role: ModelRole, choice: RoleChoice) {
         scope.launch {

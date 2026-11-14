@@ -74,10 +74,16 @@ data class ObservedTopic(
 
 /**
  * 话题池落盘的样子:只有话题名、种类、计数和时间。[blocked] 是用户删掉后「不再记录」的话题名的指纹
- * (见 [TopicPool.fingerprint]:只有指纹,不留名字)。
+ * (见 [TopicPool.fingerprint]:只有指纹,不留名字)。[merged] 是用户并掉的话题名的指纹 → 并进去的那个话题的 id
+ * (见 [TopicPool.merge];同样只有指纹)。
  */
 @Serializable
-data class TopicPoolData(val version: Int = 1, val topics: List<ObservedTopic> = emptyList(), val blocked: List<String> = emptyList())
+data class TopicPoolData(
+    val version: Int = 1,
+    val topics: List<ObservedTopic> = emptyList(),
+    val blocked: List<String> = emptyList(),
+    val merged: Map<String, String> = emptyMap(),
+)
 
 /** 校验过的一条归纳:引用一个已有话题([topicId]),或者新起一个([newKind] + [newLabel])。[events] 是这一批里的下标。没有 App 这一项。 */
 data class LearnSignal(
@@ -98,14 +104,23 @@ data class LearnSignal(
  * 用户单独删掉的话题不再被学回来:记下它名字的指纹,模型之后再新起同名的话题(不管归到哪一种)不收。
  * 只按名字认:换一个说法的拦不住。「清空全部」「清掉某个 App 的」「删掉敏感的」和久了自己忘掉的都是另一回事,不记。
  *
+ * 用户把一个话题并进另一个([merge])之后,并掉的那个名字记成别名:模型之后再新起这个名字的话题,算引用并进去的那个。
+ * 「不再记录」和别名是同一个名字上的两种决定,后做的算数:并掉一个名字时把它从「不再记录」里拿出来;删掉一个话题时,
+ * 它的名字、并进过它的名字都记进「不再记录」(用户删的是并好的这一个,那些名字不该借着别名没了又被学回来)。
+ *
  * 话题的 id 是随机的([randomId]),不是顺着往下编的序号:序号在「新起了话题却没存上」「池子读不出来、从空的重来」之后会被
  * 再发一遍,而联系人上连着的话题、事件上记着的话题都只认 id,会连到不相干的话题上。
  */
 class TopicPool(data: TopicPoolData = TopicPoolData(), private val newId: () -> String = ::randomId) {
     private val topics = LinkedHashMap<String, ObservedTopic>().apply { data.topics.forEach { put(it.id, it) } }
     private val blocked = LinkedHashSet(data.blocked)
+    /** 并掉的话题名的指纹 → 并进去的话题的 id。指着的话题没了的(忘掉、清掉了)不算数,存盘、认名字时都只看还在的。 */
+    private val aliases = LinkedHashMap(data.merged)
+    /** 这个进程里并掉的话题 id → 并进去的 id:并的那一刻在途的请求引用的还是并掉的那个。不落盘(请求不会跨进程)。 */
+    private val moved = HashMap<String, String>()
 
-    fun data(): TopicPoolData = TopicPoolData(topics = topics.values.toList(), blocked = blocked.toList())
+    fun data(): TopicPoolData =
+        TopicPoolData(topics = topics.values.toList(), blocked = blocked.toList(), merged = aliases.filterValues { it in topics })
 
     /** 用户删掉后不再记录的话题有几个。 */
     val blockedCount: Int get() = blocked.size
@@ -114,17 +129,33 @@ class TopicPool(data: TopicPoolData = TopicPoolData(), private val newId: () -> 
 
     operator fun get(id: String): ObservedTopic? = topics[id]
 
-    /** 给模型看的已有话题:强度×留存最高的 [limit] 个。 */
-    fun strongest(nowMs: Long, limit: Int = LearnTuning.EXISTING_MAX, includeSensitive: Boolean = false): List<ObservedTopic> =
-        topics.values.filter { includeSensitive || !it.sensitive }.sortedByDescending { it.score(nowMs) }.take(limit)
+    /**
+     * 给模型看的已有话题,一共 [limit] 个,都按强度×留存从高到低挑:先是 [packageName](这一批的 App)印证过的,最多占三分之二的位置;
+     * 剩下的位置给其余的里最强的(不管哪个 App;它自己的没占满时位置也归这边)。
+     * 模型只能引用它看得到的:池子里的话题比 [limit] 多得多时,只按强度挑的话,这个 App 以前推出来的那个话题多半不在里面,
+     * 它再推同样的东西,模型就只能另起一个说法差不多的。同一个 App 推的多半还是那些题材,所以先给它自己的;
+     * 但不全给它:话题很多的 App(比如聊天 App)不该把别的 App 的强话题全挤出去——同一个题材也会从别的 App 来。
+     */
+    fun strongest(
+        nowMs: Long,
+        limit: Int = LearnTuning.EXISTING_MAX,
+        includeSensitive: Boolean = false,
+        packageName: String? = null,
+    ): List<ObservedTopic> {
+        val byScore = topics.values.filter { includeSensitive || !it.sensitive }.sortedByDescending { it.score(nowMs) }
+        val own = if (packageName == null) emptyList() else byScore.filter { packageName in it.evidence }.take(limit * 2 / 3)
+        val ownIds = own.mapTo(HashSet()) { it.id }
+        return own + byScore.filter { it.id !in ownIds }.take(limit - own.size)
+    }
 
     /** 用上一次结果后的统计。[byEvent]:这一批的下标 → 归到的话题 id。[blocked]:新起的话题是用户删掉过的,没收的有几条。 */
     data class Applied(val byEvent: Map<Int, Set<String>>, val applied: Int, val missing: Int, val blocked: Int = 0)
 
     /**
      * 把一批的归纳用到池上。[packageName] 是这批的 App(我们自己分的批),证据只记到它名下。
-     * 引用的话题在请求途中被用户删了的,丢掉,不复活。新话题和已有的同种类、同名(大小写、全半角、空白不计)就当引用;
-     * 没有同名的、名字却是用户删掉过的(不管当初是哪一种),不收。
+     * 引用的话题在请求途中被用户删了的,丢掉,不复活;被用户并进另一个了的,算引用那一个。
+     * 新话题和已有的同种类、同名(大小写、全半角、空白不计)就当引用;没有同名的、名字是用户并掉过的(不管哪一种),算引用并进去的那个;
+     * 都不是、名字却是用户删掉过的(不管当初是哪一种),不收。
      * 同一条通知对同一个话题只算一次点开/划掉。
      *
      * 一次回复对一个话题最多记一天的证据:几条归纳落在同一个话题上时并在一起,记在它们引用的通知里最新那条发出的那天。
@@ -150,9 +181,10 @@ class TopicPool(data: TopicPoolData = TopicPoolData(), private val newId: () -> 
             // 「敏感类推断」关着时:标了敏感的新话题不收,已有的敏感话题不加证据(用的是用上结果这一刻的开关)
             if (!allowSensitive && s.sensitive) { missing++; continue }
             val id = when {
-                s.topicId != null -> s.topicId.takeIf { it in topics }
-                // 先认已有的同名话题(留着的照常用);要新起时才看这个名字是不是用户删掉过的
+                s.topicId != null -> (moved[s.topicId] ?: s.topicId).takeIf { it in topics }
+                // 先认已有的同名话题(留着的照常用),再认用户并掉过的名字;要新起时才看这个名字是不是用户删掉过的
                 s.newKind != null && s.newLabel != null -> findSame(s.newKind, s.newLabel)?.id
+                    ?: aliases[fingerprint(s.newLabel)]?.takeIf { it in topics }
                     ?: if (fingerprint(s.newLabel) in blocked) { refused++; continue } else create(s.newKind, s.newLabel, s.sensitive, nowMs)
                 else -> null
             }
@@ -212,13 +244,57 @@ class TopicPool(data: TopicPoolData = TopicPoolData(), private val newId: () -> 
         return dropped
     }
 
-    /** 用户删一个:同名的话题以后也不再记(只记名字的指纹)。 */
+    /** 用户删一个:同名的话题以后也不再记(只记名字的指纹);并进过它的那些名字也一样。 */
     fun delete(id: String): Boolean {
         val t = topics.remove(id) ?: return false
-        val f = fingerprint(t.label)
-        blocked.remove(f)
-        blocked += f
+        // 它自己的名字放在最后(名单满了先丢最早的)
+        val names = aliases.filterValues { it == id }.keys + fingerprint(t.label)
+        for (f in names) {
+            // 这个名字不再是谁的别名(同名的另一个话题以前被并掉过的也一样:后做的决定算数)
+            aliases.remove(f)
+            blocked.remove(f)
+            blocked += f
+        }
         while (blocked.size > LearnTuning.TOPIC_BLOCKED_CAP) blocked.remove(blocked.first())
+        return true
+    }
+
+    /**
+     * 用户把 [fromId] 并进 [intoId]:两个其实是一回事(模型换了个说法另起的)。并完只剩 [intoId],名字、种类用它的:
+     * 证据按「App × 天」并在一起(同一个 App 同一天两边都有的只算一份),点开、划掉的次数相加(同一条通知两边都算过的会多算一次,
+     * 分不出来,不去管),有一个是敏感的就算敏感(只会变严),最早、最近出现的时间各取两边的。
+     * [fromId] 的名字记成别名(见类注释);以前并进 [fromId] 的名字跟着改指 [intoId]。
+     * 两个是同一个、或有一个已经不在了(页面上是早先的样子)时什么都不做,返回 false。分不开:没有反过来的操作。
+     */
+    fun merge(fromId: String, intoId: String): Boolean {
+        if (fromId == intoId) return false
+        val from = topics[fromId] ?: return false
+        val into = topics[intoId] ?: return false
+        topics.remove(fromId)
+        val union = LinkedHashMap<String, List<Long>>()
+        for (pkg in into.evidence.keys + from.evidence.keys) {
+            union[pkg] = (into.evidence[pkg].orEmpty() + from.evidence[pkg].orEmpty()).toSortedSet().toList().takeLast(LearnTuning.DAYS_PER_APP)
+        }
+        // App 多了留最近出现过的那些
+        val kept = union.entries.sortedByDescending { it.value.lastOrNull() ?: Long.MIN_VALUE }.take(LearnTuning.APPS_PER_TOPIC).map { it.key }.toSet()
+        topics[intoId] = into.copy(
+            firstSeenMs = minOf(into.firstSeenMs, from.firstSeenMs),
+            lastSeenMs = maxOf(into.lastSeenMs, from.lastSeenMs),
+            evidence = union.filterKeys { it in kept },
+            opened = into.opened + from.opened,
+            dismissed = into.dismissed + from.dismissed,
+            sensitive = into.sensitive || from.sensitive,
+        )
+        // 指着的话题已经没了的别名趁这时去掉;以前并进 from 的跟着改指 into
+        aliases.values.removeAll { it != fromId && it !in topics }
+        aliases.replaceAll { _, id -> if (id == fromId) intoId else id }
+        val f = fingerprint(from.label)
+        aliases.remove(f)
+        aliases[f] = intoId
+        blocked.remove(f)
+        while (aliases.size > LearnTuning.TOPIC_MERGED_CAP) aliases.remove(aliases.keys.first())
+        moved.replaceAll { _, id -> if (id == fromId) intoId else id }
+        moved[fromId] = intoId
         return true
     }
 
@@ -229,8 +305,12 @@ class TopicPool(data: TopicPoolData = TopicPoolData(), private val newId: () -> 
         return true
     }
 
-    /** 清空全部:是重来,不记进「不再记录」(已经记着的留着)。 */
-    fun clear() = topics.clear()
+    /** 清空全部:是重来,不记进「不再记录」(已经记着的留着);并掉过的名字也不再记着。 */
+    fun clear() {
+        topics.clear()
+        aliases.clear()
+        moved.clear()
+    }
 
     /** 删掉所有敏感话题(用户关掉「敏感类推断」并选了删除)。返回删掉的 id。 */
     fun deleteSensitive(): Set<String> {
@@ -275,6 +355,18 @@ class TopicPool(data: TopicPoolData = TopicPoolData(), private val newId: () -> 
 
         /** 话题名的指纹:按 [normalize] 之后的名字算,和种类无关。存它而不存名字:用户删掉的东西不该原样留着。 */
         fun fingerprint(label: String): String = NoticeDedup.idOf("topic:" + normalize(label))
+
+        /**
+         * 「并入」时列给用户挑的其他话题:名字和 [of] 像的排在前面(相同的相邻两个字越多越靠前;要并的多半是说法差不多的那个,
+         * 话题多的时候不该让人从头翻),其余按强度×留存从高到低。
+         */
+        fun mergeCandidates(of: ObservedTopic, all: List<ObservedTopic>, nowMs: Long): List<ObservedTopic> {
+            val pairs = pairsOf(of.label)
+            return all.filter { it.id != of.id }
+                .sortedWith(compareByDescending<ObservedTopic> { t -> pairsOf(t.label).count { it in pairs } }.thenByDescending { it.score(nowMs) })
+        }
+
+        private fun pairsOf(label: String): Set<String> = normalize(label).windowed(2).toSet()
 
         /** 比较话题名用:全半角、兼容字符统一,不分大小写,不计空白。 */
         fun normalize(label: String): String =

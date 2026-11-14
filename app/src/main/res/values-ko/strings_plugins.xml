@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugins_title">플러그인</string>
+    <string name="plugins_install">플러그인 설치</string>
+    <string name="plugins_installing">설치 중…</string>
+    <string name="plugins_empty">아직 플러그인이 없습니다</string>
+    <string name="plugins_empty_sub">플러그인 zip을 설치하면 Mika가 읽을 수 있는 스킬이 추가됩니다. 플러그인은 앱 설정을 바꾸거나 다른 데이터를 읽을 수 없습니다.</string>
+    <string name="plugins_enabled">사용 중</string>
+    <string name="plugins_disabled">사용 안 함</string>
+    <string name="plugins_skills">스킬</string>
+    <string name="plugins_no_skills">스킬 없음</string>
+    <string name="plugins_permissions">권한</string>
+    <string name="plugins_none">없음</string>
+    <string name="plugins_version">버전 %1$s</string>
+    <string name="plugins_uninstall">제거</string>
+    <string name="plugins_uninstall_body">이 플러그인과 스킬을 제거할까요? 대화와 기억은 영향을 받지 않습니다.</string>
+    <string name="plugins_install_failed">설치 실패: %1$s</string>
+    <string name="plugins_unsupported_in_version">이 버전은 스킬만 있는 플러그인을 지원합니다.</string>
+    <string name="plugins_error_too_new">이 플러그인에는 더 새로운 버전의 Mika가 필요합니다.</string>
+    <string name="plugins_error_unsafe">패키지에 안전하지 않은 경로가 있어 거부했습니다.</string>
+    <string name="plugins_error_too_large">패키지가 너무 큽니다.</string>
+    <string name="plugins_error_missing_manifest">패키지 루트에 manifest.json이 없습니다.</string>
+    <string name="plugins_error_invalid">이 패키지는 올바른 플러그인이 아닙니다.</string>
+    <plurals name="plugins_skill_count">
+        <item quantity="other">스킬 %1$d개</item>
+    </plurals>
+    <plurals name="plugins_count">
+        <item quantity="other">플러그인 %1$d개</item>
+    </plurals>
+</resources>

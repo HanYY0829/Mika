@@ -235,6 +235,19 @@ class RunTimelineViewModel(
         private val NOT_COUNTED = Regex(""""counts_as_failure"\s*:\s*false""")
         private val ERROR = Regex(""""error"\s*:\s*"([a-z_]+)"""")
 
+        /** 回放按实际调用匹配结果后复用同一份错误译名，不从轮次或模型计划猜失败原因。 */
+        internal fun failureLabel(json: String): String? {
+            val parsed = parse(json)
+            if (parsed != null && parsed["ok"] != JsonPrimitive(false)) return null
+            if (parsed == null && !NOT_OK.containsMatchIn(json)) return null
+            val code = (parsed?.get("error") as? JsonPrimitive)?.contentOrNull
+                ?: ERROR.find(json)?.groupValues?.get(1)
+            val message = (parsed?.get("message") as? JsonPrimitive)?.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
+            val reason = ERROR_LABELS[code] ?: message?.let { com.wangzan101.mika.core.record.Redactor.text(it).take(240) }
+                ?: code?.takeIf { it.isNotBlank() }?.take(100)
+            return reason?.let { tr(R.string.result_error_detail, it) }
+        }
+
         private fun resultLabel(json: String, changed: Boolean?): String = when {
             // 按规矩没收、结果里写明不计入失败的(写记忆时)不是出错:只说没收和原因,不带「出错」,这一步也就不标成失败。
             // 同样的错误码别的工具(存技能、改资料)照旧算失败,照旧说出错

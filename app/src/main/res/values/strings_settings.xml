@@ -207,6 +207,8 @@
     <string name="mcp_servers_status_fail">Connection failed: %1$s</string>
     <string name="mcp_servers_refresh_all">Test all</string>
     <string name="mcp_servers_allowlist">Allowed tools (comma separated, empty = all)</string>
+    <string name="settings_show_task_cost">Show task cost</string>
+    <string name="settings_show_task_cost_sub">Estimate DeepSeek API charges in Chinese yuan for new tasks.</string>
     <string name="quit_title">Quit Mika completely</string>
     <string name="quit_row_sub">Stops background tasks and hides the floating capsule</string>
     <string name="quit_confirm_body">Tasks that are running will stop, and the floating capsule and notifications will go away. Open Mika again and everything comes back.</string>

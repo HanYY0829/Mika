@@ -26,10 +26,11 @@ enum class Concurrency { Serial, ParallelSafe }
 enum class Verb {
     Observe, ListElements, Query, Collect, PhoneRun, PhoneFind, PhoneExtract, PhoneDialog, PhoneEvent, PhoneGesture, PhoneCommand, Screenshot, ViewPastScreens, ViewUserScreen, Describe, FindVisually, Diagnose,
     Tap, TypeText, ClearText, Scroll, Swipe, Back, PressKey,
-    ListApps, LaunchApp, OpenLink, ShareText, AppAfterTask,
+    ListApps, LaunchApp, OpenLink, ShareText, AppAfterTask, SmsLogin,
     SetAlarm, SetTimer, ShowAlarms, AddCalendarEvent, BulkAddCalendarEvents, SetWheel,
     Navigate, ReadPage, EvaluateJs, SiteCommand, Tabs, Downloads, Upload, SiteMode, Script, Interact, Capture, WaitFor, KeepOpen,
     RunCommand, RunBundledScript, ReadFile, WriteFile, SearchFiles, ShareFile,
+    ListDeviceFiles, CopyDeviceFile, SearchDeviceFiles, ListDeviceDirectoryHints, UpdateDeviceDirectoryDescription,
     RootCommand,
     CallState, CallDial, CallAnswer, CallHangup, CallTakeover,
     Wait, AskUser, RequestConfirmation, HandToUser, HandleObstacle, EndNotDone,

@@ -21,7 +21,11 @@ object ModelHttp {
     suspend fun send(http: OkHttpClient, request: Request): Reply =
         HttpSupport.execute(http, request).let { Reply(it.status, it.retryAfter, it.body) }
 
-    /** OpenAI 兼容接口(对话、转写同一套)的错误映射。[model] 是请求的模型名。 */
+    /**
+     * OpenAI 兼容接口(对话、转写同一套)的错误映射。[model] 是请求的模型名。
+     * 没有更具体说法的 HTTP 错误(>= 400)一律归 [ModelError.Server](MK-1 第 2 批:分类依状态码,不依 body 能否解析,
+     * 备援链接得住);只有 HTTP 200 的内容解析不了才是 [ModelError.BadResponse]。
+     */
     fun openAiError(status: Int, retryAfter: String?, body: String, model: String): ModelError =
         ModelAccessErrors.of(status, body, model) ?: reasoningEffortRejected(status, body) ?: when {
             status == 401 -> ModelError.Auth()
@@ -31,7 +35,7 @@ object ModelHttp {
             status == 404 -> ModelError.ModelNotFound(model, ModelAccessErrors.jsonDetail(body))
             status in 500..599 -> ModelError.Server(status)
             status == 403 -> ModelError.Auth()
-            else -> ModelError.BadResponse("HTTP $status ${body.take(200)}")
+            else -> if (status >= 400) ModelError.Server(status, ModelAccessErrors.detail(body)) else ModelError.BadResponse("HTTP $status ${body.take(200)}")
         }
 
     /** HTTP 400 的报错说请求超出了模型的上下文(见 [saysContextTooLong])。OpenAI 兼容、Responses、Anthropic 三种接口共用;本机跑的服务三种接口都可能开。 */
@@ -82,7 +86,7 @@ object ModelHttp {
             status == 413 || (status == 400 && lower.contains("token") &&
                 (lower.contains("exceed") || lower.contains("too long") || lower.contains("maximum"))) -> ModelError.ContextTooLong()
             status in 500..599 -> ModelError.Server(status)
-            else -> ModelError.BadResponse("HTTP $status ${body.take(200)}")
+            else -> if (status >= 400) ModelError.Server(status, ModelAccessErrors.detail(body)) else ModelError.BadResponse("HTTP $status ${body.take(200)}")
         }
     }
 }

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dirs_title">Folder perangkat</string>
+    <string name="device_dirs_explanation">Petunjuk folder membantu Mika menemukan file. Menambahkan petunjuk tidak memberikan akses; izinkan setiap folder yang disimpan secara terpisah.</string>
+    <string name="device_dirs_authorize">Izinkan akses folder</string>
+    <string name="device_dirs_recursive">Sertakan subfolder</string>
+    <string name="device_dirs_not_synced">Izin belum disinkronkan</string>
+    <string name="device_dirs_synced">Izin telah disinkronkan</string>
+    <string name="device_dirs_retry_sync">Coba sinkronkan lagi</string>
+    <string name="device_dirs_edit_path">Edit jalur folder dan coba lagi.</string>
+    <string name="device_dirs_not_authorized">Belum diizinkan</string>
+    <string name="device_dirs_write_failed">Pengaturan folder tidak dapat disimpan. Mulai ulang aplikasi dan coba lagi.</string>
+    <string name="device_dirs_add">Tambah petunjuk folder</string>
+    <string name="device_dirs_edit">Petunjuk folder</string>
+    <string name="device_dirs_name">Nama</string>
+    <string name="device_dirs_path">Jalur perangkat</string>
+    <string name="device_dirs_description">Deskripsi</string>
+    <string name="device_dirs_invalid">Masukkan nama dan jalur penyimpanan bersama yang unik.</string>
+    <string name="device_dirs_delete">Hapus petunjuk</string>
+    <string name="device_dirs_save">Simpan</string>
+    <string name="device_dirs_cancel">Batal</string>
+    <string name="device_dirs_available">Dapat diakses</string>
+    <string name="device_dirs_missing">Folder tidak ditemukan</string>
+    <string name="device_dirs_denied">Akses ditolak</string>
+    <string name="device_dirs_unknown">Status tidak tersedia</string>
+    <string name="device_dirs_entry">Petunjuk folder</string>
+    <string name="device_dirs_entry_sub">Bantu Mika menemukan file yang diunduh</string>
+    <string name="device_dirs_source_preset">Bawaan</string>
+    <string name="device_dirs_source_user">Diedit oleh Anda</string>
+    <string name="device_dirs_source_mika">Diedit oleh Mika</string>
+</resources>

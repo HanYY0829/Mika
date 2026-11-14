@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="report_title">Laporan tugas</string>
+    <string name="report_entry_hint">Hasil · Detail · Tangkapan layar</string>
+    <string name="report_no_answer">Jawaban akhir tugas ini tidak tersimpan.</string>
+    <string name="report_screens">Tangkapan layar utama</string>
+    <string name="report_view_step">Langkah %1$d · Buka pemutaran</string>
+    <string name="report_local_note">Catatan disimpan di perangkat. Tangkapan layar dapat berisi konten halaman. Hanya 30 tugas terakhir yang disimpan.</string>
+    <string name="playback_title">Pemutaran tindakan</string>
+    <string name="playback_empty">Tidak ada tangkapan layar untuk tugas ini.</string>
+    <string name="playback_legacy">Catatan lama: hanya gambar, tanpa penanda tindakan.</string>
+    <string name="playback_approximate">Panah menunjukkan arah gulir, bukan titik sentuh yang tepat.</string>
+    <string name="playback_marks">Lingkaran merah: ketukan · Panah: geseran</string>
+    <string name="playback_progress">Progres pemutaran</string>
+    <string name="playback_pause">Jeda</string>
+    <string name="playback_play">Putar</string>
+    <string name="playback_previous">Sebelumnya</string>
+    <string name="playback_next">Berikutnya</string>
+    <string name="playback_image">Tangkapan layar tugas</string>
+    <string name="playback_missing">Tangkapan layar tidak tersedia</string>
+    <string name="report_export">Ekspor</string>
+    <string name="report_saved">Laporan disimpan</string>
+    <string name="report_save_failed">Tidak dapat menyimpan. Periksa rekaman dan lokasi tujuan.</string>
+    <string name="report_close">Tutup</string>
+    <string name="report_final_page">Halaman terakhir yang direkam</string>
+    <string name="playback_stage_start">Mulai</string>
+    <string name="playback_stage_input">Input dan pencarian</string>
+    <string name="playback_skipped">Melewati %1$d gambar yang tidak tersedia.</string>
+    <string name="playback_no_mark">Penanda posisi untuk tindakan ini tidak direkam.</string>
+    <string name="playback_error_unknown">Kesalahan: alasan spesifik tidak direkam.</string>
+    <string name="playback_result">Hasil tindakan</string>
+    <string name="playback_element_click">Lingkaran menunjukkan perkiraan posisi elemen, bukan titik sentuh sebenarnya.</string>
+</resources>

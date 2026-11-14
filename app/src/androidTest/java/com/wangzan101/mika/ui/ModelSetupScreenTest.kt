@@ -52,7 +52,7 @@ class ModelSetupScreenTest {
         selectPreset = { calls += "preset $it" }, testAndSave = { calls += "test" }, openForm = { calls += "open form" },
         saveUntested = { calls += "save untested" },
         openProvider = { calls += "provider $it" }, pickRole = { calls += "role $it" }, next = { calls += "next" },
-        openUsage = { calls += "usage" }, openSignIn = { calls += "signin $it" },
+        openUsage = { calls += "usage" }, openDecision = { calls += "decision" }, openSignIn = { calls += "signin $it" },
     )
 
     private val form = AddForm.of(ProviderPresets.all.first()).copy(apiKey = "sk")
@@ -137,6 +137,18 @@ class ModelSetupScreenTest {
         calls.clear()
         show(connected(), onboarding = true)
         compose.onNodeWithText(UsageCopy.TITLE).assertDoesNotExist()
+    }
+
+    @Test fun decisionModelHasAnIndependentSettingsEntry() {
+        show(connected(), onboarding = false)
+        compose.onNodeWithText("决策模型 · Jev").performScrollTo().performClick()
+        assertEquals(listOf("decision"), calls)
+    }
+
+    @Test fun decisionModelIsNotAnOnboardingRequirement() {
+        show(connected(), onboarding = true)
+        compose.onNodeWithText("决策模型 · Jev").assertDoesNotExist()
+        compose.onNodeWithTag("setup-next").assertIsEnabled()
     }
 
     @Test fun contextFormValidatesPreviewsAndSavesTheModelUsedForNewTasks() {

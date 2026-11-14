@@ -1,5 +1,6 @@
 package com.wangzan101.mika.cap.web
 
+import android.os.Build
 import android.util.Log
 import android.view.KeyEvent
 import com.wangzan101.mika.core.cap.web.cdp.CdpGeometry
@@ -525,7 +526,9 @@ class WebScreen(
         val tab = (ready() as? Ready.Tab)?.tab?.takeIf { !borrowed(it) } ?: return false
         val shown = withContext(Dispatchers.Main) {
             val v = tab.view
-            val ime = v.rootWindowInsets?.isVisible(android.view.WindowInsets.Type.ime()) == true
+            // WindowInsets.Type 是安卓 11 起才有的;更早的系统不判断输入法,其余条件照旧。
+            val ime = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                v.rootWindowInsets?.isVisible(android.view.WindowInsets.Type.ime()) == true
             v.isAttachedToWindow && v.isShown && v.windowVisibility == android.view.View.VISIBLE && !ime
         }
         if (!shown) return false

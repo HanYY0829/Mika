@@ -51,8 +51,14 @@ interface FdSys {
     fun remove(dir: OpenFd, name: String)
     /** 同一目录里改名,[to] 已有(文件或链接)时整个换掉。 */
     fun rename(dir: OpenFd, from: String, to: String)
+    /** Create a hard link without replacing an existing destination. */
+    fun link(fromDir: OpenFd, from: String, toDir: OpenFd, to: String) {
+        throw IOException("hard links are unsupported")
+    }
     fun symlink(dir: OpenFd, name: String, target: String)
     fun chmod(fd: OpenFd, mode: Int)
+    /** 按名字改子项权限。删树前用来把只读目录先改成可写(只对 lstat 确认是目录的项调用)。 */
+    fun chmodAt(dir: OpenFd, name: String, mode: Int)
 }
 
 /**
@@ -139,9 +145,14 @@ object NioFdSys : FdSys {
     }
 
     override fun chmod(fd: OpenFd, mode: Int) {
-        val perms = java.nio.file.attribute.PosixFilePermissions.fromString(
-            (0..8).joinToString("") { i -> if (mode and (1 shl (8 - i)) != 0) "rwx"[i % 3].toString() else "-" },
-        )
-        Files.setPosixFilePermissions(fd(fd).path, perms)
+        Files.setPosixFilePermissions(fd(fd).path, perms(mode))
     }
+
+    override fun chmodAt(dir: OpenFd, name: String, mode: Int) {
+        Files.setPosixFilePermissions(fd(dir).path.resolve(name), perms(mode))
+    }
+
+    private fun perms(mode: Int) = java.nio.file.attribute.PosixFilePermissions.fromString(
+        (0..8).joinToString("") { i -> if (mode and (1 shl (8 - i)) != 0) "rwx"[i % 3].toString() else "-" },
+    )
 }
