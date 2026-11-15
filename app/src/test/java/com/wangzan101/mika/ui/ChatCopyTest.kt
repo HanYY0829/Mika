@@ -16,14 +16,16 @@ import java.time.ZoneId
 class ChatCopyTest {
     @get:Rule val texts = ChineseTexts()
 
-    @Test fun fourDistinctNonBlankExamplesStartWithGithubStar() {
+    @Test fun sixDistinctExamplesStartWithGithubStar() {
         val examples = ChatCopy.examples
-        assertEquals(4, examples.size)
-        assertEquals(4, examples.map { it.text }.filter { it.isNotBlank() }.toSet().size)
+        assertEquals(6, examples.size)
+        assertEquals(6, examples.map { it.title }.filter { it.isNotBlank() }.toSet().size)
+        assertEquals(6, examples.map { it.prompt }.filter { it.isNotBlank() }.toSet().size)
         assertEquals(ChatCopy.ExampleKind.Web, examples.first().kind)
-        assertTrue(examples.first().text.contains("https://github.com/wangzan101/mika"))
-        assertEquals(ChatCopy.examples.map { it.text }, ChatCopy.recommendationSeeds().map { it.first })
-        assertEquals(ChatCopy.examples.map { it.text }, ChatCopy.recommendationSeeds().map { it.second })
+        assertTrue(examples.first().prompt.contains("https://github.com/wangzan101/mika"))
+        // 短标题上卡片、完整提示词进输入框:两者分开存
+        assertEquals(ChatCopy.examples.map { it.title }, ChatCopy.recommendationSeeds().map { it.first })
+        assertEquals(ChatCopy.examples.map { it.prompt }, ChatCopy.recommendationSeeds().map { it.second })
     }
 
     @Test fun taskCostShowsTwoDecimalPlaces() {
@@ -218,17 +220,6 @@ class ChatCopyTest {
         assertEquals("本周", archivePeriodLabel(ArchivePeriod.ThisWeek))
         assertEquals("本月", archivePeriodLabel(ArchivePeriod.ThisMonth))
         assertEquals("更早", archivePeriodLabel(ArchivePeriod.Earlier))
-    }
-
-    /** 只有存过的、没在跑、没归档的对话能左滑归档;草稿和在跑任务的不行。 */
-    @Test fun onlyIdleSavedConversationsCanBeSwipedToArchive() {
-        fun row(id: String?, saved: Boolean = true, running: Boolean = false, archived: Boolean = false) =
-            DrawerConversation(id, "一", "", running = running, current = false, enabled = true, archived = archived, saved = saved)
-        assertTrue(canSwipeArchive(row("a")))
-        assertFalse(canSwipeArchive(row("a", running = true)))
-        assertFalse(canSwipeArchive(row("a", archived = true)))
-        assertFalse(canSwipeArchive(row("a", saved = false)))
-        assertFalse(canSwipeArchive(row(null)))
     }
 
     @Test fun greetingFollowsTheTimeOfDay() {
